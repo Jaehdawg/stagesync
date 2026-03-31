@@ -6,6 +6,7 @@ import { getRoleHomePath } from '@/lib/roles'
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get('code')
   const baseUrl = request.nextUrl.origin
+  const requestedRole = request.nextUrl.searchParams.get('role')
 
   if (!code) {
     return NextResponse.redirect(buildHomeUrl(baseUrl, 'missing-code', 'Missing auth code'))
@@ -44,7 +45,7 @@ export async function GET(request: NextRequest) {
     const firstName = user.user_metadata?.first_name ?? null
     const lastName = user.user_metadata?.last_name ?? null
     const displayName = [firstName, lastName].filter(Boolean).join(' ') || user.email || 'StageSync user'
-    const role = user.user_metadata?.role ?? 'singer'
+    const role = requestedRole === 'band' || requestedRole === 'admin' ? requestedRole : user.user_metadata?.role ?? 'singer'
 
     await supabase.from('profiles').upsert({
       id: user.id,

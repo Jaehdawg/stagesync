@@ -20,7 +20,7 @@ describe('BandAccessForm', () => {
     expect(signInWithOtp).toHaveBeenCalledWith({
       email: 'band@example.com',
       options: {
-        emailRedirectTo: expect.stringContaining('/auth/callback'),
+        emailRedirectTo: expect.stringContaining('/auth/callback?role=band'),
         data: {
           role: 'band',
         },

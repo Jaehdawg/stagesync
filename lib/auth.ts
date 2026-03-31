@@ -1,5 +1,11 @@
-export function buildAuthCallbackUrl(baseUrl: string) {
-  return new URL('/auth/callback', baseUrl).toString()
+export function buildAuthCallbackUrl(baseUrl: string, role?: 'singer' | 'band' | 'admin') {
+  const url = new URL('/auth/callback', baseUrl)
+
+  if (role) {
+    url.searchParams.set('role', role)
+  }
+
+  return url.toString()
 }
 
 export function buildHomeUrl(baseUrl: string, auth?: 'success' | 'error' | 'missing-code', message?: string) {

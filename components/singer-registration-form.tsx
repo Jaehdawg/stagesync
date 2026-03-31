@@ -50,7 +50,7 @@ export function SingerRegistrationForm({ supabaseClient, disabled = false, statu
     const { error } = await client.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: buildAuthCallbackUrl(appUrl),
+        emailRedirectTo: buildAuthCallbackUrl(appUrl, 'singer'),
         data: {
           first_name: firstName,
           last_name: lastName,

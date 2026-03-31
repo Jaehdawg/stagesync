@@ -40,7 +40,7 @@ export function BandAccessForm({ supabaseClient }: BandAccessFormProps) {
     const { error } = await client.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: buildAuthCallbackUrl(appUrl),
+        emailRedirectTo: buildAuthCallbackUrl(appUrl, 'band'),
         data: {
           role: 'band',
         },

@@ -22,7 +22,7 @@ describe('SingerRegistrationForm', () => {
     expect(signInWithOtp).toHaveBeenCalledWith({
       email: 'maya@example.com',
       options: {
-        emailRedirectTo: expect.stringContaining('/auth/callback'),
+        emailRedirectTo: expect.stringContaining('/auth/callback?role=singer'),
         data: {
           first_name: 'Maya',
           last_name: 'Chen',
