@@ -23,6 +23,8 @@ export type DashboardSource = {
   songsInQueue?: number
   queuedSingers?: number
   queueItems?: QueueItemInput[]
+  signupEnabled?: boolean
+  signupStatusMessage?: string
 }
 
 export type DashboardState = {
@@ -37,6 +39,8 @@ export type DashboardState = {
   bandLinks: { label: string; href: string }[]
   paymentLinks: { label: string; href: string }[]
   customMessage: string
+  signupEnabled: boolean
+  signupStatusMessage: string
 }
 
 const fallbackBandLinks = [
@@ -112,5 +116,8 @@ export function buildDashboardState(source: DashboardSource = {}): DashboardStat
     customMessage:
       source.bandProfile?.custom_message?.trim() ||
       'Thanks for singing with us — tip the band and leave a note if you want.',
+    signupEnabled: source.signupEnabled ?? true,
+    signupStatusMessage:
+      source.signupStatusMessage ?? 'Sign up while the show is active to add songs to the queue.',
   }
 }

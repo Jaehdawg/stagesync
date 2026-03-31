@@ -13,6 +13,8 @@ type DashboardState = {
   bandLinks: { label: string; href: string }[]
   paymentLinks: { label: string; href: string }[]
   customMessage: string
+  signupEnabled: boolean
+  signupStatusMessage: string
 }
 
 function Panel({
@@ -69,7 +71,10 @@ export function SingerDashboardView(state: DashboardState) {
           <div className="grid gap-8">
             <Panel title="Singer experience" eyebrow="Public flow">
               <div className="grid gap-6 lg:grid-cols-[1fr_0.9fr]">
-                <SingerRegistrationForm />
+                <SingerRegistrationForm
+                  disabled={!state.signupEnabled}
+                  statusMessage={state.signupStatusMessage}
+                />
 
                 <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
                   <h3 className="text-lg font-semibold text-white">Tidal song search</h3>

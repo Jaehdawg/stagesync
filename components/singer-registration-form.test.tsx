@@ -52,4 +52,19 @@ describe('SingerRegistrationForm', () => {
 
     expect(await screen.findByText(/bad email/i)).toBeInTheDocument()
   })
+
+  it('disables signup when the show is not accepting singers', async () => {
+    render(
+      <SingerRegistrationForm
+        disabled
+        statusMessage="The show is currently paused for signups."
+        supabaseClient={{
+          auth: { signInWithOtp: vi.fn() },
+        }}
+      />
+    )
+
+    expect(screen.getByRole('button', { name: /signups paused/i })).toBeDisabled()
+    expect(screen.getByText(/paused for signups/i)).toBeInTheDocument()
+  })
 })

@@ -16,6 +16,8 @@ CREATE TABLE events (
   name TEXT NOT NULL,
   description TEXT,
   is_active BOOLEAN DEFAULT true,
+  allow_signups BOOLEAN DEFAULT true,
+  ended_at TIMESTAMP WITH TIME ZONE,
   access_code TEXT UNIQUE, -- Simple code for joiners
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

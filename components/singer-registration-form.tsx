@@ -22,9 +22,11 @@ type SupabaseAuthClient = {
 
 type SingerRegistrationFormProps = {
   supabaseClient?: SupabaseAuthClient
+  disabled?: boolean
+  statusMessage?: string
 }
 
-export function SingerRegistrationForm({ supabaseClient }: SingerRegistrationFormProps) {
+export function SingerRegistrationForm({ supabaseClient, disabled = false, statusMessage }: SingerRegistrationFormProps) {
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [email, setEmail] = useState('')
@@ -34,6 +36,10 @@ export function SingerRegistrationForm({ supabaseClient }: SingerRegistrationFor
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    if (disabled) {
+      return
+    }
+
     setLoading(true)
     setError(null)
     setMessage(null)
@@ -115,11 +121,12 @@ export function SingerRegistrationForm({ supabaseClient }: SingerRegistrationFor
       </div>
       <button
         type="submit"
-        disabled={loading}
+        disabled={loading || disabled}
         className="mt-4 inline-flex rounded-full bg-cyan-400 px-5 py-3 font-semibold text-slate-950 transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:bg-cyan-200"
       >
-        {loading ? 'Sending...' : 'Send magic link'}
+        {disabled ? 'Signups paused' : loading ? 'Sending...' : 'Send magic link'}
       </button>
+      {statusMessage ? <p className="mt-3 text-sm text-slate-300">{statusMessage}</p> : null}
       {message ? <p className="mt-3 text-sm text-emerald-300">{message}</p> : null}
       {error ? <p className="mt-3 text-sm text-rose-300">{error}</p> : null}
     </form>

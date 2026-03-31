@@ -32,6 +32,8 @@ describe('buildDashboardState', () => {
     expect(state.bandLinks[0]).toEqual({ label: 'Facebook', href: 'https://facebook.com/neonecho' })
     expect(state.paymentLinks[0]).toEqual({ label: 'PayPal', href: 'https://paypal.me/neonecho' })
     expect(state.customMessage).toBe('Tip us and request your favorite throwback.')
+    expect(state.signupEnabled).toBe(true)
+    expect(state.signupStatusMessage).toMatch(/sign up while the show is active/i)
     expect(state.queueItems[0]).toEqual({
       position: 1,
       name: 'Avery',

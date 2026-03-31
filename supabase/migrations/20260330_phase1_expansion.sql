@@ -31,6 +31,8 @@ CREATE TABLE IF NOT EXISTS show_settings (
   playlist_only BOOLEAN NOT NULL DEFAULT false,
   lyrics_enabled BOOLEAN NOT NULL DEFAULT true,
   allow_tips BOOLEAN NOT NULL DEFAULT true,
+  signup_buffer_minutes INTEGER NOT NULL DEFAULT 1,
+  show_duration_minutes INTEGER,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
