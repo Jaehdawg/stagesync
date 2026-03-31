@@ -3,6 +3,8 @@ import { BandAccessForm } from '@/components/band-access-form'
 import { getTestSession } from '@/lib/test-session'
 import { listSeedTestLogins } from '@/lib/test-login'
 import { listTestLogins } from '@/lib/test-login-list'
+import { getLatestTestBandProfile } from '@/lib/test-band-profile'
+import { listTestBandProfiles } from '@/lib/test-band-profile-list'
 
 export default async function AdminPage() {
   const testSession = await getTestSession()
@@ -11,6 +13,9 @@ export default async function AdminPage() {
   if (testSession?.role === 'admin') {
     const testLogins = await listTestLogins(supabase)
     const logins = testLogins.length ? testLogins : listSeedTestLogins()
+    const testBandProfile = (await listTestBandProfiles(supabase)).length
+      ? await getLatestTestBandProfile(supabase)
+      : await getLatestTestBandProfile(supabase)
 
     return (
       <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100 sm:px-6 lg:px-8">
@@ -81,6 +86,31 @@ export default async function AdminPage() {
                 </div>
               ))}
             </div>
+          </section>
+
+          <section className="rounded-3xl border border-white/10 bg-white/5 p-6">
+            <h2 className="text-2xl font-semibold text-white">Test band profile</h2>
+            <p className="mt-2 text-sm text-slate-300">Manage the seeded band profile used by the band dashboard.</p>
+
+            <form className="mt-6 grid gap-4 rounded-2xl border border-white/10 bg-slate-950/50 p-5 md:grid-cols-2" action="/api/testing/band-profiles" method="post">
+              <input type="hidden" name="action" value="upsert" />
+              <div className="space-y-2 md:col-span-2">
+                <label htmlFor="band-name" className="text-sm font-medium text-slate-200">Band name</label>
+                <input id="band-name" name="bandName" type="text" defaultValue={testBandProfile?.band_name ?? 'StageSync'} className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
+              </div>
+              <div className="space-y-2 md:col-span-2">
+                <label htmlFor="band-message" className="text-sm font-medium text-slate-200">Custom message</label>
+                <textarea id="band-message" name="customMessage" defaultValue={testBandProfile?.custom_message ?? ''} rows={3} className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
+              </div>
+              <div className="md:col-span-2 flex gap-3">
+                <button type="submit" className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-medium text-white">Save band profile</button>
+              </div>
+            </form>
+
+            <form className="mt-4" action="/api/testing/band-profiles" method="post">
+              <input type="hidden" name="action" value="delete" />
+              <button type="submit" className="rounded-full border border-white/10 px-3 py-1 text-xs text-slate-200">Delete latest band profile</button>
+            </form>
           </section>
         </div>
       </main>

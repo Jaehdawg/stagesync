@@ -51,6 +51,27 @@ AS $$
   LIMIT 1;
 $$;
 
+CREATE OR REPLACE FUNCTION test_list_band_profiles()
+RETURNS SETOF test_band_profiles
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT *
+  FROM test_band_profiles
+  ORDER BY created_at DESC;
+$$;
+
+CREATE OR REPLACE FUNCTION test_delete_latest_band_profile()
+RETURNS VOID
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  DELETE FROM test_band_profiles
+  WHERE id = (SELECT id FROM test_band_profiles ORDER BY created_at DESC LIMIT 1);
+$$;
+
 CREATE OR REPLACE FUNCTION test_update_band_profile(
   p_band_name TEXT,
   p_website_url TEXT,
