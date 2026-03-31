@@ -7,6 +7,7 @@ import { getTestSession } from '@/lib/test-session'
 import { getLatestTestShow, getLatestTestShowSettings } from '@/lib/test-show'
 import { getLatestTestBandProfile } from '@/lib/test-band-profile'
 import { getTestLogin } from '@/lib/test-login-list'
+import { getLatestShowSongSource } from '@/lib/show-song-source'
 import { headers } from 'next/headers'
 import { buildSingerSignupUrl, slugifyBandName } from '@/lib/public-links'
 
@@ -48,6 +49,7 @@ async function getBandState(
         .eq('event_id', currentShow.id)
         .maybeSingle()
     : { data: null }
+  const currentSongSource = await getLatestShowSongSource(supabase, currentShow?.id)
 
   const showDurationMinutes = currentSettings.data?.show_duration_minutes ?? 60
   const signupBufferMinutes = currentSettings.data?.signup_buffer_minutes ?? 1
@@ -106,16 +108,8 @@ async function getBandState(
     showState,
     showDurationMinutes,
     signupBufferMinutes,
-    songSourceMode:
-      currentSettings.data?.playlist_only
-        ? 'tidal_playlist'
-        : currentSettings.data?.tidal_playlist_url === '__TIDAL_CATALOG__'
-          ? 'tidal_catalog'
-          : 'uploaded',
-    tidalPlaylistUrl:
-      currentSettings.data?.playlist_only && currentSettings.data?.tidal_playlist_url !== '__TIDAL_CATALOG__'
-        ? currentSettings.data?.tidal_playlist_url ?? null
-        : null,
+    songSourceMode: currentSongSource?.source_mode ?? 'uploaded',
+    tidalPlaylistUrl: currentSongSource?.source_mode === 'tidal_playlist' ? currentSongSource.tidal_playlist_url ?? null : null,
   })
 }
 
@@ -123,6 +117,7 @@ async function getBandTestState(supabase: Awaited<ReturnType<typeof createClient
   const testBandProfile = await getLatestTestBandProfile(supabase)
   const currentShow = await getLatestTestShow(supabase)
   const currentSettings = await getLatestTestShowSettings(supabase, currentShow?.id)
+  const currentSongSource = await getLatestShowSongSource(supabase, currentShow?.id)
   const state = await getBandState(supabase, testBandProfile ?? undefined)
 
   return {
@@ -144,16 +139,8 @@ async function getBandTestState(supabase: Awaited<ReturnType<typeof createClient
       : 'No show exists yet. Create one to begin.',
     showDurationMinutes: currentSettings?.show_duration_minutes ?? 60,
     signupBufferMinutes: currentSettings?.signup_buffer_minutes ?? 1,
-    songSourceMode:
-      currentSettings?.playlist_only
-        ? 'tidal_playlist'
-        : currentSettings?.tidal_playlist_url === '__TIDAL_CATALOG__'
-          ? 'tidal_catalog'
-          : 'uploaded',
-    tidalPlaylistUrl:
-      currentSettings?.playlist_only && currentSettings?.tidal_playlist_url !== '__TIDAL_CATALOG__'
-        ? currentSettings?.tidal_playlist_url ?? null
-        : null,
+    songSourceMode: currentSongSource?.source_mode ?? 'uploaded',
+    tidalPlaylistUrl: currentSongSource?.source_mode === 'tidal_playlist' ? currentSongSource.tidal_playlist_url ?? null : null,
   }
 }
 

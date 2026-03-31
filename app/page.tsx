@@ -6,6 +6,7 @@ import { SingerDashboardView } from '@/components/singer-dashboard-view'
 import { getRoleHomePath } from '@/lib/roles'
 import { canSingerSignUp, getShowState, getSignupCapacity } from '@/lib/show-state'
 import { buildRootAuthRedirect } from '@/lib/root-auth'
+import { getLatestShowSongSource } from '@/lib/show-song-source'
 
 type SearchParams = Record<string, string | string[] | undefined>
 
@@ -95,6 +96,7 @@ export default async function Home({
         .eq('event_id', currentShow.id)
         .maybeSingle()
     : { data: null }
+  const currentSongSource = await getLatestShowSongSource(supabase, currentShow?.id)
   const showDurationMinutes = showSettingsResponse.data?.show_duration_minutes ?? 60
   const signupBufferMinutes = showSettingsResponse.data?.signup_buffer_minutes ?? 1
   const signupCapacity = getSignupCapacity({
@@ -133,16 +135,8 @@ export default async function Home({
     showState,
     showDurationMinutes,
     signupBufferMinutes,
-    songSourceMode:
-      showSettingsResponse.data?.playlist_only
-        ? 'tidal_playlist'
-        : showSettingsResponse.data?.tidal_playlist_url === '__TIDAL_CATALOG__'
-          ? 'tidal_catalog'
-          : 'uploaded',
-    tidalPlaylistUrl:
-      showSettingsResponse.data?.playlist_only && showSettingsResponse.data?.tidal_playlist_url !== '__TIDAL_CATALOG__'
-        ? showSettingsResponse.data?.tidal_playlist_url ?? null
-        : null,
+    songSourceMode: currentSongSource?.source_mode ?? 'uploaded',
+    tidalPlaylistUrl: currentSongSource?.source_mode === 'tidal_playlist' ? currentSongSource.tidal_playlist_url ?? null : null,
   })
 
   return (

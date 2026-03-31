@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { getTestSession } from '@/lib/test-session'
 import { createTestShow, updateTestShowState } from '@/lib/test-show'
 import { createServiceClient } from '@/utils/supabase/service'
+import { upsertShowSongSource } from '@/lib/show-song-source'
 
 function getSupabase(request: NextRequest) {
   return createServerClient(
@@ -60,8 +61,6 @@ export async function POST(request: NextRequest) {
 
       const mode = songSourceMode === 'tidal_playlist' || songSourceMode === 'tidal_catalog' ? songSourceMode : 'uploaded'
       const playlistUrl = tidalPlaylistUrl.trim() || null
-      const playlistOnly = mode === 'tidal_playlist'
-      const encodedPlaylistUrl = mode === 'tidal_catalog' ? '__TIDAL_CATALOG__' : playlistUrl
 
       if (mode === 'tidal_playlist' && !playlistUrl) {
         return NextResponse.json({ message: 'Add a Tidal playlist URL before saving playlist mode.' }, { status: 400 })
@@ -74,8 +73,6 @@ export async function POST(request: NextRequest) {
             event_id: targetEventId,
             signup_buffer_minutes: Number.isFinite(signupBufferMinutes) ? signupBufferMinutes : 1,
             show_duration_minutes: Number.isFinite(showDurationMinutes) ? showDurationMinutes : 60,
-            playlist_only: playlistOnly,
-            tidal_playlist_url: encodedPlaylistUrl,
           },
           { onConflict: 'event_id' }
         )
@@ -83,6 +80,12 @@ export async function POST(request: NextRequest) {
       if (error) {
         return NextResponse.json({ message: error.message }, { status: 500 })
       }
+
+      await upsertShowSongSource(serviceSupabase, {
+        eventId: targetEventId,
+        sourceMode: mode,
+        tidalPlaylistUrl: playlistUrl,
+      })
     } else if (action === 'start' || action === 'pause' || action === 'resume' || action === 'end') {
       await updateTestShowState(supabase, { eventId, action })
     } else {
