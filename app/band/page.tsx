@@ -1,37 +1,29 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/utils/supabase/server'
 import { buildDashboardState } from '@/lib/dashboard'
-import { SingerDashboardView } from '@/components/singer-dashboard-view'
+import { DashboardView } from '@/components/dashboard-view'
 import { getRoleHomePath } from '@/lib/roles'
 
-type SearchParams = Record<string, string | string[] | undefined>
-
-export default async function Home({
-  searchParams,
-}: {
-  searchParams?: Promise<SearchParams>
-}) {
+export default async function BandPage() {
   const supabase = await createClient()
-  const params = await searchParams
-  const auth = typeof params?.auth === 'string' ? params.auth : undefined
-  const message = typeof params?.message === 'string' ? params.message : undefined
 
   const {
     data: { user },
   } = await supabase.auth.getUser()
 
-  if (user) {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .maybeSingle()
+  if (!user) {
+    redirect('/')
+  }
 
-    const target = getRoleHomePath(profile?.role)
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .maybeSingle()
 
-    if (target !== '/') {
-      redirect(target)
-    }
+  const target = getRoleHomePath(profile?.role)
+  if (target !== '/band') {
+    redirect(target)
   }
 
   const [{ data: bandProfile }, { data: events }, { data: queueItems }] = await Promise.all([
@@ -86,16 +78,5 @@ export default async function Home({
     }),
   })
 
-  return (
-    <>
-      {auth ? (
-        <div className="border-b border-cyan-400/20 bg-cyan-400/10 px-4 py-3 text-center text-sm text-cyan-100">
-          {auth === 'success' ? 'Magic link confirmed. You’re signed in.' : null}
-          {auth === 'missing-code' ? 'Missing auth code in the callback URL.' : null}
-          {auth === 'error' ? `Sign-in issue: ${message ?? 'Unable to complete the login.'}` : null}
-        </div>
-      ) : null}
-      <SingerDashboardView {...state} />
-    </>
-  )
+  return <DashboardView {...state} />
 }
