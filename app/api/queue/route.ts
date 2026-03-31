@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { getShowState } from '@/lib/show-state'
+import { createServiceClient } from '@/utils/supabase/service'
 
 function normalizeSongId(title: string, artist: string) {
   return `${title}-${artist}`
@@ -41,7 +42,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: 'Only singers can add songs from this screen.' }, { status: 403 })
   }
 
-  const { data: currentShow } = await supabase
+  const serviceSupabase = createServiceClient()
+
+  const { data: currentShow } = await serviceSupabase
     .from('events')
     .select('id, is_active, allow_signups')
     .order('created_at', { ascending: false })
@@ -63,7 +66,7 @@ export async function POST(request: NextRequest) {
 
   const songId = normalizeSongId(title, artist)
 
-  const { error: songError } = await supabase.from('songs').upsert({
+  const { error: songError } = await serviceSupabase.from('songs').upsert({
     id: songId,
     title,
     artist,
@@ -73,7 +76,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: songError.message }, { status: 500 })
   }
 
-  const { error: queueError } = await supabase.from('queue_items').insert({
+  const { error: queueError } = await serviceSupabase.from('queue_items').insert({
     event_id: currentShow.id,
     performer_id: user.id,
     song_id: songId,
