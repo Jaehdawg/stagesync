@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { getTestSession } from '@/lib/test-session'
-import { createTestShow, updateTestShowSettings, updateTestShowState } from '@/lib/test-show'
+import { createTestShow, updateTestShowState } from '@/lib/test-show'
 import { createServiceClient } from '@/utils/supabase/service'
 
 function getSupabase(request: NextRequest) {
@@ -44,22 +44,36 @@ export async function POST(request: NextRequest) {
     if (action === 'create') {
       await createTestShow(supabase, { name, description })
     } else if (action === 'settings') {
-      const updatedSettings = await updateTestShowSettings(supabase, {
-        eventId,
-        showDurationMinutes: Number.isFinite(showDurationMinutes) ? showDurationMinutes : 60,
-        signupBufferMinutes: Number.isFinite(signupBufferMinutes) ? signupBufferMinutes : 1,
-        songSourceMode:
-          songSourceMode === 'tidal_playlist' || songSourceMode === 'tidal_catalog' ? songSourceMode : 'uploaded',
-      })
-
       const serviceSupabase = createServiceClient()
-      const { error: playlistError } = await serviceSupabase
-        .from('show_settings')
-        .update({ tidal_playlist_url: tidalPlaylistUrl.trim() || null })
-        .eq('event_id', updatedSettings.event_id)
+      const latestShowResponse = await supabase
+        .from('events')
+        .select('id')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
 
-      if (playlistError) {
-        return NextResponse.json({ message: playlistError.message }, { status: 500 })
+      const targetEventId = eventId || latestShowResponse.data?.id || null
+
+      if (!targetEventId) {
+        return NextResponse.json({ message: 'No show available to update.' }, { status: 400 })
+      }
+
+      const { error } = await serviceSupabase
+        .from('show_settings')
+        .upsert(
+          {
+            event_id: targetEventId,
+            signup_buffer_minutes: Number.isFinite(signupBufferMinutes) ? signupBufferMinutes : 1,
+            show_duration_minutes: Number.isFinite(showDurationMinutes) ? showDurationMinutes : 60,
+            song_source_mode:
+              songSourceMode === 'tidal_playlist' || songSourceMode === 'tidal_catalog' ? songSourceMode : 'uploaded',
+            tidal_playlist_url: tidalPlaylistUrl.trim() || null,
+          },
+          { onConflict: 'event_id' }
+        )
+
+      if (error) {
+        return NextResponse.json({ message: error.message }, { status: 500 })
       }
     } else if (action === 'start' || action === 'pause' || action === 'resume' || action === 'end') {
       await updateTestShowState(supabase, { eventId, action })
