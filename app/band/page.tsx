@@ -44,7 +44,7 @@ async function getBandState(
   const currentSettings = currentShow?.id
     ? await supabase
         .from('show_settings')
-        .select('show_duration_minutes, signup_buffer_minutes, song_source_mode, tidal_playlist_url')
+        .select('show_duration_minutes, signup_buffer_minutes, playlist_only, tidal_playlist_url')
         .eq('event_id', currentShow.id)
         .maybeSingle()
     : { data: null }
@@ -106,8 +106,16 @@ async function getBandState(
     showState,
     showDurationMinutes,
     signupBufferMinutes,
-    songSourceMode: currentSettings.data?.song_source_mode ?? 'uploaded',
-    tidalPlaylistUrl: currentSettings.data?.tidal_playlist_url ?? null,
+    songSourceMode:
+      currentSettings.data?.playlist_only
+        ? 'tidal_playlist'
+        : currentSettings.data?.tidal_playlist_url === '__TIDAL_CATALOG__'
+          ? 'tidal_catalog'
+          : 'uploaded',
+    tidalPlaylistUrl:
+      currentSettings.data?.playlist_only && currentSettings.data?.tidal_playlist_url !== '__TIDAL_CATALOG__'
+        ? currentSettings.data?.tidal_playlist_url ?? null
+        : null,
   })
 }
 
@@ -136,8 +144,16 @@ async function getBandTestState(supabase: Awaited<ReturnType<typeof createClient
       : 'No show exists yet. Create one to begin.',
     showDurationMinutes: currentSettings?.show_duration_minutes ?? 60,
     signupBufferMinutes: currentSettings?.signup_buffer_minutes ?? 1,
-    songSourceMode: currentSettings?.song_source_mode ?? 'uploaded',
-    tidalPlaylistUrl: currentSettings?.tidal_playlist_url ?? null,
+    songSourceMode:
+      currentSettings?.playlist_only
+        ? 'tidal_playlist'
+        : currentSettings?.tidal_playlist_url === '__TIDAL_CATALOG__'
+          ? 'tidal_catalog'
+          : 'uploaded',
+    tidalPlaylistUrl:
+      currentSettings?.playlist_only && currentSettings?.tidal_playlist_url !== '__TIDAL_CATALOG__'
+        ? currentSettings?.tidal_playlist_url ?? null
+        : null,
   }
 }
 

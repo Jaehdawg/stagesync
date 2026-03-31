@@ -18,7 +18,6 @@ export type TestShowSettingsRow = {
   allow_tips: boolean | null
   signup_buffer_minutes: number | null
   show_duration_minutes: number | null
-  song_source_mode: 'uploaded' | 'tidal_playlist' | 'tidal_catalog' | null
   tidal_playlist_url: string | null
 }
 

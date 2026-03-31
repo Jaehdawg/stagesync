@@ -58,6 +58,15 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ message: 'No show available to update.' }, { status: 400 })
       }
 
+      const mode = songSourceMode === 'tidal_playlist' || songSourceMode === 'tidal_catalog' ? songSourceMode : 'uploaded'
+      const playlistUrl = tidalPlaylistUrl.trim() || null
+      const playlistOnly = mode === 'tidal_playlist'
+      const encodedPlaylistUrl = mode === 'tidal_catalog' ? '__TIDAL_CATALOG__' : playlistUrl
+
+      if (mode === 'tidal_playlist' && !playlistUrl) {
+        return NextResponse.json({ message: 'Add a Tidal playlist URL before saving playlist mode.' }, { status: 400 })
+      }
+
       const { error } = await serviceSupabase
         .from('show_settings')
         .upsert(
@@ -65,9 +74,8 @@ export async function POST(request: NextRequest) {
             event_id: targetEventId,
             signup_buffer_minutes: Number.isFinite(signupBufferMinutes) ? signupBufferMinutes : 1,
             show_duration_minutes: Number.isFinite(showDurationMinutes) ? showDurationMinutes : 60,
-            song_source_mode:
-              songSourceMode === 'tidal_playlist' || songSourceMode === 'tidal_catalog' ? songSourceMode : 'uploaded',
-            tidal_playlist_url: tidalPlaylistUrl.trim() || null,
+            playlist_only: playlistOnly,
+            tidal_playlist_url: encodedPlaylistUrl,
           },
           { onConflict: 'event_id' }
         )
