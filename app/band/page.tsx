@@ -1,7 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/utils/supabase/server'
 import { buildDashboardState } from '@/lib/dashboard'
-import { getRoleHomePath } from '@/lib/roles'
 import { canSingerSignUp, getShowState, getSignupCapacity } from '@/lib/show-state'
 import { BandAccessForm } from '@/components/band-access-form'
 import { BandDashboardView } from '@/components/band-dashboard-view'
@@ -106,9 +105,27 @@ export default async function BandPage() {
     .eq('id', user.id)
     .maybeSingle()
 
-  const target = getRoleHomePath(profile?.role)
-  if (target !== '/band') {
-    redirect(target)
+  const userRole = profile?.role
+
+  if (userRole !== 'band') {
+    if (userRole === 'admin') {
+      redirect('/admin')
+    }
+
+    return (
+      <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100 sm:px-6 lg:px-8">
+        <div className="mx-auto grid w-full max-w-5xl gap-6 lg:grid-cols-[1fr_0.9fr]">
+          <header className="rounded-3xl border border-white/10 bg-white/5 p-6">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">Band portal</p>
+            <h1 className="mt-2 text-4xl font-semibold text-white">Switch to a band account</h1>
+            <p className="mt-3 max-w-2xl text-slate-300">
+              You&apos;re currently signed in as a singer. Use a band email to get the band dashboard.
+            </p>
+          </header>
+          <BandAccessForm />
+        </div>
+      </main>
+    )
   }
 
   const state = await getBandState(supabase)
