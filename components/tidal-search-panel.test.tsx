@@ -52,7 +52,7 @@ describe('TidalSearchPanel', () => {
 
     render(<TidalSearchPanel sourceMode="tidal_playlist" playlistUrl="https://tidal.com/browse/playlist/abc123" />)
 
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith('/api/songs/search?query='))
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith('/api/tidal/playlist?url=https%3A%2F%2Ftidal.com%2Fbrowse%2Fplaylist%2Fabc123'))
 
     expect(screen.getByText(/playlist:/i)).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /https:\/\/tidal\.com\/browse\/playlist\/abc123/i })).toBeInTheDocument()

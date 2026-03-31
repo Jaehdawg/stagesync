@@ -2,20 +2,12 @@
 
 import { useState, type FormEvent } from 'react'
 import { createClient } from '../utils/supabase/client'
-import { buildAuthCallbackUrl } from '../lib/auth'
 
 type SupabaseAuthClient = {
   auth: {
-    signInWithOtp: (params: {
+    signInWithPassword: (params: {
       email: string
-      options: {
-        emailRedirectTo: string
-        data: {
-          first_name: string
-          last_name: string
-          role: string
-        }
-      }
+      password: string
     }) => Promise<{ error: { message: string } | null }>
   }
 }
@@ -26,10 +18,14 @@ type SingerRegistrationFormProps = {
   statusMessage?: string
 }
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const PASSWORD_REGEX = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/
+
 export function SingerRegistrationForm({ supabaseClient, disabled = false, statusMessage }: SingerRegistrationFormProps) {
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -40,40 +36,69 @@ export function SingerRegistrationForm({ supabaseClient, disabled = false, statu
       return
     }
 
+    const trimmedEmail = email.trim().toLowerCase()
+    const trimmedFirstName = firstName.trim()
+    const trimmedLastName = lastName.trim()
+
+    if (!trimmedFirstName || !trimmedLastName) {
+      setError('First name and last name are required.')
+      return
+    }
+
+    if (!EMAIL_REGEX.test(trimmedEmail)) {
+      setError('Enter a valid email address.')
+      return
+    }
+
+    if (!PASSWORD_REGEX.test(password)) {
+      setError('Password must be at least 8 characters and include a letter and a number.')
+      return
+    }
+
     setLoading(true)
     setError(null)
     setMessage(null)
 
-    const client = supabaseClient ?? createClient()
-    const appUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim() || window.location.origin
-
-    const { error } = await client.auth.signInWithOtp({
-      email,
-      options: {
-        emailRedirectTo: buildAuthCallbackUrl(appUrl, 'singer'),
-        data: {
-          first_name: firstName,
-          last_name: lastName,
-          role: 'singer',
-        },
-      },
+    const response = await fetch('/api/singer/signup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        firstName: trimmedFirstName,
+        lastName: trimmedLastName,
+        email: trimmedEmail,
+        password,
+      }),
     })
 
-    if (error) {
-      setError(error.message)
+    const payload = (await response.json().catch(() => ({}))) as { message?: string }
+
+    if (!response.ok && response.status !== 409) {
+      setError(payload.message ?? 'Unable to create your singer account.')
       setLoading(false)
       return
     }
 
-    setMessage('Check your email for the StageSync magic link. Your place in the queue starts there.')
+    const client = supabaseClient ?? createClient()
+    const { error: signInError } = await client.auth.signInWithPassword({
+      email: trimmedEmail,
+      password,
+    })
+
+    if (signInError) {
+      setError(signInError.message)
+      setLoading(false)
+      return
+    }
+
+    setMessage(payload.message ?? 'You’re signed up and signed in to StageSync.')
     setLoading(false)
   }
 
   return (
     <form className="rounded-2xl border border-white/10 bg-white/5 p-5" onSubmit={handleSubmit}>
-      <h3 className="text-lg font-semibold text-white">Quick registration</h3>
+      <h3 className="text-lg font-semibold text-white">Singer details</h3>
       <p className="mt-1 text-slate-400">
-        Capture first name, last name, and email before the singer joins the queue.
+        Create your singer account with a password so you can join the queue right away.
       </p>
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
         <div className="space-y-2 sm:col-span-1">
@@ -118,13 +143,29 @@ export function SingerRegistrationForm({ supabaseClient, disabled = false, statu
             className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none"
           />
         </div>
+        <div className="space-y-2 sm:col-span-2">
+          <label htmlFor="password" className="text-sm font-medium text-slate-200">
+            Password
+          </label>
+          <input
+            id="password"
+            name="password"
+            type="password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            placeholder="At least 8 characters with a number"
+            minLength={8}
+            className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none"
+          />
+          <p className="text-xs text-slate-500">Use at least 8 characters with a letter and a number.</p>
+        </div>
       </div>
       <button
         type="submit"
         disabled={loading || disabled}
         className="mt-4 inline-flex rounded-full bg-cyan-400 px-5 py-3 font-semibold text-slate-950 transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:bg-cyan-200"
       >
-        {disabled ? 'Signups paused' : loading ? 'Sending...' : 'Send magic link'}
+        {disabled ? 'Signups paused' : loading ? 'Signing up...' : 'Sign-up'}
       </button>
       {statusMessage ? <p className="mt-3 text-sm text-slate-300">{statusMessage}</p> : null}
       {message ? <p className="mt-3 text-sm text-emerald-300">{message}</p> : null}

@@ -3,70 +3,76 @@ import { vi } from 'vitest'
 import { SingerRegistrationForm } from './singer-registration-form'
 
 describe('SingerRegistrationForm', () => {
-  it('sends a magic link with singer details', async () => {
-    vi.stubEnv('NEXT_PUBLIC_SITE_URL', 'https://stagesync.example')
-    const signInWithOtp = vi.fn().mockResolvedValue({ error: null })
+  it('creates a singer account and signs the user in', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 201,
+      json: async () => ({ message: 'Singer account created.' }),
+    })
+    const signInWithPassword = vi.fn().mockResolvedValue({ error: null })
+
+    vi.stubGlobal('fetch', fetchMock)
 
     render(
       <SingerRegistrationForm
         supabaseClient={{
-          auth: { signInWithOtp },
+          auth: { signInWithPassword },
         }}
       />
     )
 
     fireEvent.change(screen.getByLabelText(/first name/i), { target: { value: 'Maya' } })
     fireEvent.change(screen.getByLabelText(/last name/i), { target: { value: 'Chen' } })
-    fireEvent.change(screen.getByLabelText(/email/i), { target: { value: 'maya@example.com' } })
-    fireEvent.click(screen.getByRole('button', { name: /send magic link/i }))
+    fireEvent.change(screen.getByLabelText(/^email$/i), { target: { value: 'maya@example.com' } })
+    fireEvent.change(screen.getByLabelText(/password/i), { target: { value: 'Singer123' } })
+    fireEvent.click(screen.getByRole('button', { name: /sign-up/i }))
 
-    await waitFor(() => expect(signInWithOtp).toHaveBeenCalledTimes(1))
-    expect(signInWithOtp).toHaveBeenCalledWith({
-      email: 'maya@example.com',
-      options: {
-        emailRedirectTo: 'https://stagesync.example/auth/callback?role=singer',
-        data: {
-          first_name: 'Maya',
-          last_name: 'Chen',
-          role: 'singer',
-        },
-      },
-    })
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith('/api/singer/signup', expect.any(Object)))
+    expect(signInWithPassword).toHaveBeenCalledWith({ email: 'maya@example.com', password: 'Singer123' })
+    expect(screen.getByText(/Singer account created/i)).toBeInTheDocument()
+  })
 
-    vi.unstubAllEnvs()
+  it('shows validation errors for bad email or weak password', () => {
+    const fetchMock = vi.fn()
+    vi.stubGlobal('fetch', fetchMock)
 
-    expect(screen.getByText(/check your email/i)).toBeInTheDocument()
+    render(<SingerRegistrationForm />)
+
+    fireEvent.change(screen.getByLabelText(/first name/i), { target: { value: 'Maya' } })
+    fireEvent.change(screen.getByLabelText(/last name/i), { target: { value: 'Chen' } })
+    fireEvent.change(screen.getByLabelText(/^email$/i), { target: { value: 'maya@bad' } })
+    fireEvent.change(screen.getByLabelText(/password/i), { target: { value: 'short' } })
+    fireEvent.click(screen.getByRole('button', { name: /sign-up/i }))
+
+    expect(screen.getByText(/valid email address/i)).toBeInTheDocument()
+    expect(fetchMock).not.toHaveBeenCalled()
   })
 
   it('shows an error when signup fails', async () => {
-    vi.unstubAllEnvs()
-    const signInWithOtp = vi.fn().mockResolvedValue({ error: { message: 'Bad email' } })
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 500,
+      json: async () => ({ message: 'Bad signup' }),
+    })
+    vi.stubGlobal('fetch', fetchMock)
 
-    render(
-      <SingerRegistrationForm
-        supabaseClient={{
-          auth: { signInWithOtp },
-        }}
-      />
-    )
+    render(<SingerRegistrationForm supabaseClient={{ auth: { signInWithPassword: vi.fn() } }} />)
 
     fireEvent.change(screen.getByLabelText(/first name/i), { target: { value: 'Maya' } })
     fireEvent.change(screen.getByLabelText(/last name/i), { target: { value: 'Chen' } })
-    fireEvent.change(screen.getByLabelText(/email/i), { target: { value: 'maya@example.com' } })
-    fireEvent.click(screen.getByRole('button', { name: /send magic link/i }))
+    fireEvent.change(screen.getByLabelText(/^email$/i), { target: { value: 'maya@example.com' } })
+    fireEvent.change(screen.getByLabelText(/password/i), { target: { value: 'Singer123' } })
+    fireEvent.click(screen.getByRole('button', { name: /sign-up/i }))
 
-    expect(await screen.findByText(/bad email/i)).toBeInTheDocument()
+    expect(await screen.findByText(/bad signup/i)).toBeInTheDocument()
   })
 
-  it('disables signup when the show is not accepting singers', async () => {
-    vi.unstubAllEnvs()
+  it('disables signup when the show is not accepting singers', () => {
     render(
       <SingerRegistrationForm
         disabled
         statusMessage="The show is currently paused for signups."
-        supabaseClient={{
-          auth: { signInWithOtp: vi.fn() },
-        }}
+        supabaseClient={{ auth: { signInWithPassword: vi.fn() } }}
       />
     )
 

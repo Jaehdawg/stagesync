@@ -106,8 +106,7 @@ export function buildDashboardState(source: DashboardSource = {}): DashboardStat
     brand: {
       label: 'StageSync',
       title: bandName,
-      description:
-        'Live karaoke queueing for singers, bands, and admins — built to handle fast registration, Tidal search, queue control, lyrics, tips, and band profile visibility from one dashboard.',
+      description: 'Singer sign-up, band links, tips, song picking, queue status, and lyrics — all in one show page.',
     },
     analytics: [
       { label: 'Active Show', value: activeShows > 0 ? '🤘' : '⛔️' },

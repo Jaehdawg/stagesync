@@ -23,6 +23,7 @@ const state = buildDashboardState({
   queueItems: [
     { position: 1, name: 'Avery', song: 'Maps - Yeah Yeah Yeahs', status: 'Now singing' },
   ],
+  songSourceMode: 'uploaded',
 })
 
 describe('Singer dashboard', () => {
@@ -43,10 +44,9 @@ describe('Singer dashboard', () => {
     await waitFor(() => expect(fetchMock).toHaveBeenCalledWith('/api/songs/search?query='))
 
     expect(screen.getByRole('heading', { name: /neon echo/i })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: /singer experience/i })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: /band profile/i })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: /payment links/i })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: /singer actions/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /singer sign-up/i })).toBeInTheDocument()
+    expect(screen.getAllByText(/band links/i).length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/tip links/i).length).toBeGreaterThan(0)
     expect(screen.queryByRole('heading', { name: /band management/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: /saas admin/i })).not.toBeInTheDocument()
   })

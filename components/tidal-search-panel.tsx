@@ -18,6 +18,7 @@ type TidalSearchPanelProps = {
 
 export function TidalSearchPanel({ disabled = false, statusMessage, sourceMode = 'tidal_catalog', playlistUrl = null }: TidalSearchPanelProps) {
   const isCatalogMode = sourceMode === 'tidal_catalog'
+  const isPlaylistMode = sourceMode === 'tidal_playlist'
   const isBrowseMode = !isCatalogMode
   const [query, setQuery] = useState('')
   const [tracks, setTracks] = useState<TidalTrack[]>([])
@@ -56,13 +57,16 @@ export function TidalSearchPanel({ disabled = false, statusMessage, sourceMode =
       setError(null)
       setMessage(null)
 
-      const response = await fetch('/api/songs/search?query=')
+      const endpoint = isPlaylistMode
+        ? `/api/tidal/playlist?url=${encodeURIComponent(playlistUrl ?? '')}`
+        : '/api/songs/search?query='
+      const response = await fetch(endpoint)
       const payload = (await response.json().catch(() => ({}))) as { tracks?: TidalTrack[]; message?: string }
 
       if (cancelled) return
 
       if (!response.ok) {
-        setError(payload.message ?? 'Unable to load songs.')
+        setError(payload.message ?? (isPlaylistMode ? 'Unable to load playlist songs.' : 'Unable to load songs.'))
         setTracks([])
         setLoading(false)
         return
@@ -75,7 +79,13 @@ export function TidalSearchPanel({ disabled = false, statusMessage, sourceMode =
       })
 
       setTracks(nextTracks)
-      setMessage(nextTracks.length ? `Loaded ${nextTracks.length} song${nextTracks.length === 1 ? '' : 's'}.` : 'No songs found.')
+      setMessage(
+        nextTracks.length
+          ? `Loaded ${nextTracks.length} song${nextTracks.length === 1 ? '' : 's'}.`
+          : isPlaylistMode
+            ? 'No songs found in the playlist.'
+            : 'No songs found.'
+      )
       setLoading(false)
     }
 
@@ -84,7 +94,7 @@ export function TidalSearchPanel({ disabled = false, statusMessage, sourceMode =
     return () => {
       cancelled = true
     }
-  }, [isBrowseMode])
+  }, [isBrowseMode, isPlaylistMode, playlistUrl])
 
   useEffect(() => {
     if (!isCatalogMode) {

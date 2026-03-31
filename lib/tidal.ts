@@ -67,10 +67,12 @@ async function getTidalAccessToken() {
 }
 
 function normalizeTrack(item: Record<string, unknown>): TidalTrack | null {
-  const id = readString(item.id ?? item.trackId ?? item.tidalId)
-  const title = readString(item.title ?? item.name)
-  const artist = readNestedString(item.artist, 'name') || readString(item.artistName ?? item.artist ?? item.performer ?? item.artist_name)
-  const album = readNestedString(item.album, 'title') || readString(item.albumTitle ?? item.album) || null
+  const source = item.track && typeof item.track === 'object' ? { ...item, ...(item.track as Record<string, unknown>) } : item
+
+  const id = readString(source.id ?? source.trackId ?? source.tidalId)
+  const title = readString(source.title ?? source.name)
+  const artist = readNestedString(source.artist, 'name') || readString(source.artistName ?? source.artist ?? source.performer ?? source.artist_name)
+  const album = readNestedString(source.album, 'title') || readString(source.albumTitle ?? source.album) || null
 
   if (!id || !title || !artist) {
     return null
@@ -114,12 +116,16 @@ export function extractTidalTracks(payload: unknown): TidalTrack[] {
   return tracks
 }
 
-async function fetchTidalJson(paths: string[], token: string, query: string, limit: number) {
+async function fetchTidalJson(paths: string[], token: string, options: { query?: string; limit: number }) {
+  const { query, limit } = options
   for (const path of paths) {
     const url = new URL(path, getTidalBaseUrl())
-    url.searchParams.set('query', query)
     url.searchParams.set('limit', String(limit))
     url.searchParams.set('countryCode', 'US')
+
+    if (query) {
+      url.searchParams.set('query', query)
+    }
 
     const response = await fetch(url, {
       headers: {
@@ -155,9 +161,48 @@ export async function searchTidalTracks(query: string, options: { limit?: number
     return []
   }
 
-  const searchPaths = options.playlistOnly
-    ? ['/v1/search', '/search/tracks']
-    : ['/v2/search/tracks', '/v1/search', '/search/tracks']
+  const searchPaths = [
+    `/searchSuggestions/${encodeURIComponent(trimmed)}/relationships/directHits`,
+    `/searchSuggestions/${encodeURIComponent(trimmed)}`,
+  ]
 
-  return fetchTidalJson(searchPaths, token, trimmed, limit)
+  return fetchTidalJson(searchPaths, token, { limit })
+}
+
+function extractPlaylistId(url: string) {
+  const trimmed = url.trim()
+  if (!trimmed) {
+    return null
+  }
+
+  try {
+    const parsed = new URL(trimmed)
+    const segments = parsed.pathname.split('/').filter(Boolean)
+    const playlistIndex = segments.findIndex((segment) => segment === 'playlist')
+    const candidate = playlistIndex >= 0 ? segments[playlistIndex + 1] : segments.at(-1)
+    return candidate?.trim() || null
+  } catch {
+    const match = trimmed.match(/playlist\/([A-Za-z0-9_-]+)/i)
+    return match?.[1] ?? null
+  }
+}
+
+export async function fetchTidalPlaylistTracks(playlistUrl: string, options: { limit?: number } = {}) {
+  const playlistId = extractPlaylistId(playlistUrl)
+  if (!playlistId) {
+    return []
+  }
+
+  const token = await getTidalAccessToken()
+  if (!token) {
+    return []
+  }
+
+  const limit = Math.min(Math.max(options.limit ?? 200, 1), 500)
+  const playlistPaths = [
+    `/playlists/${playlistId}/relationships/items`,
+    `/playlists/${playlistId}`,
+  ]
+
+  return fetchTidalJson(playlistPaths, token, { limit })
 }

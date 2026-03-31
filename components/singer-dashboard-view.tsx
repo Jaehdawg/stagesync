@@ -48,32 +48,66 @@ export function SingerDashboardView(state: DashboardState) {
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(34,211,238,0.14),_transparent_40%),linear-gradient(180deg,#020617_0%,#0f172a_100%)] px-4 py-8 text-slate-100 sm:px-6 lg:px-8">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-8">
         <header className="rounded-3xl border border-cyan-400/20 bg-slate-950/70 p-6 shadow-2xl shadow-cyan-950/20 backdrop-blur">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-            <div className="max-w-3xl">
+          <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr] lg:items-start">
+            <div className="space-y-5">
               <p className="inline-flex rounded-full border border-cyan-400/30 bg-cyan-400/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.28em] text-cyan-200">
                 {state.brand.label}
               </p>
-              <h1 className="mt-4 text-4xl font-semibold tracking-tight text-white sm:text-5xl">
+              <h1 className="text-4xl font-semibold tracking-tight text-white sm:text-5xl">
                 {state.brand.title}
               </h1>
-              <p className="mt-3 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg">
+              <p className="max-w-2xl text-base leading-7 text-slate-300 sm:text-lg">
                 {state.brand.description}
               </p>
+              <p className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-300">
+                {state.customMessage}
+              </p>
             </div>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              {state.analytics.map((item) => (
-                <div key={item.label} className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-                  <p className="text-xs uppercase tracking-[0.22em] text-slate-400">{item.label}</p>
-                  <p className="mt-2 text-2xl font-semibold text-white">{item.value}</p>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                <p className="text-xs uppercase tracking-[0.22em] text-cyan-300">Band links</p>
+                <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
+                  {state.bandLinks.map((link) => (
+                    <a
+                      key={link.label}
+                      href={link.href}
+                      className="rounded-xl border border-white/10 bg-slate-900/70 px-3 py-2 text-center text-slate-200 transition hover:border-cyan-400/50 hover:text-white"
+                    >
+                      {link.label}
+                    </a>
+                  ))}
                 </div>
-              ))}
+              </div>
+
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                <p className="text-xs uppercase tracking-[0.22em] text-cyan-300">Tip links</p>
+                <ul className="mt-3 space-y-2 text-sm text-slate-300">
+                  {state.paymentLinks.map((link) => (
+                    <li key={link.label}>
+                      <a href={link.href} className="text-cyan-200 underline decoration-cyan-400/40 underline-offset-4">
+                        {link.label}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </div>
+          </div>
+
+          <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
+            {state.analytics.map((item) => (
+              <div key={item.label} className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+                <p className="text-xs uppercase tracking-[0.22em] text-slate-400">{item.label}</p>
+                <p className="mt-2 text-2xl font-semibold text-white">{item.value}</p>
+              </div>
+            ))}
           </div>
         </header>
 
         <div className="grid gap-8 xl:grid-cols-[1.25fr_0.95fr]">
           <div className="grid gap-8">
-            <Panel title="Singer experience" eyebrow="Public flow">
+            <Panel title="Singer Sign-up" eyebrow="StageSync">
               <div className="grid gap-6 lg:grid-cols-[1fr_0.9fr]">
                 <SingerRegistrationForm
                   disabled={!state.signupEnabled}
@@ -134,47 +168,8 @@ Well, who am I to keep you down?`}
             </div>
           </div>
 
-          <div className="grid gap-8">
-            <Panel title="Band profile" eyebrow="Public info">
-              <div className="space-y-4">
-                <p className="text-slate-300">Website, socials, and payment links for the current show band.</p>
-                <div className="grid grid-cols-2 gap-2 text-sm">
-                  {state.bandLinks.map((link) => (
-                    <a
-                      key={link.label}
-                      href={link.href}
-                      className="rounded-xl border border-white/10 bg-slate-900/70 px-3 py-2 text-center text-slate-200 transition hover:border-cyan-400/50 hover:text-white"
-                    >
-                      {link.label}
-                    </a>
-                  ))}
-                </div>
-              </div>
-            </Panel>
-
-            <Panel title="Payment links" eyebrow="Tips">
-              <ul className="space-y-2 text-slate-300">
-                {state.paymentLinks.map((link) => (
-                  <li key={link.label}>
-                    {link.label} — {link.href}
-                  </li>
-                ))}
-              </ul>
-              <p className="mt-3 text-sm text-slate-400">{state.customMessage}</p>
-            </Panel>
-          </div>
         </div>
 
-        <section className="rounded-3xl border border-white/10 bg-white/5 p-6 text-sm text-slate-300">
-          <h2 className="text-2xl font-semibold text-white">Singer actions</h2>
-          <ul className="mt-4 grid gap-2 md:grid-cols-2 xl:grid-cols-3">
-            {state.singerActions.map((action) => (
-              <li key={action} className="rounded-2xl border border-white/10 bg-slate-950/50 px-4 py-3">
-                {action}
-              </li>
-            ))}
-          </ul>
-        </section>
       </div>
     </main>
   )
