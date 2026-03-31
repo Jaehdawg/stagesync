@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { getTestSession } from '@/lib/test-session'
-import { createTestShow, updateTestShowState } from '@/lib/test-show'
+import { createTestShow, updateTestShowSettings, updateTestShowState } from '@/lib/test-show'
 
 function getSupabase(request: NextRequest) {
   return createServerClient(
@@ -34,10 +34,18 @@ export async function POST(request: NextRequest) {
   const eventId = String(formData.get('eventId') ?? '') || null
   const name = String(formData.get('name') ?? '')
   const description = String(formData.get('description') ?? '')
+  const showDurationMinutes = Number(formData.get('showDurationMinutes'))
+  const signupBufferMinutes = Number(formData.get('signupBufferMinutes'))
 
   try {
     if (action === 'create') {
       await createTestShow(supabase, { name, description })
+    } else if (action === 'settings') {
+      await updateTestShowSettings(supabase, {
+        eventId,
+        showDurationMinutes: Number.isFinite(showDurationMinutes) ? showDurationMinutes : 60,
+        signupBufferMinutes: Number.isFinite(signupBufferMinutes) ? signupBufferMinutes : 1,
+      })
     } else if (action === 'start' || action === 'pause' || action === 'resume' || action === 'end') {
       await updateTestShowState(supabase, { eventId, action })
     } else {

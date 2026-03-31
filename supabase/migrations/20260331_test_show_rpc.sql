@@ -44,7 +44,69 @@ BEGIN
   )
   RETURNING * INTO new_event;
 
+  INSERT INTO show_settings (
+    event_id,
+    playlist_only,
+    lyrics_enabled,
+    allow_tips,
+    signup_buffer_minutes,
+    show_duration_minutes
+  )
+  VALUES (
+    new_event.id,
+    false,
+    true,
+    true,
+    1,
+    60
+  )
+  ON CONFLICT (event_id) DO UPDATE SET
+    signup_buffer_minutes = EXCLUDED.signup_buffer_minutes,
+    show_duration_minutes = EXCLUDED.show_duration_minutes,
+    updated_at = NOW();
+
   RETURN new_event;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION test_update_show_settings(
+  p_event_id UUID,
+  p_show_duration_minutes INTEGER,
+  p_signup_buffer_minutes INTEGER
+)
+RETURNS show_settings
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  updated_settings show_settings;
+BEGIN
+  INSERT INTO show_settings (
+    event_id,
+    playlist_only,
+    lyrics_enabled,
+    allow_tips,
+    signup_buffer_minutes,
+    show_duration_minutes,
+    updated_at
+  )
+  VALUES (
+    COALESCE(p_event_id, (SELECT id FROM events ORDER BY created_at DESC LIMIT 1)),
+    false,
+    true,
+    true,
+    COALESCE(p_signup_buffer_minutes, 1),
+    COALESCE(p_show_duration_minutes, 60),
+    NOW()
+  )
+  ON CONFLICT (event_id) DO UPDATE SET
+    signup_buffer_minutes = EXCLUDED.signup_buffer_minutes,
+    show_duration_minutes = EXCLUDED.show_duration_minutes,
+    updated_at = NOW()
+  RETURNING * INTO updated_settings;
+
+  RETURN updated_settings;
 END;
 $$;
 

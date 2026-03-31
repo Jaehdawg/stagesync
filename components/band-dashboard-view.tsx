@@ -14,6 +14,8 @@ export type BandDashboardState = {
   showState: 'active' | 'paused' | 'ended'
   signupStatusMessage: string
   signupEnabled?: boolean
+  showDurationMinutes?: number | null
+  signupBufferMinutes?: number | null
   testMode?: boolean
 }
 
@@ -48,6 +50,8 @@ export function BandDashboardView({
   currentShowName,
   showState,
   signupStatusMessage,
+  showDurationMinutes,
+  signupBufferMinutes,
   testMode = false,
 }: BandDashboardState) {
   const controls =
@@ -147,6 +151,47 @@ export function BandDashboardView({
                     </form>
                   ))}
                 </div>
+                {testMode && currentShowId ? (
+                  <form className="mt-6 space-y-4 rounded-2xl border border-white/10 bg-white/5 p-4" action="/api/testing/show" method="post">
+                    <input type="hidden" name="action" value="settings" />
+                    <input type="hidden" name="eventId" value={currentShowId} />
+                    <h3 className="text-lg font-semibold text-white">Show settings</h3>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div className="space-y-2">
+                        <label htmlFor="show-duration" className="text-sm font-medium text-slate-200">
+                          Show duration (minutes)
+                        </label>
+                        <input
+                          id="show-duration"
+                          name="showDurationMinutes"
+                          type="number"
+                          min={0}
+                          defaultValue={showDurationMinutes ?? 60}
+                          className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label htmlFor="signup-buffer" className="text-sm font-medium text-slate-200">
+                          Buffer between songs (minutes)
+                        </label>
+                        <input
+                          id="signup-buffer"
+                          name="signupBufferMinutes"
+                          type="number"
+                          min={0}
+                          defaultValue={signupBufferMinutes ?? 1}
+                          className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none"
+                        />
+                      </div>
+                    </div>
+                    <button
+                      type="submit"
+                      className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-medium text-white"
+                    >
+                      Save settings
+                    </button>
+                  </form>
+                ) : null}
                 <p className="mt-4 text-slate-400">{signupStatusMessage}</p>
               </>
             )}

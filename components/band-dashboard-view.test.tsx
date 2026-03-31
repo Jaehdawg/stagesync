@@ -39,4 +39,21 @@ describe('BandDashboardView', () => {
     expect(screen.getByRole('button', { name: /create show/i })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /pause signups/i })).not.toBeInTheDocument()
   })
+
+  it('shows show settings when a test show exists', () => {
+    render(
+      <BandDashboardView
+        {...state}
+        currentShowId="show-1"
+        currentShowName="Saturday Night"
+        testMode
+        showDurationMinutes={90}
+        signupBufferMinutes={2}
+      />
+    )
+
+    expect(screen.getByRole('button', { name: /save settings/i })).toBeInTheDocument()
+    expect(screen.getByLabelText(/show duration/i)).toHaveValue(90)
+    expect(screen.getByLabelText(/buffer between songs/i)).toHaveValue(2)
+  })
 })

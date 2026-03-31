@@ -4,7 +4,7 @@ import { canSingerSignUp, getShowState, getSignupCapacity } from '@/lib/show-sta
 import { BandAccessForm } from '@/components/band-access-form'
 import { BandDashboardView, type BandDashboardState } from '@/components/band-dashboard-view'
 import { getTestSession } from '@/lib/test-session'
-import { getLatestTestShow } from '@/lib/test-show'
+import { getLatestTestShow, getLatestTestShowSettings } from '@/lib/test-show'
 
 async function getBandState(supabase: Awaited<ReturnType<typeof createClient>>) {
   const [{ data: bandProfile }, { data: events }, { data: queueItems }] = await Promise.all([
@@ -78,6 +78,7 @@ async function getBandState(supabase: Awaited<ReturnType<typeof createClient>>) 
 
 async function getBandTestState(supabase: Awaited<ReturnType<typeof createClient>>): Promise<BandDashboardState> {
   const currentShow = await getLatestTestShow(supabase)
+  const currentSettings = await getLatestTestShowSettings(supabase, currentShow?.id)
   const state = await getBandState(supabase)
 
   return {
@@ -97,6 +98,8 @@ async function getBandTestState(supabase: Awaited<ReturnType<typeof createClient
           : 'Signups are open for the test show.'
         : 'This show has ended and singer signups are closed.'
       : 'No show exists yet. Create one to begin.',
+    showDurationMinutes: currentSettings?.show_duration_minutes ?? 60,
+    signupBufferMinutes: currentSettings?.signup_buffer_minutes ?? 1,
   }
 }
 
