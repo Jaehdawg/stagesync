@@ -91,7 +91,7 @@ export default async function Home({
   const showSettingsResponse = currentShow?.id
     ? await supabase
         .from('show_settings')
-        .select('show_duration_minutes, signup_buffer_minutes, song_source_mode')
+        .select('show_duration_minutes, signup_buffer_minutes, song_source_mode, tidal_playlist_url')
         .eq('event_id', currentShow.id)
         .maybeSingle()
     : { data: null }
@@ -134,6 +134,7 @@ export default async function Home({
     showDurationMinutes,
     signupBufferMinutes,
     songSourceMode: showSettingsResponse.data?.song_source_mode ?? 'uploaded',
+    tidalPlaylistUrl: showSettingsResponse.data?.tidal_playlist_url ?? null,
   })
 
   return (

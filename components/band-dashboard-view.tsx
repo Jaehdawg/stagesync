@@ -20,6 +20,7 @@ export type BandDashboardState = {
   showDurationMinutes?: number | null
   signupBufferMinutes?: number | null
   songSourceMode?: 'uploaded' | 'tidal_playlist' | 'tidal_catalog'
+  tidalPlaylistUrl?: string | null
   bandAccessLevel?: 'admin' | 'member'
   testMode?: boolean
   singerSignupUrl?: string | null
@@ -59,6 +60,7 @@ export function BandDashboardView({
   showDurationMinutes,
   signupBufferMinutes,
   songSourceMode = 'uploaded',
+  tidalPlaylistUrl = null,
   bandAccessLevel = 'admin',
   testMode = false,
   singerSignupUrl = null,
@@ -195,9 +197,9 @@ export function BandDashboardView({
                             className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none"
                           />
                         </div>
-                        <div className="space-y-2 sm:col-span-2">
-                          <label htmlFor="song-source-mode" className="text-sm font-medium text-slate-200">
-                            Song source
+                      <div className="space-y-2 sm:col-span-2">
+                        <label htmlFor="song-source-mode" className="text-sm font-medium text-slate-200">
+                          Song source
                           </label>
                           <select
                             id="song-source-mode"
@@ -208,9 +210,22 @@ export function BandDashboardView({
                             <option value="uploaded">Uploaded song list</option>
                             <option value="tidal_playlist">Tidal playlist</option>
                             <option value="tidal_catalog">Full Tidal catalog</option>
-                          </select>
-                        </div>
+                        </select>
                       </div>
+                      <div className="space-y-2 sm:col-span-2">
+                        <label htmlFor="tidal-playlist-url" className="text-sm font-medium text-slate-200">
+                          Tidal playlist URL
+                        </label>
+                        <input
+                          id="tidal-playlist-url"
+                          name="tidalPlaylistUrl"
+                          type="url"
+                          defaultValue={tidalPlaylistUrl ?? ''}
+                          placeholder="https://tidal.com/browse/playlist/..."
+                          className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none"
+                        />
+                      </div>
+                    </div>
                       <button
                         type="submit"
                         className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-medium text-white"

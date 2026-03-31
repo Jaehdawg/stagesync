@@ -18,6 +18,7 @@ type DashboardState = {
   signupEnabled: boolean
   signupStatusMessage: string
   songSourceMode?: 'uploaded' | 'tidal_playlist' | 'tidal_catalog'
+  tidalPlaylistUrl?: string | null
 }
 
 function Panel({
@@ -85,6 +86,7 @@ export function SingerDashboardView(state: DashboardState) {
                     disabled={!state.signupEnabled}
                     statusMessage={state.signupStatusMessage}
                     sourceMode={songSourceMode}
+                    playlistUrl={state.tidalPlaylistUrl ?? null}
                   />
                   <SongRequestForm
                     disabled={!state.signupEnabled}

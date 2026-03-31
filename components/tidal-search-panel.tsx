@@ -13,9 +13,10 @@ type TidalSearchPanelProps = {
   disabled?: boolean
   statusMessage?: string
   sourceMode?: 'uploaded' | 'tidal_playlist' | 'tidal_catalog'
+  playlistUrl?: string | null
 }
 
-export function TidalSearchPanel({ disabled = false, statusMessage, sourceMode = 'tidal_catalog' }: TidalSearchPanelProps) {
+export function TidalSearchPanel({ disabled = false, statusMessage, sourceMode = 'tidal_catalog', playlistUrl = null }: TidalSearchPanelProps) {
   const [query, setQuery] = useState('')
   const [playlistOnly, setPlaylistOnly] = useState(true)
   const [results, setResults] = useState<TidalTrack[]>([])
@@ -82,6 +83,11 @@ export function TidalSearchPanel({ disabled = false, statusMessage, sourceMode =
     <section className="rounded-2xl border border-white/10 bg-white/5 p-5">
       <h3 className="text-lg font-semibold text-white">{title}</h3>
       <p className="mt-1 text-slate-400">{description}</p>
+      {sourceMode === 'tidal_playlist' && playlistUrl ? (
+        <p className="mt-2 text-sm text-cyan-200">
+          Playlist: <a href={playlistUrl} className="underline decoration-cyan-400/40 underline-offset-4">{playlistUrl}</a>
+        </p>
+      ) : null}
 
       <form className="mt-4 space-y-4" onSubmit={handleSearch}>
         <div className="space-y-2">

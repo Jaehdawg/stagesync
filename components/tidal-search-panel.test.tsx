@@ -48,4 +48,11 @@ describe('TidalSearchPanel', () => {
     expect(fetchMock).toHaveBeenCalledWith('/api/songs/search?query=Dreams')
     expect(screen.getByText(/found 1 song/i)).toBeInTheDocument()
   })
+
+  it('shows the linked tidal playlist when provided', () => {
+    render(<TidalSearchPanel sourceMode="tidal_playlist" playlistUrl="https://tidal.com/browse/playlist/abc123" />)
+
+    expect(screen.getByText(/playlist:/i)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /https:\/\/tidal\.com\/browse\/playlist\/abc123/i })).toBeInTheDocument()
+  })
 })
