@@ -8,7 +8,7 @@ export type TestLoginRow = {
 }
 
 export async function listTestLogins(supabase: SupabaseClient): Promise<TestLoginRow[]> {
-  const { data, error } = await supabase.rpc('test_list_logins')
+  const { data, error } = await supabase.from('test_logins').select('*').order('created_at', { ascending: false })
   if (error) {
     return []
   }
