@@ -104,13 +104,13 @@ export function buildDashboardState(source: DashboardSource = {}): DashboardStat
 
   return {
     brand: {
-      label: 'Phase 1 build',
+      label: 'StageSync',
       title: bandName,
       description:
         'Live karaoke queueing for singers, bands, and admins — built to handle fast registration, Tidal search, queue control, lyrics, tips, and band profile visibility from one dashboard.',
     },
     analytics: [
-      { label: 'Active shows', value: String(activeShows) },
+      { label: activeShows > 0 ? '🤘 Active Show' : '⛔️ Active Show', value: activeShows > 0 ? '1' : '0' },
       { label: 'Songs in queue', value: String(songsInQueue) },
       { label: 'Queued singers', value: String(queuedSingers) },
     ],

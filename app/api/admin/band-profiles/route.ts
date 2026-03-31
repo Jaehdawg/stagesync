@@ -1,6 +1,12 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { createServiceClient } from '@/utils/supabase/service'
 
+async function bandNameExists(supabase: ReturnType<typeof createServiceClient>, bandName: string) {
+  const { data, error } = await supabase.from('band_profiles').select('id').ilike('band_name', bandName).limit(1)
+  if (error) throw error
+  return (data?.length ?? 0) > 0
+}
+
 export async function POST(request: NextRequest) {
   const formData = await request.formData()
   const action = String(formData.get('action') ?? '')
@@ -8,9 +14,18 @@ export async function POST(request: NextRequest) {
 
   try {
     if (action === 'create') {
+      const bandName = String(formData.get('bandName') ?? '').trim()
+      if (!bandName) {
+        return NextResponse.json({ message: 'Band name is required.' }, { status: 400 })
+      }
+
+      if (await bandNameExists(supabase, bandName)) {
+        return NextResponse.json({ message: 'A band with that name already exists.' }, { status: 409 })
+      }
+
       const { error } = await supabase.from('band_profiles').insert({
         profile_id: String(formData.get('profileId') ?? '').trim(),
-        band_name: String(formData.get('bandName') ?? '').trim(),
+        band_name: bandName,
         logo_url: String(formData.get('logoUrl') ?? '').trim() || null,
         website_url: String(formData.get('websiteUrl') ?? '').trim() || null,
         facebook_url: String(formData.get('facebookUrl') ?? '').trim() || null,

@@ -68,7 +68,7 @@ export default async function AdminAnalyticsPage() {
         <section className="grid gap-4 md:grid-cols-4">
           {[
             { label: 'Band-shows', value: String(showCount ?? 0) },
-            { label: 'Active shows', value: String(activeShowCount ?? 0) },
+            { label: activeShowCount ? '🤘 Active Show' : '⛔️ Active Show', value: String(activeShowCount ? 1 : 0) },
             { label: 'Singer count', value: String(singerCount ?? 0) },
             { label: 'Tracks played', value: String(tracksPlayedCount ?? 0) },
           ].map((item) => (

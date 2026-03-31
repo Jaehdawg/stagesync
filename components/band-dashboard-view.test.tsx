@@ -3,12 +3,12 @@ import { BandDashboardView } from './band-dashboard-view'
 
 const state = {
   brand: {
-    label: 'Phase 1 build',
+    label: 'StageSync',
     title: 'Neon Echo',
     description: 'Band dashboard',
   },
   analytics: [
-    { label: 'Active shows', value: '1' },
+    { label: '🤘 Active Show', value: '1' },
     { label: 'Songs in queue', value: '12' },
     { label: 'Queued singers', value: '6' },
   ],
