@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { SingerRegistrationForm } from './singer-registration-form'
 import { SongRequestForm } from './song-request-form'
+import { TidalSearchPanel } from './tidal-search-panel'
 
 type DashboardState = {
   brand: {
@@ -77,45 +78,12 @@ export function SingerDashboardView(state: DashboardState) {
                   statusMessage={state.signupStatusMessage}
                 />
 
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-                  <h3 className="text-lg font-semibold text-white">Tidal song search</h3>
-                  <p className="mt-1 text-slate-400">
-                    Search the playlist or the full catalog before submitting a request.
-                  </p>
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    <button className="rounded-full border border-cyan-400/40 bg-cyan-400/15 px-4 py-2 text-sm font-medium text-cyan-100">
-                      Playlist
-                    </button>
-                    <button className="rounded-full border border-white/10 bg-slate-900/80 px-4 py-2 text-sm font-medium text-slate-200">
-                      Full catalog
-                    </button>
-                  </div>
-                  <label htmlFor="search-song" className="mt-4 block text-sm font-medium text-slate-200">
-                    Search songs
-                  </label>
-                  <input
-                    id="search-song"
-                    name="search-song"
-                    type="search"
-                    placeholder="Search by title, artist, or album"
-                    className="mt-2 w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none"
+                <div className="space-y-4">
+                  <TidalSearchPanel disabled={!state.signupEnabled} statusMessage={state.signupStatusMessage} />
+                  <SongRequestForm
+                    disabled={!state.signupEnabled}
+                    statusMessage={state.signupStatusMessage}
                   />
-                  <div className="mt-4 space-y-3 text-sm text-slate-300">
-                    <div className="rounded-xl border border-white/10 bg-slate-900/60 p-3">
-                      <p className="font-medium text-white">Suggested result</p>
-                      <p className="text-slate-400">Shallow — Lady Gaga & Bradley Cooper</p>
-                    </div>
-                    <div className="rounded-xl border border-white/10 bg-slate-900/60 p-3">
-                      <p className="font-medium text-white">Suggested result</p>
-                      <p className="text-slate-400">Dreams — Fleetwood Mac</p>
-                    </div>
-                  </div>
-                  <div className="mt-4">
-                    <SongRequestForm
-                      disabled={!state.signupEnabled}
-                      statusMessage={state.signupStatusMessage}
-                    />
-                  </div>
                 </div>
               </div>
             </Panel>
