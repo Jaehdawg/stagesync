@@ -29,6 +29,10 @@ export default async function AdminPage() {
               <h2 className="text-lg font-semibold text-white">Manage bands</h2>
               <p className="mt-2 text-sm text-slate-300">CRUD bands and members.</p>
             </Link>
+            <Link href="/admin/band-profiles" className="rounded-3xl border border-white/10 bg-white/5 p-5 transition hover:border-cyan-400/50 hover:bg-white/10">
+              <h2 className="text-lg font-semibold text-white">Band profiles</h2>
+              <p className="mt-2 text-sm text-slate-300">Modify public band profile records.</p>
+            </Link>
             <Link href="/admin/users" className="rounded-3xl border border-white/10 bg-white/5 p-5 transition hover:border-cyan-400/50 hover:bg-white/10">
               <h2 className="text-lg font-semibold text-white">User management</h2>
               <p className="mt-2 text-sm text-slate-300">CRUD singers, band members, and admins.</p>
@@ -112,6 +116,10 @@ export default async function AdminPage() {
           <Link href="/admin/bands" className="rounded-3xl border border-white/10 bg-white/5 p-5 transition hover:border-cyan-400/50 hover:bg-white/10">
             <h2 className="text-lg font-semibold text-white">Manage bands</h2>
             <p className="mt-2 text-sm text-slate-300">CRUD bands and members.</p>
+          </Link>
+          <Link href="/admin/band-profiles" className="rounded-3xl border border-white/10 bg-white/5 p-5 transition hover:border-cyan-400/50 hover:bg-white/10">
+            <h2 className="text-lg font-semibold text-white">Band profiles</h2>
+            <p className="mt-2 text-sm text-slate-300">Modify public band profile records.</p>
           </Link>
           <Link href="/admin/users" className="rounded-3xl border border-white/10 bg-white/5 p-5 transition hover:border-cyan-400/50 hover:bg-white/10">
             <h2 className="text-lg font-semibold text-white">User management</h2>

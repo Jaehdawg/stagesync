@@ -3,6 +3,7 @@ import { createClient } from '@/utils/supabase/server'
 import { BandAccessForm } from '@/components/band-access-form'
 import { getTestSession } from '@/lib/test-session'
 import { listTestLogins } from '@/lib/test-login-list'
+import { AdminRowDialog } from '@/components/admin-row-dialog'
 
 export default async function AdminBandsPage() {
   const testSession = await getTestSession()
@@ -83,32 +84,35 @@ export default async function AdminBandsPage() {
                   <h2 className="text-xl font-semibold text-white">{login.band_name || login.username}</h2>
                   <p className="text-xs uppercase tracking-[0.2em] text-slate-400">{login.username}</p>
                 </div>
-                <form action="/api/testing/logins" method="post">
-                  <input type="hidden" name="action" value="delete" />
-                  <input type="hidden" name="username" value={login.username} />
-                  <button type="submit" className="rounded-full border border-white/10 px-3 py-1 text-xs text-slate-200">Delete</button>
-                </form>
+                <div className="flex gap-2">
+                  <AdminRowDialog triggerLabel="Edit" title={`Edit ${login.username}`}>
+                    <form className="grid gap-4 rounded-2xl border border-white/10 bg-slate-950/50 p-5" action="/api/testing/logins" method="post">
+                      <input type="hidden" name="action" value="upsert" />
+                      <input type="hidden" name="role" value="band" />
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-slate-200" htmlFor={`band-username-${login.username}`}>Username</label>
+                        <input id={`band-username-${login.username}`} name="username" defaultValue={login.username} className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-slate-200" htmlFor={`band-password-${login.username}`}>Password</label>
+                        <input id={`band-password-${login.username}`} name="password" type="password" className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-slate-200" htmlFor={`band-name-${login.username}`}>Band name</label>
+                        <input id={`band-name-${login.username}`} name="bandName" defaultValue={login.band_name ?? ''} className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
+                      </div>
+                      <div>
+                        <button type="submit" className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-medium text-white">Save changes</button>
+                      </div>
+                    </form>
+                  </AdminRowDialog>
+                  <form action="/api/testing/logins" method="post">
+                    <input type="hidden" name="action" value="delete" />
+                    <input type="hidden" name="username" value={login.username} />
+                    <button type="submit" className="rounded-full border border-white/10 px-3 py-1 text-xs text-slate-200">Delete</button>
+                  </form>
+                </div>
               </div>
-
-              <form className="mt-6 grid gap-4 rounded-2xl border border-white/10 bg-slate-950/50 p-5" action="/api/testing/logins" method="post">
-                <input type="hidden" name="action" value="upsert" />
-                <input type="hidden" name="role" value="band" />
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-200" htmlFor={`band-username-${login.username}`}>Username</label>
-                  <input id={`band-username-${login.username}`} name="username" defaultValue={login.username} className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-200" htmlFor={`band-password-${login.username}`}>Password</label>
-                  <input id={`band-password-${login.username}`} name="password" type="password" className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-200" htmlFor={`band-name-${login.username}`}>Band name</label>
-                  <input id={`band-name-${login.username}`} name="bandName" defaultValue={login.band_name ?? ''} className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
-                </div>
-                <div>
-                  <button type="submit" className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-medium text-white">Save changes</button>
-                </div>
-              </form>
             </article>
           ))}
         </section>
