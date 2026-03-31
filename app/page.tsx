@@ -88,9 +88,18 @@ export default async function Home({
   const currentShow = events?.[0]
   const showState = getShowState(currentShow)
   const signupEnabled = canSingerSignUp(currentShow)
+  const showSettingsResponse = currentShow?.id
+    ? await supabase
+        .from('show_settings')
+        .select('show_duration_minutes, signup_buffer_minutes')
+        .eq('event_id', currentShow.id)
+        .maybeSingle()
+    : { data: null }
+  const showDurationMinutes = showSettingsResponse.data?.show_duration_minutes ?? 60
+  const signupBufferMinutes = showSettingsResponse.data?.signup_buffer_minutes ?? 1
   const signupCapacity = getSignupCapacity({
-    show_duration_minutes: 60,
-    buffer_minutes: 1,
+    show_duration_minutes: showDurationMinutes,
+    buffer_minutes: signupBufferMinutes,
   })
 
   const state = buildDashboardState({
@@ -119,6 +128,11 @@ export default async function Home({
         : showState === 'paused'
           ? 'Signups are currently paused by the band.'
           : 'This show has ended, so new signups are closed.',
+    currentShowId: currentShow?.id ?? null,
+    currentShowName: currentShow?.name ?? null,
+    showState,
+    showDurationMinutes,
+    signupBufferMinutes,
   })
 
   return (

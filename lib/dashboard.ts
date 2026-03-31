@@ -26,7 +26,10 @@ export type DashboardSource = {
   signupEnabled?: boolean
   signupStatusMessage?: string
   currentShowId?: string | null
+  currentShowName?: string | null
   showState?: 'active' | 'paused' | 'ended'
+  showDurationMinutes?: number | null
+  signupBufferMinutes?: number | null
 }
 
 export type DashboardState = {
@@ -44,7 +47,10 @@ export type DashboardState = {
   signupEnabled: boolean
   signupStatusMessage: string
   currentShowId?: string | null
+  currentShowName?: string | null
   showState: 'active' | 'paused' | 'ended'
+  showDurationMinutes?: number | null
+  signupBufferMinutes?: number | null
 }
 
 const fallbackBandLinks = [
@@ -124,6 +130,9 @@ export function buildDashboardState(source: DashboardSource = {}): DashboardStat
     signupStatusMessage:
       source.signupStatusMessage ?? 'Sign up while the show is active to add songs to the queue.',
     currentShowId: source.currentShowId ?? null,
+    currentShowName: source.currentShowName ?? null,
     showState: source.showState ?? 'ended',
+    showDurationMinutes: source.showDurationMinutes ?? null,
+    signupBufferMinutes: source.signupBufferMinutes ?? null,
   }
 }
