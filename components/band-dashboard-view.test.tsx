@@ -56,4 +56,11 @@ describe('BandDashboardView', () => {
     expect(screen.getByLabelText(/show duration/i)).toHaveValue(90)
     expect(screen.getByLabelText(/buffer between songs/i)).toHaveValue(2)
   })
+
+  it('shows band profile editing in test mode', () => {
+    render(<BandDashboardView {...state} testMode currentShowId={null} currentShowName={null} />)
+
+    expect(screen.getByRole('button', { name: /save band profile/i })).toBeInTheDocument()
+    expect(screen.getByLabelText(/band name/i)).toHaveValue('Neon Echo')
+  })
 })

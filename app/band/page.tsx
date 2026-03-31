@@ -5,8 +5,22 @@ import { BandAccessForm } from '@/components/band-access-form'
 import { BandDashboardView, type BandDashboardState } from '@/components/band-dashboard-view'
 import { getTestSession } from '@/lib/test-session'
 import { getLatestTestShow, getLatestTestShowSettings } from '@/lib/test-show'
+import { getLatestTestBandProfile } from '@/lib/test-band-profile'
 
-async function getBandState(supabase: Awaited<ReturnType<typeof createClient>>) {
+async function getBandState(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  bandProfileOverride?: {
+    band_name?: string | null
+    website_url?: string | null
+    facebook_url?: string | null
+    instagram_url?: string | null
+    tiktok_url?: string | null
+    paypal_url?: string | null
+    venmo_url?: string | null
+    cashapp_url?: string | null
+    custom_message?: string | null
+  }
+) {
   type QueueRow = { id: string; position: number | null; status: string | null; song_id: string | null; performer_id: string | null }
 
   const [{ data: bandProfile }, { data: events }, { data: queueItems }] = await Promise.all([
@@ -48,7 +62,7 @@ async function getBandState(supabase: Awaited<ReturnType<typeof createClient>>) 
   })
 
   return buildDashboardState({
-    bandProfile,
+    bandProfile: bandProfileOverride ?? bandProfile,
     activeShowCount: events?.length ?? 0,
     songsInQueue: queueItems?.length ?? 0,
     queuedSingers: queueItems?.length ?? 0,
@@ -80,9 +94,10 @@ async function getBandState(supabase: Awaited<ReturnType<typeof createClient>>) 
 }
 
 async function getBandTestState(supabase: Awaited<ReturnType<typeof createClient>>): Promise<BandDashboardState> {
+  const testBandProfile = await getLatestTestBandProfile(supabase)
   const currentShow = await getLatestTestShow(supabase)
   const currentSettings = await getLatestTestShowSettings(supabase, currentShow?.id)
-  const state = await getBandState(supabase)
+  const state = await getBandState(supabase, testBandProfile ?? undefined)
 
   return {
     ...state,

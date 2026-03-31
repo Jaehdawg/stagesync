@@ -254,6 +254,66 @@ export function BandDashboardView({
                 </a>
               ))}
             </div>
+
+            {testMode ? (
+              <form className="mt-6 space-y-4 rounded-2xl border border-white/10 bg-white/5 p-4" action="/api/testing/band-profile" method="post">
+                <h3 className="text-lg font-semibold text-white">Edit band profile</h3>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2 sm:col-span-2">
+                    <label htmlFor="band-name" className="text-sm font-medium text-slate-200">
+                      Band name
+                    </label>
+                    <input
+                      id="band-name"
+                      name="bandName"
+                      type="text"
+                      defaultValue={brand.title}
+                      className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none"
+                    />
+                  </div>
+                  {[
+                    ['websiteUrl', 'Website', bandLinks.find((link) => link.label === 'Website')?.href],
+                    ['facebookUrl', 'Facebook', bandLinks.find((link) => link.label === 'Facebook')?.href],
+                    ['instagramUrl', 'Instagram', bandLinks.find((link) => link.label === 'Instagram')?.href],
+                    ['tiktokUrl', 'TikTok', bandLinks.find((link) => link.label === 'TikTok')?.href],
+                    ['paypalUrl', 'PayPal', paymentLinks.find((link) => link.label === 'PayPal')?.href],
+                    ['venmoUrl', 'Venmo', paymentLinks.find((link) => link.label === 'Venmo')?.href],
+                    ['cashappUrl', 'CashApp', paymentLinks.find((link) => link.label === 'CashApp')?.href],
+                  ].map(([name, label, defaultValue]) => (
+                    <div key={name} className="space-y-2">
+                      <label htmlFor={name} className="text-sm font-medium text-slate-200">
+                        {label}
+                      </label>
+                      <input
+                        id={name}
+                        name={name}
+                        type="url"
+                        defaultValue={defaultValue}
+                        className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none"
+                      />
+                    </div>
+                  ))}
+                  <div className="space-y-2 sm:col-span-2">
+                    <label htmlFor="custom-message" className="text-sm font-medium text-slate-200">
+                      Custom message
+                    </label>
+                    <textarea
+                      id="custom-message"
+                      name="customMessage"
+                      defaultValue={customMessage}
+                      rows={3}
+                      className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none"
+                    />
+                  </div>
+                </div>
+                <button
+                  type="submit"
+                  className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-medium text-white"
+                >
+                  Save band profile
+                </button>
+              </form>
+            ) : null}
           </Panel>
 
           <Panel title="Payment links" eyebrow="Tips">
