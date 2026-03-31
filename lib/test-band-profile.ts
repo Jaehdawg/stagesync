@@ -38,6 +38,70 @@ export async function listTestBandProfiles(supabase: SupabaseClient): Promise<Te
   return (data ?? []) as TestBandProfileRow[]
 }
 
+export async function createTestBandProfile(
+  supabase: SupabaseClient,
+  input: Partial<Omit<TestBandProfileRow, 'id'>>
+): Promise<TestBandProfileRow> {
+  const { data, error } = await supabase
+    .from('test_band_profiles')
+    .insert({
+      band_name: input.band_name ?? 'StageSync',
+      website_url: input.website_url ?? null,
+      facebook_url: input.facebook_url ?? null,
+      instagram_url: input.instagram_url ?? null,
+      tiktok_url: input.tiktok_url ?? null,
+      paypal_url: input.paypal_url ?? null,
+      venmo_url: input.venmo_url ?? null,
+      cashapp_url: input.cashapp_url ?? null,
+      custom_message: input.custom_message ?? null,
+    })
+    .select('*')
+    .single()
+
+  if (error || !data) {
+    throw new Error(error?.message || 'Unable to create band profile')
+  }
+
+  return data as TestBandProfileRow
+}
+
+export async function updateTestBandProfileById(
+  supabase: SupabaseClient,
+  profileId: string,
+  input: Partial<Omit<TestBandProfileRow, 'id'>>
+): Promise<TestBandProfileRow> {
+  const { data, error } = await supabase
+    .from('test_band_profiles')
+    .update({
+      band_name: input.band_name ?? '',
+      website_url: input.website_url ?? null,
+      facebook_url: input.facebook_url ?? null,
+      instagram_url: input.instagram_url ?? null,
+      tiktok_url: input.tiktok_url ?? null,
+      paypal_url: input.paypal_url ?? null,
+      venmo_url: input.venmo_url ?? null,
+      cashapp_url: input.cashapp_url ?? null,
+      custom_message: input.custom_message ?? null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', profileId)
+    .select('*')
+    .single()
+
+  if (error || !data) {
+    throw new Error(error?.message || 'Unable to update band profile')
+  }
+
+  return data as TestBandProfileRow
+}
+
+export async function deleteTestBandProfileById(supabase: SupabaseClient, profileId: string): Promise<void> {
+  const { error } = await supabase.from('test_band_profiles').delete().eq('id', profileId)
+  if (error) {
+    throw new Error(error.message)
+  }
+}
+
 export async function upsertTestBandProfile(
   supabase: SupabaseClient,
   input: Partial<Omit<TestBandProfileRow, 'id'>>

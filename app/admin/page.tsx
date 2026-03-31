@@ -1,20 +1,13 @@
+import Link from 'next/link'
 import { createClient } from '@/utils/supabase/server'
 import { BandAccessForm } from '@/components/band-access-form'
 import { getTestSession } from '@/lib/test-session'
-import { listSeedTestLogins } from '@/lib/test-login'
-import { listTestLogins } from '@/lib/test-login-list'
-import { getLatestTestBandProfile } from '@/lib/test-band-profile'
-import Link from 'next/link'
 
 export default async function AdminPage() {
   const testSession = await getTestSession()
   const supabase = await createClient()
 
   if (testSession?.role === 'admin') {
-    const testLogins = await listTestLogins(supabase)
-    const logins = testLogins.length ? testLogins : listSeedTestLogins()
-    const testBandProfile = await getLatestTestBandProfile(supabase)
-
     return (
       <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100 sm:px-6 lg:px-8">
         <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
@@ -27,11 +20,11 @@ export default async function AdminPage() {
           </header>
 
           <section className="grid gap-4 md:grid-cols-3">
-            <Link href="#bands" className="rounded-3xl border border-white/10 bg-white/5 p-5 transition hover:border-cyan-400/50 hover:bg-white/10">
+            <Link href="/admin/bands" className="rounded-3xl border border-white/10 bg-white/5 p-5 transition hover:border-cyan-400/50 hover:bg-white/10">
               <h2 className="text-lg font-semibold text-white">Manage bands</h2>
               <p className="mt-2 text-sm text-slate-300">CRUD bands and members.</p>
             </Link>
-            <Link href="#users" className="rounded-3xl border border-white/10 bg-white/5 p-5 transition hover:border-cyan-400/50 hover:bg-white/10">
+            <Link href="/admin/users" className="rounded-3xl border border-white/10 bg-white/5 p-5 transition hover:border-cyan-400/50 hover:bg-white/10">
               <h2 className="text-lg font-semibold text-white">User management</h2>
               <p className="mt-2 text-sm text-slate-300">CRUD singers, band members, and admins.</p>
             </Link>
@@ -39,81 +32,6 @@ export default async function AdminPage() {
               <h2 className="text-lg font-semibold text-white">System analytics</h2>
               <p className="mt-2 text-sm text-slate-300">Track usage, queue volume, and show health.</p>
             </Link>
-          </section>
-
-          <section id="users" className="rounded-3xl border border-white/10 bg-white/5 p-6">
-            <h2 className="text-2xl font-semibold text-white">Test user management</h2>
-            <p className="mt-2 text-sm text-slate-300">Create, update, or delete seeded band/admin accounts for testing.</p>
-
-            <form className="mt-6 grid gap-4 rounded-2xl border border-white/10 bg-slate-950/50 p-5 md:grid-cols-5" action="/api/testing/logins" method="post">
-              <input type="hidden" name="action" value="upsert" />
-              <div className="space-y-2">
-                <label htmlFor="new-username" className="text-sm font-medium text-slate-200">Username</label>
-                <input id="new-username" name="username" type="text" className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
-              </div>
-              <div className="space-y-2">
-                <label htmlFor="new-role" className="text-sm font-medium text-slate-200">Role</label>
-                <select id="new-role" name="role" className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white">
-                  <option value="band">band</option>
-                  <option value="admin">admin</option>
-                </select>
-              </div>
-              <div className="space-y-2">
-                <label htmlFor="new-password" className="text-sm font-medium text-slate-200">Password</label>
-                <input id="new-password" name="password" type="password" className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
-              </div>
-              <div className="space-y-2">
-                <label htmlFor="new-band" className="text-sm font-medium text-slate-200">Band name</label>
-                <input id="new-band" name="bandName" type="text" placeholder="Neon Echo" className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
-              </div>
-              <div className="flex items-end">
-                <button type="submit" className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-medium text-white">Save user</button>
-              </div>
-            </form>
-
-            <div className="mt-6 grid gap-3 md:grid-cols-2">
-              {logins.map((login) => (
-                <div key={login.username} className="rounded-2xl border border-white/10 bg-slate-950/50 p-4">
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <p className="text-sm font-semibold text-white">{login.username}</p>
-                      <p className="text-xs uppercase tracking-[0.2em] text-slate-400">{login.role}</p>
-                      {login.band_name ? <p className="text-xs text-cyan-200">Band: {login.band_name}</p> : null}
-                    </div>
-                    <form action="/api/testing/logins" method="post">
-                      <input type="hidden" name="action" value="delete" />
-                      <input type="hidden" name="username" value={login.username} />
-                      <button type="submit" className="rounded-full border border-white/10 px-3 py-1 text-xs text-slate-200">Delete</button>
-                    </form>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          <section id="bands" className="rounded-3xl border border-white/10 bg-white/5 p-6">
-            <h2 className="text-2xl font-semibold text-white">Test band profile</h2>
-            <p className="mt-2 text-sm text-slate-300">Manage the seeded band profile used by the band dashboard.</p>
-
-            <form className="mt-6 grid gap-4 rounded-2xl border border-white/10 bg-slate-950/50 p-5 md:grid-cols-2" action="/api/testing/band-profiles" method="post">
-              <input type="hidden" name="action" value="upsert" />
-              <div className="space-y-2 md:col-span-2">
-                <label htmlFor="band-name" className="text-sm font-medium text-slate-200">Band name</label>
-                <input id="band-name" name="bandName" type="text" defaultValue={testBandProfile?.band_name ?? 'StageSync'} className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
-              </div>
-              <div className="space-y-2 md:col-span-2">
-                <label htmlFor="band-message" className="text-sm font-medium text-slate-200">Custom message</label>
-                <textarea id="band-message" name="customMessage" defaultValue={testBandProfile?.custom_message ?? ''} rows={3} className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
-              </div>
-              <div className="md:col-span-2 flex gap-3">
-                <button type="submit" className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-medium text-white">Save band profile</button>
-              </div>
-            </form>
-
-            <form className="mt-4" action="/api/testing/band-profiles" method="post">
-              <input type="hidden" name="action" value="delete" />
-              <button type="submit" className="rounded-full border border-white/10 px-3 py-1 text-xs text-slate-200">Delete latest band profile</button>
-            </form>
           </section>
         </div>
       </main>
@@ -186,18 +104,18 @@ export default async function AdminPage() {
         </header>
 
         <section className="grid gap-4 md:grid-cols-3">
-          <div className="rounded-3xl border border-white/10 bg-white/5 p-5">
+          <Link href="/admin/bands" className="rounded-3xl border border-white/10 bg-white/5 p-5 transition hover:border-cyan-400/50 hover:bg-white/10">
             <h2 className="text-lg font-semibold text-white">Manage bands</h2>
             <p className="mt-2 text-sm text-slate-300">CRUD bands and members.</p>
-          </div>
-          <div className="rounded-3xl border border-white/10 bg-white/5 p-5">
+          </Link>
+          <Link href="/admin/users" className="rounded-3xl border border-white/10 bg-white/5 p-5 transition hover:border-cyan-400/50 hover:bg-white/10">
             <h2 className="text-lg font-semibold text-white">User management</h2>
             <p className="mt-2 text-sm text-slate-300">CRUD singers, band members, and admins.</p>
-          </div>
-          <div className="rounded-3xl border border-white/10 bg-white/5 p-5">
+          </Link>
+          <Link href="/admin/analytics" className="rounded-3xl border border-white/10 bg-white/5 p-5 transition hover:border-cyan-400/50 hover:bg-white/10">
             <h2 className="text-lg font-semibold text-white">System analytics</h2>
             <p className="mt-2 text-sm text-slate-300">Track usage, queue volume, and show health.</p>
-          </div>
+          </Link>
         </section>
       </div>
     </main>

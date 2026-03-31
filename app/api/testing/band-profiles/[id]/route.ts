@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { getTestSession } from '@/lib/test-session'
-import { createTestBandProfile, deleteLatestTestBandProfile, upsertTestBandProfile } from '@/lib/test-band-profile'
+import { deleteTestBandProfileById, updateTestBandProfileById } from '@/lib/test-band-profile'
 
 function getSupabase(request: NextRequest) {
   return createServerClient(
@@ -22,33 +22,22 @@ function getSupabase(request: NextRequest) {
   )
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const testSession = await getTestSession()
   if (!testSession || testSession.role !== 'admin') {
     return NextResponse.json({ message: 'Admin test login required.' }, { status: 401 })
   }
 
+  const { id } = await params
   const supabase = getSupabase(request)
   const formData = await request.formData()
   const action = String(formData.get('action') ?? '')
 
   try {
     if (action === 'delete') {
-      await deleteLatestTestBandProfile(supabase)
-    } else if (action === 'create') {
-      await createTestBandProfile(supabase, {
-        band_name: String(formData.get('bandName') ?? ''),
-        website_url: String(formData.get('websiteUrl') ?? ''),
-        facebook_url: String(formData.get('facebookUrl') ?? ''),
-        instagram_url: String(formData.get('instagramUrl') ?? ''),
-        tiktok_url: String(formData.get('tiktokUrl') ?? ''),
-        paypal_url: String(formData.get('paypalUrl') ?? ''),
-        venmo_url: String(formData.get('venmoUrl') ?? ''),
-        cashapp_url: String(formData.get('cashappUrl') ?? ''),
-        custom_message: String(formData.get('customMessage') ?? ''),
-      })
-    } else if (action === 'upsert') {
-      await upsertTestBandProfile(supabase, {
+      await deleteTestBandProfileById(supabase, id)
+    } else if (action === 'update') {
+      await updateTestBandProfileById(supabase, id, {
         band_name: String(formData.get('bandName') ?? ''),
         website_url: String(formData.get('websiteUrl') ?? ''),
         facebook_url: String(formData.get('facebookUrl') ?? ''),
@@ -66,5 +55,5 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: error instanceof Error ? error.message : 'Unable to update band profile.' }, { status: 500 })
   }
 
-  return NextResponse.redirect(new URL('/admin', request.url))
+  return NextResponse.redirect(new URL('/admin/bands', request.url))
 }

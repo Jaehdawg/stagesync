@@ -2,7 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 
 export type TestLoginRow = {
   username: string
-  role: 'band' | 'admin'
+  role: 'singer' | 'band' | 'admin'
   password_hash: string
   band_name: string | null
 }

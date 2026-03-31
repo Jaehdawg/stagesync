@@ -40,8 +40,8 @@ export async function POST(request: NextRequest) {
     if (action === 'delete') {
       await supabase.from('test_logins').delete().eq('username', username)
     } else if (action === 'upsert') {
-      if (role !== 'band' && role !== 'admin') {
-        return NextResponse.json({ message: 'Role must be band or admin.' }, { status: 400 })
+      if (role !== 'singer' && role !== 'band' && role !== 'admin') {
+        return NextResponse.json({ message: 'Role must be singer, band, or admin.' }, { status: 400 })
       }
 
       await supabase.from('test_logins').upsert({
