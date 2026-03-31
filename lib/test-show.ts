@@ -77,14 +77,13 @@ export async function getLatestTestShowSettings(supabase: SupabaseClient, eventI
 
 export async function updateTestShowSettings(
   supabase: SupabaseClient,
-  input: { eventId?: string | null; showDurationMinutes?: number; signupBufferMinutes?: number; songSourceMode?: 'uploaded' | 'tidal_playlist' | 'tidal_catalog'; tidalPlaylistUrl?: string | null }
+  input: { eventId?: string | null; showDurationMinutes?: number; signupBufferMinutes?: number; songSourceMode?: 'uploaded' | 'tidal_playlist' | 'tidal_catalog' }
 ): Promise<TestShowSettingsRow> {
   const { data, error } = await supabase.rpc('test_update_show_settings', {
     p_event_id: input.eventId ?? null,
     p_show_duration_minutes: input.showDurationMinutes ?? 60,
     p_signup_buffer_minutes: input.signupBufferMinutes ?? 1,
     p_song_source_mode: input.songSourceMode ?? 'uploaded',
-    p_tidal_playlist_url: input.tidalPlaylistUrl ?? null,
   })
 
   if (error || !data) {
