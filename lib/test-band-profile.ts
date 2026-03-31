@@ -14,34 +14,93 @@ export type TestBandProfileRow = {
 }
 
 export async function getLatestTestBandProfile(supabase: SupabaseClient): Promise<TestBandProfileRow | null> {
-  const { data, error } = await supabase.rpc('test_latest_band_profile')
+  const { data, error } = await supabase
+    .from('test_band_profiles')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
 
   if (error) {
     return null
   }
 
-  return (data?.[0] as TestBandProfileRow | undefined) ?? null
+  return (data as TestBandProfileRow | null) ?? null
 }
 
-export async function updateTestBandProfile(
+export async function listTestBandProfiles(supabase: SupabaseClient): Promise<TestBandProfileRow[]> {
+  const { data, error } = await supabase.from('test_band_profiles').select('*').order('created_at', { ascending: false })
+
+  if (error) {
+    return []
+  }
+
+  return (data ?? []) as TestBandProfileRow[]
+}
+
+export async function upsertTestBandProfile(
   supabase: SupabaseClient,
   input: Partial<Omit<TestBandProfileRow, 'id'>>
 ): Promise<TestBandProfileRow> {
-  const { data, error } = await supabase.rpc('test_update_band_profile', {
-    p_band_name: input.band_name ?? '',
-    p_cashapp_url: input.cashapp_url ?? '',
-    p_custom_message: input.custom_message ?? '',
-    p_facebook_url: input.facebook_url ?? '',
-    p_instagram_url: input.instagram_url ?? '',
-    p_tiktok_url: input.tiktok_url ?? '',
-    p_paypal_url: input.paypal_url ?? '',
-    p_venmo_url: input.venmo_url ?? '',
-    p_website_url: input.website_url ?? '',
-  })
+  const latest = await getLatestTestBandProfile(supabase)
+
+  if (!latest) {
+    const { data, error } = await supabase
+      .from('test_band_profiles')
+      .insert({
+        band_name: input.band_name ?? 'StageSync',
+        website_url: input.website_url ?? null,
+        facebook_url: input.facebook_url ?? null,
+        instagram_url: input.instagram_url ?? null,
+        tiktok_url: input.tiktok_url ?? null,
+        paypal_url: input.paypal_url ?? null,
+        venmo_url: input.venmo_url ?? null,
+        cashapp_url: input.cashapp_url ?? null,
+        custom_message: input.custom_message ?? null,
+      })
+      .select('*')
+      .single()
+
+    if (error || !data) {
+      throw new Error(error?.message || 'Unable to update band profile')
+    }
+
+    return data as TestBandProfileRow
+  }
+
+  const { data, error } = await supabase
+    .from('test_band_profiles')
+    .update({
+      band_name: input.band_name ?? latest.band_name,
+      website_url: input.website_url ?? null,
+      facebook_url: input.facebook_url ?? null,
+      instagram_url: input.instagram_url ?? null,
+      tiktok_url: input.tiktok_url ?? null,
+      paypal_url: input.paypal_url ?? null,
+      venmo_url: input.venmo_url ?? null,
+      cashapp_url: input.cashapp_url ?? null,
+      custom_message: input.custom_message ?? null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', latest.id)
+    .select('*')
+    .single()
 
   if (error || !data) {
     throw new Error(error?.message || 'Unable to update band profile')
   }
 
   return data as TestBandProfileRow
+}
+
+export async function deleteLatestTestBandProfile(supabase: SupabaseClient): Promise<void> {
+  const latest = await getLatestTestBandProfile(supabase)
+  if (!latest) {
+    return
+  }
+
+  const { error } = await supabase.from('test_band_profiles').delete().eq('id', latest.id)
+  if (error) {
+    throw new Error(error.message)
+  }
 }

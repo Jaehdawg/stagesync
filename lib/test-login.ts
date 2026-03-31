@@ -86,5 +86,9 @@ export function getTestLoginSeed(role: TestLoginRole, username: string) {
 }
 
 export function listSeedTestLogins() {
-  return TEST_LOGIN_SEEDS.map(({ role, username }) => ({ role, username }))
+  return TEST_LOGIN_SEEDS.map(({ role, username }) => ({
+    role,
+    username,
+    band_name: role === 'band' ? 'Neon Echo' : null,
+  }))
 }

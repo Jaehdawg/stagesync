@@ -34,19 +34,21 @@ export async function POST(request: NextRequest) {
   const username = String(formData.get('username') ?? '').trim()
   const role = String(formData.get('role') ?? '')
   const password = String(formData.get('password') ?? '')
+  const bandName = String(formData.get('bandName') ?? '').trim()
 
   try {
     if (action === 'delete') {
-      await supabase.rpc('test_delete_login', { p_username: username })
+      await supabase.from('test_logins').delete().eq('username', username)
     } else if (action === 'upsert') {
       if (role !== 'band' && role !== 'admin') {
         return NextResponse.json({ message: 'Role must be band or admin.' }, { status: 400 })
       }
 
-      await supabase.rpc('test_upsert_login', {
-        p_username: username,
-        p_role: role,
-        p_password_hash: getTestLoginPasswordHash(username, password),
+      await supabase.from('test_logins').upsert({
+        username: username.toLowerCase(),
+        role,
+        password_hash: getTestLoginPasswordHash(username, password),
+        band_name: role === 'band' ? bandName || null : null,
       })
     } else {
       return NextResponse.json({ message: 'Unknown action.' }, { status: 400 })

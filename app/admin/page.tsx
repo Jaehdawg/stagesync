@@ -4,7 +4,7 @@ import { getTestSession } from '@/lib/test-session'
 import { listSeedTestLogins } from '@/lib/test-login'
 import { listTestLogins } from '@/lib/test-login-list'
 import { getLatestTestBandProfile } from '@/lib/test-band-profile'
-import { listTestBandProfiles } from '@/lib/test-band-profile-list'
+import Link from 'next/link'
 
 export default async function AdminPage() {
   const testSession = await getTestSession()
@@ -13,9 +13,7 @@ export default async function AdminPage() {
   if (testSession?.role === 'admin') {
     const testLogins = await listTestLogins(supabase)
     const logins = testLogins.length ? testLogins : listSeedTestLogins()
-    const testBandProfile = (await listTestBandProfiles(supabase)).length
-      ? await getLatestTestBandProfile(supabase)
-      : await getLatestTestBandProfile(supabase)
+    const testBandProfile = await getLatestTestBandProfile(supabase)
 
     return (
       <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100 sm:px-6 lg:px-8">
@@ -29,25 +27,25 @@ export default async function AdminPage() {
           </header>
 
           <section className="grid gap-4 md:grid-cols-3">
-            <div className="rounded-3xl border border-white/10 bg-white/5 p-5">
+            <Link href="#bands" className="rounded-3xl border border-white/10 bg-white/5 p-5 transition hover:border-cyan-400/50 hover:bg-white/10">
               <h2 className="text-lg font-semibold text-white">Manage bands</h2>
               <p className="mt-2 text-sm text-slate-300">CRUD bands and members.</p>
-            </div>
-            <div className="rounded-3xl border border-white/10 bg-white/5 p-5">
+            </Link>
+            <Link href="#users" className="rounded-3xl border border-white/10 bg-white/5 p-5 transition hover:border-cyan-400/50 hover:bg-white/10">
               <h2 className="text-lg font-semibold text-white">User management</h2>
               <p className="mt-2 text-sm text-slate-300">CRUD singers, band members, and admins.</p>
-            </div>
-            <div className="rounded-3xl border border-white/10 bg-white/5 p-5">
+            </Link>
+            <Link href="/admin/analytics" className="rounded-3xl border border-white/10 bg-white/5 p-5 transition hover:border-cyan-400/50 hover:bg-white/10">
               <h2 className="text-lg font-semibold text-white">System analytics</h2>
               <p className="mt-2 text-sm text-slate-300">Track usage, queue volume, and show health.</p>
-            </div>
+            </Link>
           </section>
 
-          <section className="rounded-3xl border border-white/10 bg-white/5 p-6">
+          <section id="users" className="rounded-3xl border border-white/10 bg-white/5 p-6">
             <h2 className="text-2xl font-semibold text-white">Test user management</h2>
             <p className="mt-2 text-sm text-slate-300">Create, update, or delete seeded band/admin accounts for testing.</p>
 
-            <form className="mt-6 grid gap-4 rounded-2xl border border-white/10 bg-slate-950/50 p-5 md:grid-cols-4" action="/api/testing/logins" method="post">
+            <form className="mt-6 grid gap-4 rounded-2xl border border-white/10 bg-slate-950/50 p-5 md:grid-cols-5" action="/api/testing/logins" method="post">
               <input type="hidden" name="action" value="upsert" />
               <div className="space-y-2">
                 <label htmlFor="new-username" className="text-sm font-medium text-slate-200">Username</label>
@@ -64,6 +62,10 @@ export default async function AdminPage() {
                 <label htmlFor="new-password" className="text-sm font-medium text-slate-200">Password</label>
                 <input id="new-password" name="password" type="password" className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
               </div>
+              <div className="space-y-2">
+                <label htmlFor="new-band" className="text-sm font-medium text-slate-200">Band name</label>
+                <input id="new-band" name="bandName" type="text" placeholder="Neon Echo" className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
+              </div>
               <div className="flex items-end">
                 <button type="submit" className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-medium text-white">Save user</button>
               </div>
@@ -76,6 +78,7 @@ export default async function AdminPage() {
                     <div>
                       <p className="text-sm font-semibold text-white">{login.username}</p>
                       <p className="text-xs uppercase tracking-[0.2em] text-slate-400">{login.role}</p>
+                      {login.band_name ? <p className="text-xs text-cyan-200">Band: {login.band_name}</p> : null}
                     </div>
                     <form action="/api/testing/logins" method="post">
                       <input type="hidden" name="action" value="delete" />
@@ -88,7 +91,7 @@ export default async function AdminPage() {
             </div>
           </section>
 
-          <section className="rounded-3xl border border-white/10 bg-white/5 p-6">
+          <section id="bands" className="rounded-3xl border border-white/10 bg-white/5 p-6">
             <h2 className="text-2xl font-semibold text-white">Test band profile</h2>
             <p className="mt-2 text-sm text-slate-300">Manage the seeded band profile used by the band dashboard.</p>
 

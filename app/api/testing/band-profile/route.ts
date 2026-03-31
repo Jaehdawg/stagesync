@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { getTestSession } from '@/lib/test-session'
-import { updateTestBandProfile } from '@/lib/test-band-profile'
+import { upsertTestBandProfile } from '@/lib/test-band-profile'
 
 function getSupabase(request: NextRequest) {
   return createServerClient(
@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
   const formData = await request.formData()
 
   try {
-    await updateTestBandProfile(supabase, {
+    await upsertTestBandProfile(supabase, {
       band_name: String(formData.get('bandName') ?? ''),
       website_url: String(formData.get('websiteUrl') ?? ''),
       facebook_url: String(formData.get('facebookUrl') ?? ''),

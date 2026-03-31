@@ -4,6 +4,7 @@ export type TestLoginRow = {
   username: string
   role: 'band' | 'admin'
   password_hash: string
+  band_name: string | null
 }
 
 export async function listTestLogins(supabase: SupabaseClient): Promise<TestLoginRow[]> {
