@@ -1,10 +1,11 @@
-const path = require('path');
+import path from 'node:path';
+import nextPWA from 'next-pwa';
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
   transpilePackages: ['next-pwa'],
-  outputFileTracingRoot: path.join(__dirname),
+  outputFileTracingRoot: path.join(process.cwd()),
   // Next.js 16+ Turbopack / Webpack settings
   turbopack: {},
   experimental: {
@@ -13,11 +14,11 @@ const nextConfig = {
   },
 };
 
-const withPWA = require('next-pwa')({
+const withPWA = nextPWA({
   dest: 'public',
   disable: process.env.NODE_ENV === 'development',
   register: true,
   skipWaiting: true,
 });
 
-module.exports = withPWA(nextConfig);
+export default withPWA(nextConfig);
