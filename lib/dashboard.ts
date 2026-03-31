@@ -11,6 +11,7 @@ export type BandProfileInput = {
 }
 
 export type QueueItemInput = {
+  id?: string | null
   position?: number | null
   name?: string | null
   song?: string | null
@@ -60,7 +61,7 @@ const fallbackBandLinks = [
   { label: 'Website', href: 'https://example.com' },
 ]
 
-const fallbackQueueItems = [
+const fallbackQueueItems: QueueItemInput[] = [
   { position: 1, name: 'Maya Chen', song: 'Dreams - Fleetwood Mac', status: 'Singing now' },
   { position: 2, name: 'Jordan Lee', song: 'Mr. Brightside - The Killers', status: 'Up next' },
   { position: 3, name: 'Sam Rivera', song: 'Shallow - Lady Gaga & Bradley Cooper', status: 'Waiting' },
@@ -75,6 +76,7 @@ const singerActions = [
 ]
 
 export function buildDashboardState(source: DashboardSource = {}): DashboardState {
+  const queueSourceItems: QueueItemInput[] = source.queueItems?.length ? source.queueItems : fallbackQueueItems
   const bandName = source.bandProfile?.band_name?.trim() || 'StageSync'
   const activeShows = source.activeShowCount ?? 12
   const songsInQueue = source.songsInQueue ?? (source.queueItems?.length ?? 38)
@@ -115,12 +117,20 @@ export function buildDashboardState(source: DashboardSource = {}): DashboardStat
       { label: 'Queued singers', value: String(queuedSingers) },
     ],
     singerActions,
-    queueItems: (source.queueItems?.length ? source.queueItems : fallbackQueueItems).map((item, index) => ({
-      position: item.position ?? index + 1,
-      name: item.name?.trim() || fallbackQueueItems[index % fallbackQueueItems.length].name,
-      song: item.song?.trim() || fallbackQueueItems[index % fallbackQueueItems.length].song,
-      status: item.status?.trim() || fallbackQueueItems[index % fallbackQueueItems.length].status,
-    })),
+    queueItems: queueSourceItems.map((item, index) => {
+      const fallbackItem = fallbackQueueItems[index % fallbackQueueItems.length]
+      const name = (item.name?.trim() || fallbackItem.name) as string
+      const song = (item.song?.trim() || fallbackItem.song) as string
+      const status = (item.status?.trim() || fallbackItem.status) as string
+
+      return {
+        id: item.id ?? null,
+        position: item.position ?? index + 1,
+        name,
+        song,
+        status,
+      }
+    }),
     bandLinks,
     paymentLinks,
     customMessage:

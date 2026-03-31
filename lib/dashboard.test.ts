@@ -35,6 +35,23 @@ describe('buildDashboardState', () => {
     expect(state.signupEnabled).toBe(true)
     expect(state.signupStatusMessage).toMatch(/sign up while the show is active/i)
     expect(state.queueItems[0]).toEqual({
+      id: null,
+      position: 1,
+      name: 'Avery',
+      song: 'Maps - Yeah Yeah Yeahs',
+      status: 'Now singing',
+    })
+  })
+
+  it('preserves queue item ids for band controls', () => {
+    const state = buildDashboardState({
+      queueItems: [
+        { id: 'queue-1', position: 1, name: 'Avery', song: 'Maps - Yeah Yeah Yeahs', status: 'Now singing' },
+      ],
+    })
+
+    expect(state.queueItems[0]).toMatchObject({
+      id: 'queue-1',
       position: 1,
       name: 'Avery',
       song: 'Maps - Yeah Yeah Yeahs',

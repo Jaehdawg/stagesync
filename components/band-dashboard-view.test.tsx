@@ -13,7 +13,7 @@ const state = {
     { label: 'Queued singers', value: '6' },
   ],
   queueItems: [
-    { position: 1, name: 'Avery', song: 'Maps - Yeah Yeah Yeahs', status: 'Now singing' },
+    { id: 'queue-1', position: 1, name: 'Avery', song: 'Maps - Yeah Yeah Yeahs', status: 'Now singing' },
   ],
   bandLinks: [{ label: 'Website', href: 'https://example.com' }],
   paymentLinks: [{ label: 'PayPal', href: 'https://paypal.com' }],
@@ -62,5 +62,11 @@ describe('BandDashboardView', () => {
 
     expect(screen.getByRole('button', { name: /save band profile/i })).toBeInTheDocument()
     expect(screen.getByLabelText(/band name/i)).toHaveValue('Neon Echo')
+  })
+
+  it('wires queue actions to the queue item id', () => {
+    const { container } = render(<BandDashboardView {...state} />)
+
+    expect(container.querySelector('form[action="/api/queue/queue-1/state"]')).toBeInTheDocument()
   })
 })
