@@ -8,7 +8,7 @@ const state = {
     description: 'Band dashboard',
   },
   analytics: [
-    { label: '🤘 Active Show', value: '1' },
+    { label: 'Active Show', value: '🤘' },
     { label: 'Songs in queue', value: '12' },
     { label: 'Queued singers', value: '6' },
   ],

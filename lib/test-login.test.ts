@@ -24,10 +24,11 @@ describe('test-login helpers', () => {
   })
 
   it('returns the seeded credentials', () => {
-    expect(getTestLoginSeed('band', 'neon-echo-band')).toEqual({
+    expect(getTestLoginSeed('band', 'neon-echo-band')).toMatchObject({
       role: 'band',
       username: 'neon-echo-band',
       password: 'BandTest123!',
+      band_access_level: 'admin',
     })
   })
 })

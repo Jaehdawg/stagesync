@@ -2,6 +2,7 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { getTestSession } from '@/lib/test-session'
 import { getTestLoginPasswordHash } from '@/lib/test-login'
+import { getTestLogin } from '@/lib/test-login-list'
 
 function getSupabase(request: NextRequest) {
   return createServerClient(
@@ -24,40 +25,43 @@ function getSupabase(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const testSession = await getTestSession()
-  if (!testSession || testSession.role !== 'admin') {
-    return NextResponse.json({ message: 'Admin test login required.' }, { status: 401 })
+  if (!testSession || testSession.role !== 'band') {
+    return NextResponse.json({ message: 'Band test login required.' }, { status: 401 })
   }
 
   const supabase = getSupabase(request)
+  const current = await getTestLogin(supabase, testSession.username)
+  if (!current || current.role !== 'band' || current.band_access_level !== 'admin') {
+    return NextResponse.json({ message: 'Band admin access required.' }, { status: 403 })
+  }
+
   const formData = await request.formData()
   const action = String(formData.get('action') ?? '')
   const username = String(formData.get('username') ?? '').trim()
-  const role = String(formData.get('role') ?? '')
   const password = String(formData.get('password') ?? '')
-  const bandName = String(formData.get('bandName') ?? '').trim()
-  const bandAccessLevel = String(formData.get('bandAccessLevel') ?? 'admin')
+  const bandName = current.band_name ?? String(formData.get('bandName') ?? '').trim()
 
   try {
     if (action === 'delete') {
       await supabase.from('test_logins').delete().eq('username', username)
     } else if (action === 'upsert') {
-      if (role !== 'singer' && role !== 'band' && role !== 'admin') {
-        return NextResponse.json({ message: 'Role must be singer, band, or admin.' }, { status: 400 })
+      if (!username || !password) {
+        return NextResponse.json({ message: 'Username and password are required.' }, { status: 400 })
       }
 
       await supabase.from('test_logins').upsert({
         username: username.toLowerCase(),
-        role,
+        role: 'band',
         password_hash: getTestLoginPasswordHash(username, password),
-        band_name: role === 'band' ? bandName || null : null,
-        band_access_level: role === 'band' ? (bandAccessLevel === 'member' ? 'member' : 'admin') : null,
+        band_name: bandName || null,
+        band_access_level: 'member',
       })
     } else {
       return NextResponse.json({ message: 'Unknown action.' }, { status: 400 })
     }
   } catch (error) {
-    return NextResponse.json({ message: error instanceof Error ? error.message : 'Unable to update login.' }, { status: 500 })
+    return NextResponse.json({ message: error instanceof Error ? error.message : 'Unable to update member.' }, { status: 500 })
   }
 
-  return NextResponse.redirect(new URL('/admin', request.url))
+  return NextResponse.redirect(new URL('/band/members', request.url))
 }

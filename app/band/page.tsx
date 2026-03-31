@@ -6,7 +6,7 @@ import { BandDashboardView, type BandDashboardState } from '@/components/band-da
 import { getTestSession } from '@/lib/test-session'
 import { getLatestTestShow, getLatestTestShowSettings } from '@/lib/test-show'
 import { getLatestTestBandProfile } from '@/lib/test-band-profile'
-import { listTestLogins } from '@/lib/test-login-list'
+import { getTestLogin } from '@/lib/test-login-list'
 
 async function getBandState(
   supabase: Awaited<ReturnType<typeof createClient>>,
@@ -128,10 +128,8 @@ export default async function BandPage() {
 
   if (testSession?.role === 'band') {
     const state = await getBandTestState(supabase)
-    const testLogins = await listTestLogins(supabase)
-    const currentBandLogin = testLogins.find((login) => login.username === testSession.username && login.role === 'band')
-    const currentBandName = currentBandLogin?.band_name ?? state.brand.title
-    const bandMembers = testLogins.filter((login) => login.role === 'band' && login.band_name === currentBandName)
+    const currentBandLogin = await getTestLogin(supabase, testSession.username)
+    const isBandAdmin = currentBandLogin?.band_access_level !== 'member'
 
     return (
       <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100 sm:px-6 lg:px-8">
@@ -142,6 +140,12 @@ export default async function BandPage() {
             <p className="mt-3 max-w-2xl text-slate-300">
               Logged in as testing account <span className="font-semibold">{testSession.username}</span>.
             </p>
+            {isBandAdmin ? (
+              <div className="mt-4 flex flex-wrap gap-3">
+                <a href="/band/account" className="rounded-full border border-white/10 px-4 py-2 text-sm font-medium text-white hover:border-cyan-400/50">Account</a>
+                <a href="/band/members" className="rounded-full border border-white/10 px-4 py-2 text-sm font-medium text-white hover:border-cyan-400/50">Members</a>
+              </div>
+            ) : null}
             <form className="mt-4" action="/api/auth/logout" method="post">
               <button type="submit" className="rounded-full border border-white/10 px-4 py-2 text-sm font-medium text-white hover:border-cyan-400/50">
                 Log out
@@ -149,42 +153,7 @@ export default async function BandPage() {
             </form>
           </header>
 
-          <section className="rounded-3xl border border-white/10 bg-white/5 p-6">
-            <h2 className="text-2xl font-semibold text-white">Band members</h2>
-            <p className="mt-2 text-sm text-slate-300">Create additional login accounts for members of {currentBandName}.</p>
-
-            <form className="mt-6 grid gap-4 rounded-2xl border border-white/10 bg-slate-950/50 p-5 md:grid-cols-4" action="/api/testing/logins" method="post">
-              <input type="hidden" name="action" value="upsert" />
-              <input type="hidden" name="role" value="band" />
-              <input type="hidden" name="bandName" value={currentBandName} />
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-200" htmlFor="band-member-username">Username</label>
-                <input id="band-member-username" name="username" type="text" className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-200" htmlFor="band-member-password">Password</label>
-                <input id="band-member-password" name="password" type="password" className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
-              </div>
-              <div className="space-y-2 md:col-span-2">
-                <label className="text-sm font-medium text-slate-200" htmlFor="band-member-name">Band name</label>
-                <div className="rounded-xl border border-white/10 bg-slate-900/50 px-4 py-3 text-white">{currentBandName}</div>
-              </div>
-              <div className="md:col-span-4">
-                <button type="submit" className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-medium text-white">Create member</button>
-              </div>
-            </form>
-
-            <div className="mt-6 grid gap-3 md:grid-cols-2">
-              {bandMembers.map((member) => (
-                <div key={member.username} className="rounded-2xl border border-white/10 bg-slate-950/50 p-4">
-                  <p className="text-sm font-semibold text-white">{member.username}</p>
-                  <p className="text-xs uppercase tracking-[0.2em] text-slate-400">{member.role}</p>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          <BandDashboardView {...state} testMode />
+          <BandDashboardView {...state} testMode bandAccessLevel={isBandAdmin ? 'admin' : 'member'} />
         </div>
       </main>
     )

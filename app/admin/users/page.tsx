@@ -121,11 +121,11 @@ export default async function AdminUsersPage() {
                       </div>
                     </form>
                   </AdminRowDialog>
-                  <form action="/api/testing/logins" method="post">
-                    <input type="hidden" name="action" value="delete" />
-                    <input type="hidden" name="username" value={login.username} />
-                    <button type="submit" className="rounded-full border border-white/10 px-3 py-1 text-xs text-slate-200">Delete</button>
-                  </form>
+                <form action="/api/testing/logins" method="post">
+                  <input type="hidden" name="action" value="delete" />
+                  <input type="hidden" name="username" value={login.username} />
+                  <button type="submit" className="rounded-full border border-white/10 px-3 py-1 text-xs text-slate-200">Delete</button>
+                </form>
                 </div>
               </div>
             </article>

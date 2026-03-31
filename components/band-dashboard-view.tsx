@@ -16,6 +16,7 @@ export type BandDashboardState = {
   signupEnabled?: boolean
   showDurationMinutes?: number | null
   signupBufferMinutes?: number | null
+  bandAccessLevel?: 'admin' | 'member'
   testMode?: boolean
 }
 
@@ -52,8 +53,10 @@ export function BandDashboardView({
   signupStatusMessage,
   showDurationMinutes,
   signupBufferMinutes,
+  bandAccessLevel = 'admin',
   testMode = false,
 }: BandDashboardState) {
+  const canManageShow = bandAccessLevel !== 'member'
   const controls =
     showState === 'active'
       ? [
@@ -93,8 +96,9 @@ export function BandDashboardView({
         </div>
       </header>
 
-      <div className="grid gap-8 xl:grid-cols-[1.15fr_0.85fr]">
+      <div className={canManageShow ? 'grid gap-8 xl:grid-cols-[1.15fr_0.85fr]' : 'grid gap-8'}>
         <div className="grid gap-8">
+          {canManageShow ? (
           <Panel title="Show controls" eyebrow="Operations">
             {!currentShowId && testMode ? (
               <form className="space-y-4" action="/api/testing/show" method="post">
@@ -196,6 +200,7 @@ export function BandDashboardView({
               </>
             )}
           </Panel>
+          ) : null}
 
           <Panel title="Queue management" eyebrow="Queue admin">
             <div className="space-y-3">
@@ -241,6 +246,7 @@ export function BandDashboardView({
           </Panel>
         </div>
 
+        {canManageShow ? (
         <div className="grid gap-8">
           <Panel title="Band profile" eyebrow="Public info">
             <div className="grid grid-cols-2 gap-2 text-sm">
@@ -327,6 +333,7 @@ export function BandDashboardView({
             <p className="mt-3 text-sm text-slate-400">{customMessage}</p>
           </Panel>
         </div>
+        ) : null}
       </div>
     </main>
   )

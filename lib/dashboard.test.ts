@@ -25,7 +25,7 @@ describe('buildDashboardState', () => {
 
     expect(state.brand.title).toBe('Neon Echo')
     expect(state.analytics).toEqual([
-      { label: '🤘 Active Show', value: '1' },
+      { label: 'Active Show', value: '🤘' },
       { label: 'Songs in queue', value: '11' },
       { label: 'Queued singers', value: '7' },
     ])

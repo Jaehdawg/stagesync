@@ -11,10 +11,11 @@ export type TestLoginSeed = {
   role: TestLoginRole
   username: string
   password: string
+  band_access_level?: 'admin' | 'member' | null
 }
 
 export const TEST_LOGIN_SEEDS: TestLoginSeed[] = [
-  { role: 'band', username: 'neon-echo-band', password: 'BandTest123!' },
+  { role: 'band', username: 'neon-echo-band', password: 'BandTest123!', band_access_level: 'admin' },
   { role: 'admin', username: 'stagesync-admin', password: 'AdminTest123!' },
 ]
 
@@ -90,5 +91,6 @@ export function listSeedTestLogins() {
     role,
     username,
     band_name: role === 'band' ? 'Neon Echo' : null,
+    band_access_level: role === 'band' ? 'admin' : null,
   }))
 }
