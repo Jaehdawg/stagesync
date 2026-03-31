@@ -1,6 +1,12 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
-import { getTestLoginCookieName, getTestLoginPasswordHash, signTestSession, type TestLoginRole } from '@/lib/test-login'
+import {
+  getTestLoginCookieName,
+  getTestLoginPasswordHash,
+  getTestLoginSeed,
+  signTestSession,
+  type TestLoginRole,
+} from '@/lib/test-login'
 
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 7
 
@@ -40,16 +46,25 @@ export async function POST(request: NextRequest) {
     }
   )
 
-  const { data: loginRow, error } = await supabase
+  const lookup = await supabase
     .from('test_logins')
     .select('username, role, password_hash')
     .eq('username', username)
     .eq('role', role)
     .maybeSingle()
 
-  if (error) {
-    return NextResponse.json({ message: error.message }, { status: 500 })
+  const tableMissing = lookup.error?.message?.includes('public.test_logins') || lookup.error?.code === 'PGRST205'
+  const seededLogin = getTestLoginSeed(role, username)
+
+  if (lookup.error && !tableMissing) {
+    return NextResponse.json({ message: lookup.error.message }, { status: 500 })
   }
+
+  const loginRow = lookup.data ?? (tableMissing ? seededLogin && {
+    username: seededLogin.username,
+    role: seededLogin.role,
+    password_hash: getTestLoginPasswordHash(seededLogin.username, seededLogin.password),
+  } : null)
 
   if (!loginRow) {
     return NextResponse.json({ message: `No ${role} account found for that username.` }, { status: 401 })

@@ -7,6 +7,17 @@ export type TestLoginSession = {
   username: string
 }
 
+export type TestLoginSeed = {
+  role: TestLoginRole
+  username: string
+  password: string
+}
+
+export const TEST_LOGIN_SEEDS: TestLoginSeed[] = [
+  { role: 'band', username: 'neon-echo-band', password: 'BandTest123!' },
+  { role: 'admin', username: 'stagesync-admin', password: 'AdminTest123!' },
+]
+
 const COOKIE_NAME = 'stagesync_test_session'
 const SIGNING_SECRET = process.env.STAGESYNC_TEST_SESSION_SECRET || 'stagesync-test-session-secret'
 const PASSWORD_SALT = 'stagesync-test-login-salt'
@@ -68,4 +79,8 @@ export function getTestLoginCookieName() {
 
 export function getTestLoginPasswordHash(username: string, password: string) {
   return hashTestLoginPassword(username, password)
+}
+
+export function getTestLoginSeed(role: TestLoginRole, username: string) {
+  return TEST_LOGIN_SEEDS.find((seed) => seed.role === role && seed.username === username) ?? null
 }
