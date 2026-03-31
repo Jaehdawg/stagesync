@@ -4,17 +4,16 @@ import { createServiceClient } from '@/utils/supabase/service'
 export async function GET(request: NextRequest) {
   const query = request.nextUrl.searchParams.get('query')?.trim() || ''
 
-  if (!query) {
-    return NextResponse.json({ tracks: [] })
-  }
-
   const supabase = createServiceClient()
-  const { data, error } = await supabase
+  const baseQuery = supabase
     .from('songs')
     .select('id, title, artist')
-    .or(`title.ilike.%${query}%,artist.ilike.%${query}%`)
+    .order('artist', { ascending: true })
     .order('title', { ascending: true })
-    .limit(20)
+
+  const { data, error } = query
+    ? await baseQuery.or(`title.ilike.%${query}%,artist.ilike.%${query}%`).limit(20)
+    : await baseQuery.limit(200)
 
   if (error) {
     return NextResponse.json({ message: error.message }, { status: 500 })

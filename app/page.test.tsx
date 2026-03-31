@@ -1,4 +1,6 @@
 import { render, screen } from '@testing-library/react'
+import { waitFor } from '@testing-library/react'
+import { afterEach, vi } from 'vitest'
 import { SingerDashboardView } from '../components/singer-dashboard-view'
 import { buildDashboardState } from '../lib/dashboard'
 import { buildRootAuthRedirect } from '../lib/root-auth'
@@ -24,8 +26,21 @@ const state = buildDashboardState({
 })
 
 describe('Singer dashboard', () => {
-  it('shows the singer experience and hides band admin controls', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('shows the singer experience and hides band admin controls', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ tracks: [{ id: 'song-1', title: 'Dreams', artist: 'Fleetwood Mac' }] }),
+    })
+
+    vi.stubGlobal('fetch', fetchMock)
+
     render(<SingerDashboardView {...state} />)
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith('/api/songs/search?query='))
 
     expect(screen.getByRole('heading', { name: /neon echo/i })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: /singer experience/i })).toBeInTheDocument()

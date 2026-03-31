@@ -17,71 +17,15 @@ type TidalSearchPanelProps = {
 }
 
 export function TidalSearchPanel({ disabled = false, statusMessage, sourceMode = 'tidal_catalog', playlistUrl = null }: TidalSearchPanelProps) {
+  const isCatalogMode = sourceMode === 'tidal_catalog'
+  const isBrowseMode = !isCatalogMode
   const [query, setQuery] = useState('')
-  const [playlistOnly, setPlaylistOnly] = useState(true)
-  const [results, setResults] = useState<TidalTrack[]>([])
+  const [tracks, setTracks] = useState<TidalTrack[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
 
-  async function runSearch(searchText: string) {
-    const trimmed = searchText.trim()
-
-    if (!trimmed || disabled) {
-      setResults([])
-      setLoading(false)
-      setError(null)
-      setMessage(null)
-      return
-    }
-
-    setLoading(true)
-    setError(null)
-    setMessage(null)
-
-    const endpoint = sourceMode === 'uploaded'
-      ? `/api/songs/search?query=${encodeURIComponent(trimmed)}`
-      : `/api/tidal/search?query=${encodeURIComponent(trimmed)}&playlistOnly=${playlistOnly}`
-    const response = await fetch(endpoint)
-    const payload = (await response.json().catch(() => ({}))) as { tracks?: TidalTrack[]; message?: string }
-
-    if (!response.ok) {
-      setError(payload.message ?? (sourceMode === 'uploaded' ? 'Unable to search uploaded songs.' : 'Unable to search Tidal.'))
-      setResults([])
-      setLoading(false)
-      return
-    }
-
-    setResults(payload.tracks ?? [])
-    setMessage(
-      payload.tracks?.length
-        ? `Found ${payload.tracks.length} ${sourceMode === 'uploaded' ? 'song' : 'Tidal result'}${payload.tracks.length === 1 ? '' : 's'}.`
-        : sourceMode === 'uploaded'
-          ? 'No uploaded songs found.'
-          : 'No Tidal results found.'
-    )
-    setLoading(false)
-  }
-
-  useEffect(() => {
-    const trimmed = query.trim()
-
-    if (!trimmed) {
-      setResults([])
-      setLoading(false)
-      setError(null)
-      setMessage(null)
-      return
-    }
-
-    const timer = window.setTimeout(() => {
-      void runSearch(trimmed)
-    }, 250)
-
-    return () => window.clearTimeout(timer)
-  }, [query, playlistOnly, sourceMode, disabled])
-
-  async function handlePick(track: TidalTrack) {
+  async function pickTrack(track: TidalTrack) {
     if (disabled) return
 
     const response = await fetch('/api/queue', {
@@ -100,11 +44,97 @@ export function TidalSearchPanel({ disabled = false, statusMessage, sourceMode =
     setMessage(payload.message ?? 'Song request added to the queue.')
   }
 
-  const isUploaded = sourceMode === 'uploaded'
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadBrowseSongs() {
+      if (!isBrowseMode) {
+        return
+      }
+
+      setLoading(true)
+      setError(null)
+      setMessage(null)
+
+      const response = await fetch('/api/songs/search?query=')
+      const payload = (await response.json().catch(() => ({}))) as { tracks?: TidalTrack[]; message?: string }
+
+      if (cancelled) return
+
+      if (!response.ok) {
+        setError(payload.message ?? 'Unable to load songs.')
+        setTracks([])
+        setLoading(false)
+        return
+      }
+
+      const nextTracks = (payload.tracks ?? []).slice().sort((left, right) => {
+        const artistCompare = left.artist.localeCompare(right.artist, undefined, { sensitivity: 'base' })
+        if (artistCompare !== 0) return artistCompare
+        return left.title.localeCompare(right.title, undefined, { sensitivity: 'base' })
+      })
+
+      setTracks(nextTracks)
+      setMessage(nextTracks.length ? `Loaded ${nextTracks.length} song${nextTracks.length === 1 ? '' : 's'}.` : 'No songs found.')
+      setLoading(false)
+    }
+
+    void loadBrowseSongs()
+
+    return () => {
+      cancelled = true
+    }
+  }, [isBrowseMode])
+
+  useEffect(() => {
+    if (!isCatalogMode) {
+      return
+    }
+
+    const trimmed = query.trim()
+    if (!trimmed) {
+      setTracks([])
+      setLoading(false)
+      setError(null)
+      setMessage(null)
+      return
+    }
+
+    const timer = window.setTimeout(() => {
+      void (async () => {
+        if (disabled) return
+
+        setLoading(true)
+        setError(null)
+        setMessage(null)
+
+        const response = await fetch(`/api/tidal/search?query=${encodeURIComponent(trimmed)}`)
+        const payload = (await response.json().catch(() => ({}))) as { tracks?: TidalTrack[]; message?: string }
+
+        if (!response.ok) {
+          setError(payload.message ?? 'Unable to search Tidal.')
+          setTracks([])
+          setLoading(false)
+          return
+        }
+
+        setTracks(payload.tracks ?? [])
+        setMessage(
+          payload.tracks?.length
+            ? `Found ${payload.tracks.length} Tidal result${payload.tracks.length === 1 ? '' : 's'}.`
+            : 'No Tidal results found.'
+        )
+        setLoading(false)
+      })()
+    }, 250)
+
+    return () => window.clearTimeout(timer)
+  }, [query, disabled, isCatalogMode])
+
   const title = 'Pick a Song'
-  const description = isUploaded
-    ? 'Start typing to search the band’s uploaded song library, then pick a song to add it to the queue while the show is active.'
-    : 'Start typing to search Tidal, then pick a song to add it to the queue while the show is active.'
+  const description = isBrowseMode
+    ? 'Browse the band’s song list, sorted by artist. Pick a song to add it to the queue while the show is active.'
+    : 'Start typing to search the full Tidal catalog, then pick a song to add it to the queue while the show is active.'
 
   return (
     <section className="rounded-2xl border border-white/10 bg-white/5 p-5">
@@ -116,65 +146,44 @@ export function TidalSearchPanel({ disabled = false, statusMessage, sourceMode =
         </p>
       ) : null}
 
-      <div className="mt-4 space-y-4">
-        <div className="space-y-2">
-          <label htmlFor="tidal-query" className="text-sm font-medium text-slate-200">Search songs</label>
-          <input
-            id="tidal-query"
-            name="tidal-query"
-            type="search"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search by title, artist, or album"
-            className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none"
-          />
-        </div>
-
-        {sourceMode !== 'uploaded' ? (
-          <div className="flex flex-wrap gap-2 text-sm">
-            <button
-              type="button"
-              onClick={() => setPlaylistOnly(true)}
-              className={`rounded-full border px-4 py-2 font-medium ${playlistOnly ? 'border-cyan-400/40 bg-cyan-400/15 text-cyan-100' : 'border-white/10 bg-slate-900/80 text-slate-200'}`}
-            >
-              Playlist
-            </button>
-            <button
-              type="button"
-              onClick={() => setPlaylistOnly(false)}
-              className={`rounded-full border px-4 py-2 font-medium ${!playlistOnly ? 'border-cyan-400/40 bg-cyan-400/15 text-cyan-100' : 'border-white/10 bg-slate-900/80 text-slate-200'}`}
-            >
-              Full catalog
-            </button>
+      {isCatalogMode ? (
+        <div className="mt-4 space-y-4">
+          <div className="space-y-2">
+            <label htmlFor="tidal-query" className="text-sm font-medium text-slate-200">Search songs</label>
+            <input
+              id="tidal-query"
+              name="tidal-query"
+              type="search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Search by title, artist, or album"
+              className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none"
+            />
           </div>
-        ) : null}
-
-        {loading ? <p className="text-sm text-slate-400">Searching...</p> : null}
-      </div>
+          {loading ? <p className="text-sm text-slate-400">Searching...</p> : null}
+        </div>
+      ) : null}
 
       {statusMessage ? <p className="mt-3 text-sm text-slate-300">{statusMessage}</p> : null}
       {message ? <p className="mt-3 text-sm text-emerald-300">{message}</p> : null}
       {error ? <p className="mt-3 text-sm text-rose-300">{error}</p> : null}
 
-      <div className="mt-4 space-y-3">
-        {results.length ? results.map((track) => (
-          <div key={track.id} className="rounded-xl border border-white/10 bg-slate-900/60 p-4">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="font-medium text-white">{track.title}</p>
-                <p className="text-sm text-slate-400">{track.artist}{track.album ? ` • ${track.album}` : ''}</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => void handlePick(track)}
-                disabled={disabled}
-                className="rounded-full border border-white/10 px-3 py-1 text-xs font-medium text-slate-200 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                Pick song
-              </button>
+      <div className="mt-4 max-h-96 space-y-3 overflow-y-auto pr-1">
+        {tracks.length ? tracks.map((track) => (
+          <button
+            key={track.id}
+            type="button"
+            onClick={() => void pickTrack(track)}
+            disabled={disabled}
+            className="flex w-full items-start justify-between gap-3 rounded-xl border border-white/10 bg-slate-900/60 p-4 text-left transition hover:border-cyan-400/40 hover:bg-slate-900/80 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <div>
+              <p className="font-medium text-white">{track.artist}</p>
+              <p className="text-sm text-slate-400">{track.title}{track.album ? ` • ${track.album}` : ''}</p>
             </div>
-          </div>
-        )) : query.trim() ? <p className="text-sm text-slate-400">No matches yet — keep typing.</p> : null}
+            <span className="rounded-full border border-white/10 px-3 py-1 text-xs font-medium text-slate-200">Pick song</span>
+          </button>
+        )) : isCatalogMode && query.trim() ? <p className="text-sm text-slate-400">No matches yet — keep typing.</p> : null}
       </div>
     </section>
   )
