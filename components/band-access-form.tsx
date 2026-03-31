@@ -2,18 +2,6 @@
 
 import { useState, type FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '../utils/supabase/client'
-
-type SupabaseAuthClient = {
-  auth: {
-    signInWithPassword: (params: { email: string; password: string }) => Promise<{ error: { message: string } | null }>
-  }
-  from: (table: string) => {
-    select: (columns: string) => {
-      eq: (column: string, value: string) => { maybeSingle: () => Promise<{ data: { email: string | null; role: string | null } | null }> }
-    }
-  }
-}
 
 type BandAccessFormProps = {
   role: 'band' | 'admin'
@@ -21,17 +9,9 @@ type BandAccessFormProps = {
   description: string
   submitLabel: string
   successMessage: string
-  supabaseClient?: SupabaseAuthClient
 }
 
-export function BandAccessForm({
-  role,
-  title,
-  description,
-  submitLabel,
-  successMessage,
-  supabaseClient,
-}: BandAccessFormProps) {
+export function BandAccessForm({ role, title, description, submitLabel, successMessage }: BandAccessFormProps) {
   const router = useRouter()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -45,42 +25,21 @@ export function BandAccessForm({
     setError(null)
     setMessage(null)
 
-    const client = supabaseClient ?? createClient()
-    const lookupResponse = (await client
-      .from('profiles')
-      .select('email, role')
-      .eq('username', username)
-      .maybeSingle()) as {
-      data: { email: string | null; role: string | null } | null
-      error?: { message: string } | null
-    }
-
-    const { data: profile, error: lookupError } = lookupResponse
-
-    if (lookupError) {
-      setError(lookupError.message)
-      setLoading(false)
-      return
-    }
-
-    if (!profile?.email || profile.role !== role) {
-      setError(`No ${role} account found for that username.`)
-      setLoading(false)
-      return
-    }
-
-    const { error: signInError } = await client.auth.signInWithPassword({
-      email: profile.email,
-      password,
+    const response = await fetch('/api/testing/login', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ role, username, password }),
     })
 
-    if (signInError) {
-      setError(signInError.message)
+    const payload = (await response.json().catch(() => ({}))) as { message?: string }
+
+    if (!response.ok) {
+      setError(payload.message ?? 'Unable to sign in.')
       setLoading(false)
       return
     }
 
-    setMessage(successMessage)
+    setMessage(payload.message ?? successMessage)
     setLoading(false)
     router.push(role === 'band' ? '/band' : '/admin')
     router.refresh()

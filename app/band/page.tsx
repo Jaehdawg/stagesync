@@ -3,6 +3,7 @@ import { buildDashboardState } from '@/lib/dashboard'
 import { canSingerSignUp, getShowState, getSignupCapacity } from '@/lib/show-state'
 import { BandAccessForm } from '@/components/band-access-form'
 import { BandDashboardView } from '@/components/band-dashboard-view'
+import { getTestSession } from '@/lib/test-session'
 
 async function getBandState(supabase: Awaited<ReturnType<typeof createClient>>) {
   const [{ data: bandProfile }, { data: events }, { data: queueItems }] = await Promise.all([
@@ -75,7 +76,28 @@ async function getBandState(supabase: Awaited<ReturnType<typeof createClient>>) 
 }
 
 export default async function BandPage() {
+  const testSession = await getTestSession()
   const supabase = await createClient()
+
+  if (testSession?.role === 'band') {
+    const state = await getBandState(supabase)
+
+    return (
+      <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100 sm:px-6 lg:px-8">
+        <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
+          <header className="rounded-3xl border border-white/10 bg-white/5 p-6">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">Band control</p>
+            <h1 className="mt-2 text-4xl font-semibold text-white">StageSync Band Dashboard</h1>
+            <p className="mt-3 max-w-2xl text-slate-300">
+              Logged in as testing account <span className="font-semibold">{testSession.username}</span>.
+            </p>
+          </header>
+
+          <BandDashboardView {...state} />
+        </div>
+      </main>
+    )
+  }
 
   const {
     data: { user },
@@ -104,13 +126,11 @@ export default async function BandPage() {
     )
   }
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .maybeSingle()
+  const { data: profile } = user
+    ? await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle()
+    : { data: { role: 'band' } }
 
-  const userRole = profile?.role
+  const userRole = user ? profile?.role : 'band'
 
   if (userRole !== 'band') {
     return (

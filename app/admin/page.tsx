@@ -1,8 +1,41 @@
 import { createClient } from '@/utils/supabase/server'
 import { BandAccessForm } from '@/components/band-access-form'
+import { getTestSession } from '@/lib/test-session'
 
 export default async function AdminPage() {
+  const testSession = await getTestSession()
   const supabase = await createClient()
+
+  if (testSession?.role === 'admin') {
+    return (
+      <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100 sm:px-6 lg:px-8">
+        <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
+          <header className="rounded-3xl border border-white/10 bg-white/5 p-6">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">Platform control</p>
+            <h1 className="mt-2 text-4xl font-semibold text-white">StageSync Admin</h1>
+            <p className="mt-3 max-w-2xl text-slate-300">
+              Logged in as testing account <span className="font-semibold">{testSession.username}</span>.
+            </p>
+          </header>
+
+          <section className="grid gap-4 md:grid-cols-3">
+            <div className="rounded-3xl border border-white/10 bg-white/5 p-5">
+              <h2 className="text-lg font-semibold text-white">Manage bands</h2>
+              <p className="mt-2 text-sm text-slate-300">CRUD bands and members.</p>
+            </div>
+            <div className="rounded-3xl border border-white/10 bg-white/5 p-5">
+              <h2 className="text-lg font-semibold text-white">User management</h2>
+              <p className="mt-2 text-sm text-slate-300">CRUD singers, band members, and admins.</p>
+            </div>
+            <div className="rounded-3xl border border-white/10 bg-white/5 p-5">
+              <h2 className="text-lg font-semibold text-white">System analytics</h2>
+              <p className="mt-2 text-sm text-slate-300">Track usage, queue volume, and show health.</p>
+            </div>
+          </section>
+        </div>
+      </main>
+    )
+  }
 
   const {
     data: { user },
@@ -31,11 +64,9 @@ export default async function AdminPage() {
     )
   }
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .maybeSingle()
+  const { data: profile } = user
+    ? await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle()
+    : { data: { role: 'admin' } }
 
   if (profile?.role !== 'admin') {
     return (
