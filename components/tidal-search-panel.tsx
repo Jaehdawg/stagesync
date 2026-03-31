@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState } from 'react'
 
 type TidalTrack = {
   id: string
@@ -24,17 +24,24 @@ export function TidalSearchPanel({ disabled = false, statusMessage, sourceMode =
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
 
-  async function handleSearch(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    if (disabled) return
+  async function runSearch(searchText: string) {
+    const trimmed = searchText.trim()
+
+    if (!trimmed || disabled) {
+      setResults([])
+      setLoading(false)
+      setError(null)
+      setMessage(null)
+      return
+    }
 
     setLoading(true)
     setError(null)
     setMessage(null)
 
     const endpoint = sourceMode === 'uploaded'
-      ? `/api/songs/search?query=${encodeURIComponent(query)}`
-      : `/api/tidal/search?query=${encodeURIComponent(query)}&playlistOnly=${playlistOnly}`
+      ? `/api/songs/search?query=${encodeURIComponent(trimmed)}`
+      : `/api/tidal/search?query=${encodeURIComponent(trimmed)}&playlistOnly=${playlistOnly}`
     const response = await fetch(endpoint)
     const payload = (await response.json().catch(() => ({}))) as { tracks?: TidalTrack[]; message?: string }
 
@@ -56,7 +63,27 @@ export function TidalSearchPanel({ disabled = false, statusMessage, sourceMode =
     setLoading(false)
   }
 
-  async function requestTrack(track: TidalTrack) {
+  useEffect(() => {
+    const trimmed = query.trim()
+
+    if (!trimmed) {
+      setResults([])
+      setLoading(false)
+      setError(null)
+      setMessage(null)
+      return
+    }
+
+    const timer = window.setTimeout(() => {
+      void runSearch(trimmed)
+    }, 250)
+
+    return () => window.clearTimeout(timer)
+  }, [query, playlistOnly, sourceMode, disabled])
+
+  async function handlePick(track: TidalTrack) {
+    if (disabled) return
+
     const response = await fetch('/api/queue', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -74,10 +101,10 @@ export function TidalSearchPanel({ disabled = false, statusMessage, sourceMode =
   }
 
   const isUploaded = sourceMode === 'uploaded'
-  const title = isUploaded ? 'Song library' : 'Tidal search'
+  const title = 'Pick a Song'
   const description = isUploaded
-    ? 'Search the band’s uploaded song library, pick a track, and add it to the queue while the show is active.'
-    : 'Search Tidal, pick a song, and add it to the queue while the show is active.'
+    ? 'Start typing to search the band’s uploaded song library, then pick a song to add it to the queue while the show is active.'
+    : 'Start typing to search Tidal, then pick a song to add it to the queue while the show is active.'
 
   return (
     <section className="rounded-2xl border border-white/10 bg-white/5 p-5">
@@ -89,7 +116,7 @@ export function TidalSearchPanel({ disabled = false, statusMessage, sourceMode =
         </p>
       ) : null}
 
-      <form className="mt-4 space-y-4" onSubmit={handleSearch}>
+      <div className="mt-4 space-y-4">
         <div className="space-y-2">
           <label htmlFor="tidal-query" className="text-sm font-medium text-slate-200">Search songs</label>
           <input
@@ -122,21 +149,15 @@ export function TidalSearchPanel({ disabled = false, statusMessage, sourceMode =
           </div>
         ) : null}
 
-        <button
-          type="submit"
-          disabled={disabled || loading}
-          className="inline-flex rounded-full bg-cyan-400 px-5 py-3 font-semibold text-slate-950 transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:bg-cyan-200"
-        >
-          {loading ? 'Searching...' : isUploaded ? 'Search songs' : 'Search Tidal'}
-        </button>
-      </form>
+        {loading ? <p className="text-sm text-slate-400">Searching...</p> : null}
+      </div>
 
       {statusMessage ? <p className="mt-3 text-sm text-slate-300">{statusMessage}</p> : null}
       {message ? <p className="mt-3 text-sm text-emerald-300">{message}</p> : null}
       {error ? <p className="mt-3 text-sm text-rose-300">{error}</p> : null}
 
       <div className="mt-4 space-y-3">
-        {results.map((track) => (
+        {results.length ? results.map((track) => (
           <div key={track.id} className="rounded-xl border border-white/10 bg-slate-900/60 p-4">
             <div className="flex items-start justify-between gap-3">
               <div>
@@ -145,15 +166,15 @@ export function TidalSearchPanel({ disabled = false, statusMessage, sourceMode =
               </div>
               <button
                 type="button"
-                onClick={() => requestTrack(track)}
+                onClick={() => void handlePick(track)}
                 disabled={disabled}
                 className="rounded-full border border-white/10 px-3 py-1 text-xs font-medium text-slate-200 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                Request
+                Pick song
               </button>
             </div>
           </div>
-        ))}
+        )) : query.trim() ? <p className="text-sm text-slate-400">No matches yet — keep typing.</p> : null}
       </div>
     </section>
   )

@@ -22,12 +22,11 @@ describe('TidalSearchPanel', () => {
     render(<TidalSearchPanel />)
 
     fireEvent.change(screen.getByLabelText(/search songs/i), { target: { value: 'Dreams' } })
-    fireEvent.click(screen.getByRole('button', { name: /search tidal/i }))
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1))
     expect(screen.getByText(/found 1 tidal result/i)).toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole('button', { name: /request/i }))
+    fireEvent.click(screen.getByRole('button', { name: /pick song/i }))
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2))
   })
 
@@ -42,7 +41,6 @@ describe('TidalSearchPanel', () => {
     render(<TidalSearchPanel sourceMode="uploaded" />)
 
     fireEvent.change(screen.getByLabelText(/search songs/i), { target: { value: 'Dreams' } })
-    fireEvent.click(screen.getByRole('button', { name: /search songs/i }))
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1))
     expect(fetchMock).toHaveBeenCalledWith('/api/songs/search?query=Dreams')

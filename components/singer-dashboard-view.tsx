@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react'
 import { SingerRegistrationForm } from './singer-registration-form'
-import { SongRequestForm } from './song-request-form'
 import { TidalSearchPanel } from './tidal-search-panel'
 
 type DashboardState = {
@@ -87,10 +86,6 @@ export function SingerDashboardView(state: DashboardState) {
                     statusMessage={state.signupStatusMessage}
                     sourceMode={songSourceMode}
                     playlistUrl={state.tidalPlaylistUrl ?? null}
-                  />
-                  <SongRequestForm
-                    disabled={!state.signupEnabled}
-                    statusMessage={state.signupStatusMessage}
                   />
                 </div>
               </div>
