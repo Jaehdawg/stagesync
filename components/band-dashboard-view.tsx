@@ -5,7 +5,7 @@ export type BandDashboardState = {
     description: string
   }
   analytics: { label: string; value: string }[]
-  queueItems: { position: number; name: string; song: string; status: string }[]
+  queueItems: { id?: string | null; position: number; name: string; song: string; status: string }[]
   bandLinks: { label: string; href: string }[]
   paymentLinks: { label: string; href: string }[]
   customMessage: string
@@ -200,7 +200,7 @@ export function BandDashboardView({
           <Panel title="Queue management" eyebrow="Queue admin">
             <div className="space-y-3">
               {queueItems.map((item) => (
-                <div key={`${item.position}-${item.name}`} className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                <div key={item.id ?? `${item.position}-${item.name}`} className="rounded-2xl border border-white/10 bg-white/5 p-4">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
                       <p className="text-xs uppercase tracking-[0.22em] text-slate-400">Position {item.position}</p>
@@ -212,10 +212,28 @@ export function BandDashboardView({
                     </span>
                   </div>
                   <div className="mt-4 flex flex-wrap gap-2 text-xs font-medium text-slate-200">
-                    <span className="rounded-full border border-white/10 px-3 py-1">Played</span>
-                    <span className="rounded-full border border-white/10 px-3 py-1">Remove</span>
-                    <span className="rounded-full border border-white/10 px-3 py-1">Move up</span>
-                    <span className="rounded-full border border-white/10 px-3 py-1">Move down</span>
+                    {['played', 'remove', 'up', 'down'].map((action) => (
+                      <form
+                        key={action}
+                        action={`/api/queue/${item.id ?? ''}/state`}
+                        method="post"
+                      >
+                        <input type="hidden" name="action" value={action} />
+                        <button
+                          type="submit"
+                          disabled={!item.id}
+                          className="rounded-full border border-white/10 px-3 py-1 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          {action === 'played'
+                            ? 'Played'
+                            : action === 'remove'
+                              ? 'Remove'
+                              : action === 'up'
+                                ? 'Move up'
+                                : 'Move down'}
+                        </button>
+                      </form>
+                    ))}
                   </div>
                 </div>
               ))}

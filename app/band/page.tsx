@@ -7,6 +7,8 @@ import { getTestSession } from '@/lib/test-session'
 import { getLatestTestShow, getLatestTestShowSettings } from '@/lib/test-show'
 
 async function getBandState(supabase: Awaited<ReturnType<typeof createClient>>) {
+  type QueueRow = { id: string; position: number | null; status: string | null; song_id: string | null; performer_id: string | null }
+
   const [{ data: bandProfile }, { data: events }, { data: queueItems }] = await Promise.all([
     supabase
       .from('band_profiles')
@@ -16,7 +18,7 @@ async function getBandState(supabase: Awaited<ReturnType<typeof createClient>>) 
     supabase.from('events').select('id, name, is_active, allow_signups').order('created_at', { ascending: false }).limit(1),
     supabase
       .from('queue_items')
-      .select('position, status, song_id, performer_id')
+      .select('id, position, status, song_id, performer_id')
       .order('position', { ascending: true })
       .limit(6),
   ])
@@ -50,11 +52,12 @@ async function getBandState(supabase: Awaited<ReturnType<typeof createClient>>) 
     activeShowCount: events?.length ?? 0,
     songsInQueue: queueItems?.length ?? 0,
     queuedSingers: queueItems?.length ?? 0,
-    queueItems: queueItems?.map((item, index) => {
+    queueItems: ((queueItems ?? []) as QueueRow[]).map((item, index) => {
       const song = item.song_id ? songsById.get(item.song_id) : undefined
       const performer = item.performer_id ? profilesById.get(item.performer_id) : undefined
 
       return {
+        id: item.id,
         position: item.position ?? index + 1,
         status: item.status ?? 'Waiting',
         name:

@@ -22,7 +22,7 @@ export type DashboardSource = {
   activeShowCount?: number
   songsInQueue?: number
   queuedSingers?: number
-  queueItems?: QueueItemInput[]
+  queueItems?: (QueueItemInput & { id?: string | null })[]
   signupEnabled?: boolean
   signupStatusMessage?: string
   currentShowId?: string | null
@@ -37,7 +37,7 @@ export type DashboardState = {
   }
   analytics: { label: string; value: string }[]
   singerActions: string[]
-  queueItems: { position: number; name: string; song: string; status: string }[]
+  queueItems: { id?: string | null; position: number; name: string; song: string; status: string }[]
   bandLinks: { label: string; href: string }[]
   paymentLinks: { label: string; href: string }[]
   customMessage: string
