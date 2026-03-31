@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { buildQrCodeImageUrl } from '../lib/public-links'
 
 export type BandDashboardState = {
@@ -18,6 +19,7 @@ export type BandDashboardState = {
   signupEnabled?: boolean
   showDurationMinutes?: number | null
   signupBufferMinutes?: number | null
+  songSourceMode?: 'uploaded' | 'tidal_playlist' | 'tidal_catalog'
   bandAccessLevel?: 'admin' | 'member'
   testMode?: boolean
   singerSignupUrl?: string | null
@@ -30,7 +32,7 @@ function Panel({
 }: Readonly<{
   title: string
   eyebrow?: string
-  children: React.ReactNode
+  children: ReactNode
 }>) {
   return (
     <section className="rounded-3xl border border-white/10 bg-slate-950/80 p-6 shadow-2xl shadow-slate-950/20">
@@ -56,6 +58,7 @@ export function BandDashboardView({
   signupStatusMessage,
   showDurationMinutes,
   signupBufferMinutes,
+  songSourceMode = 'uploaded',
   bandAccessLevel = 'admin',
   testMode = false,
   singerSignupUrl = null,
@@ -160,45 +163,71 @@ export function BandDashboardView({
                   ))}
                 </div>
                 {testMode && currentShowId ? (
-                  <form className="mt-6 space-y-4 rounded-2xl border border-white/10 bg-white/5 p-4" action="/api/testing/show" method="post">
-                    <input type="hidden" name="action" value="settings" />
-                    <input type="hidden" name="eventId" value={currentShowId} />
-                    <h3 className="text-lg font-semibold text-white">Show settings</h3>
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      <div className="space-y-2">
-                        <label htmlFor="show-duration" className="text-sm font-medium text-slate-200">
-                          Show duration (minutes)
-                        </label>
-                        <input
-                          id="show-duration"
-                          name="showDurationMinutes"
-                          type="number"
-                          min={0}
-                          defaultValue={showDurationMinutes ?? 60}
-                          className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none"
-                        />
+                  <>
+                    <form className="mt-6 space-y-4 rounded-2xl border border-white/10 bg-white/5 p-4" action="/api/testing/show" method="post">
+                      <input type="hidden" name="action" value="settings" />
+                      <input type="hidden" name="eventId" value={currentShowId} />
+                      <h3 className="text-lg font-semibold text-white">Show settings</h3>
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <div className="space-y-2">
+                          <label htmlFor="show-duration" className="text-sm font-medium text-slate-200">
+                            Show duration (minutes)
+                          </label>
+                          <input
+                            id="show-duration"
+                            name="showDurationMinutes"
+                            type="number"
+                            min={0}
+                            defaultValue={showDurationMinutes ?? 60}
+                            className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label htmlFor="signup-buffer" className="text-sm font-medium text-slate-200">
+                            Buffer between songs (minutes)
+                          </label>
+                          <input
+                            id="signup-buffer"
+                            name="signupBufferMinutes"
+                            type="number"
+                            min={0}
+                            defaultValue={signupBufferMinutes ?? 1}
+                            className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none"
+                          />
+                        </div>
+                        <div className="space-y-2 sm:col-span-2">
+                          <label htmlFor="song-source-mode" className="text-sm font-medium text-slate-200">
+                            Song source
+                          </label>
+                          <select
+                            id="song-source-mode"
+                            name="songSourceMode"
+                            defaultValue={songSourceMode}
+                            className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white focus:border-cyan-400 focus:outline-none"
+                          >
+                            <option value="uploaded">Uploaded song list</option>
+                            <option value="tidal_playlist">Tidal playlist</option>
+                            <option value="tidal_catalog">Full Tidal catalog</option>
+                          </select>
+                        </div>
                       </div>
+                      <button
+                        type="submit"
+                        className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-medium text-white"
+                      >
+                        Save settings
+                      </button>
+                    </form>
+                    <form className="mt-6 space-y-4 rounded-2xl border border-white/10 bg-white/5 p-4" action="/api/band/songs/import" method="post" encType="multipart/form-data">
+                      <h3 className="text-lg font-semibold text-white">Upload song CSV</h3>
+                      <p className="text-slate-400">Upload a CSV with columns for song title, artist, and duration to build the band’s song library.</p>
                       <div className="space-y-2">
-                        <label htmlFor="signup-buffer" className="text-sm font-medium text-slate-200">
-                          Buffer between songs (minutes)
-                        </label>
-                        <input
-                          id="signup-buffer"
-                          name="signupBufferMinutes"
-                          type="number"
-                          min={0}
-                          defaultValue={signupBufferMinutes ?? 1}
-                          className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none"
-                        />
+                        <label htmlFor="song-csv" className="text-sm font-medium text-slate-200">CSV file</label>
+                        <input id="song-csv" name="csvFile" type="file" accept=".csv,text/csv" className="block w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white file:mr-4 file:rounded-full file:border-0 file:bg-cyan-400 file:px-4 file:py-2 file:font-semibold file:text-slate-950" />
                       </div>
-                    </div>
-                    <button
-                      type="submit"
-                      className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-medium text-white"
-                    >
-                      Save settings
-                    </button>
-                  </form>
+                      <button type="submit" className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-medium text-white">Import CSV</button>
+                    </form>
+                  </>
                 ) : null}
                 <p className="mt-4 text-slate-400">{signupStatusMessage}</p>
               </>

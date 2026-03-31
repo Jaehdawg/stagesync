@@ -36,6 +36,7 @@ export async function POST(request: NextRequest) {
   const description = String(formData.get('description') ?? '')
   const showDurationMinutes = Number(formData.get('showDurationMinutes'))
   const signupBufferMinutes = Number(formData.get('signupBufferMinutes'))
+  const songSourceMode = String(formData.get('songSourceMode') ?? '')
 
   try {
     if (action === 'create') {
@@ -45,6 +46,8 @@ export async function POST(request: NextRequest) {
         eventId,
         showDurationMinutes: Number.isFinite(showDurationMinutes) ? showDurationMinutes : 60,
         signupBufferMinutes: Number.isFinite(signupBufferMinutes) ? signupBufferMinutes : 1,
+        songSourceMode:
+          songSourceMode === 'tidal_playlist' || songSourceMode === 'tidal_catalog' ? songSourceMode : 'uploaded',
       })
     } else if (action === 'start' || action === 'pause' || action === 'resume' || action === 'end') {
       await updateTestShowState(supabase, { eventId, action })

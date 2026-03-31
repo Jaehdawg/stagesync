@@ -58,11 +58,13 @@ BEGIN
     true,
     true,
     1,
-    60
+    60,
+    'uploaded'
   )
   ON CONFLICT (event_id) DO UPDATE SET
     signup_buffer_minutes = EXCLUDED.signup_buffer_minutes,
     show_duration_minutes = EXCLUDED.show_duration_minutes,
+    song_source_mode = EXCLUDED.song_source_mode,
     updated_at = NOW();
 
   RETURN new_event;
@@ -72,7 +74,8 @@ $$;
 CREATE OR REPLACE FUNCTION test_update_show_settings(
   p_event_id UUID,
   p_show_duration_minutes INTEGER,
-  p_signup_buffer_minutes INTEGER
+  p_signup_buffer_minutes INTEGER,
+  p_song_source_mode TEXT DEFAULT 'uploaded'
 )
 RETURNS show_settings
 LANGUAGE plpgsql
@@ -89,6 +92,7 @@ BEGIN
     allow_tips,
     signup_buffer_minutes,
     show_duration_minutes,
+    song_source_mode,
     updated_at
   )
   VALUES (
@@ -98,11 +102,13 @@ BEGIN
     true,
     COALESCE(p_signup_buffer_minutes, 1),
     COALESCE(p_show_duration_minutes, 60),
+    COALESCE(NULLIF(BTRIM(p_song_source_mode), ''), 'uploaded'),
     NOW()
   )
   ON CONFLICT (event_id) DO UPDATE SET
     signup_buffer_minutes = EXCLUDED.signup_buffer_minutes,
     show_duration_minutes = EXCLUDED.show_duration_minutes,
+    song_source_mode = EXCLUDED.song_source_mode,
     updated_at = NOW()
   RETURNING * INTO updated_settings;
 

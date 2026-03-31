@@ -31,6 +31,7 @@ export type DashboardSource = {
   showState?: 'active' | 'paused' | 'ended'
   showDurationMinutes?: number | null
   signupBufferMinutes?: number | null
+  songSourceMode?: 'uploaded' | 'tidal_playlist' | 'tidal_catalog'
 }
 
 export type DashboardState = {
@@ -52,6 +53,7 @@ export type DashboardState = {
   showState: 'active' | 'paused' | 'ended'
   showDurationMinutes?: number | null
   signupBufferMinutes?: number | null
+  songSourceMode?: 'uploaded' | 'tidal_playlist' | 'tidal_catalog'
 }
 
 const fallbackBandLinks = [
@@ -137,5 +139,6 @@ export function buildDashboardState(source: DashboardSource = {}): DashboardStat
     showState: source.showState ?? 'ended',
     showDurationMinutes: source.showDurationMinutes ?? null,
     signupBufferMinutes: source.signupBufferMinutes ?? null,
+    songSourceMode: source.songSourceMode ?? 'uploaded',
   }
 }

@@ -12,9 +12,10 @@ type TidalTrack = {
 type TidalSearchPanelProps = {
   disabled?: boolean
   statusMessage?: string
+  sourceMode?: 'uploaded' | 'tidal_playlist' | 'tidal_catalog'
 }
 
-export function TidalSearchPanel({ disabled = false, statusMessage }: TidalSearchPanelProps) {
+export function TidalSearchPanel({ disabled = false, statusMessage, sourceMode = 'tidal_catalog' }: TidalSearchPanelProps) {
   const [query, setQuery] = useState('')
   const [playlistOnly, setPlaylistOnly] = useState(true)
   const [results, setResults] = useState<TidalTrack[]>([])
@@ -30,18 +31,27 @@ export function TidalSearchPanel({ disabled = false, statusMessage }: TidalSearc
     setError(null)
     setMessage(null)
 
-    const response = await fetch(`/api/tidal/search?query=${encodeURIComponent(query)}&playlistOnly=${playlistOnly}`)
+    const endpoint = sourceMode === 'uploaded'
+      ? `/api/songs/search?query=${encodeURIComponent(query)}`
+      : `/api/tidal/search?query=${encodeURIComponent(query)}&playlistOnly=${playlistOnly}`
+    const response = await fetch(endpoint)
     const payload = (await response.json().catch(() => ({}))) as { tracks?: TidalTrack[]; message?: string }
 
     if (!response.ok) {
-      setError(payload.message ?? 'Unable to search Tidal.')
+      setError(payload.message ?? (sourceMode === 'uploaded' ? 'Unable to search uploaded songs.' : 'Unable to search Tidal.'))
       setResults([])
       setLoading(false)
       return
     }
 
     setResults(payload.tracks ?? [])
-    setMessage(payload.tracks?.length ? `Found ${payload.tracks.length} Tidal result${payload.tracks.length === 1 ? '' : 's'}.` : 'No Tidal results found.')
+    setMessage(
+      payload.tracks?.length
+        ? `Found ${payload.tracks.length} ${sourceMode === 'uploaded' ? 'song' : 'Tidal result'}${payload.tracks.length === 1 ? '' : 's'}.`
+        : sourceMode === 'uploaded'
+          ? 'No uploaded songs found.'
+          : 'No Tidal results found.'
+    )
     setLoading(false)
   }
 
@@ -62,12 +72,16 @@ export function TidalSearchPanel({ disabled = false, statusMessage }: TidalSearc
     setMessage(payload.message ?? 'Song request added to the queue.')
   }
 
+  const isUploaded = sourceMode === 'uploaded'
+  const title = isUploaded ? 'Song library' : 'Tidal search'
+  const description = isUploaded
+    ? 'Search the band’s uploaded song library, pick a track, and add it to the queue while the show is active.'
+    : 'Search Tidal, pick a song, and add it to the queue while the show is active.'
+
   return (
     <section className="rounded-2xl border border-white/10 bg-white/5 p-5">
-      <h3 className="text-lg font-semibold text-white">Tidal search</h3>
-      <p className="mt-1 text-slate-400">
-        Search Tidal, pick a song, and add it to the queue while the show is active.
-      </p>
+      <h3 className="text-lg font-semibold text-white">{title}</h3>
+      <p className="mt-1 text-slate-400">{description}</p>
 
       <form className="mt-4 space-y-4" onSubmit={handleSearch}>
         <div className="space-y-2">
@@ -83,29 +97,31 @@ export function TidalSearchPanel({ disabled = false, statusMessage }: TidalSearc
           />
         </div>
 
-        <div className="flex flex-wrap gap-2 text-sm">
-          <button
-            type="button"
-            onClick={() => setPlaylistOnly(true)}
-            className={`rounded-full border px-4 py-2 font-medium ${playlistOnly ? 'border-cyan-400/40 bg-cyan-400/15 text-cyan-100' : 'border-white/10 bg-slate-900/80 text-slate-200'}`}
-          >
-            Playlist
-          </button>
-          <button
-            type="button"
-            onClick={() => setPlaylistOnly(false)}
-            className={`rounded-full border px-4 py-2 font-medium ${!playlistOnly ? 'border-cyan-400/40 bg-cyan-400/15 text-cyan-100' : 'border-white/10 bg-slate-900/80 text-slate-200'}`}
-          >
-            Full catalog
-          </button>
-        </div>
+        {sourceMode !== 'uploaded' ? (
+          <div className="flex flex-wrap gap-2 text-sm">
+            <button
+              type="button"
+              onClick={() => setPlaylistOnly(true)}
+              className={`rounded-full border px-4 py-2 font-medium ${playlistOnly ? 'border-cyan-400/40 bg-cyan-400/15 text-cyan-100' : 'border-white/10 bg-slate-900/80 text-slate-200'}`}
+            >
+              Playlist
+            </button>
+            <button
+              type="button"
+              onClick={() => setPlaylistOnly(false)}
+              className={`rounded-full border px-4 py-2 font-medium ${!playlistOnly ? 'border-cyan-400/40 bg-cyan-400/15 text-cyan-100' : 'border-white/10 bg-slate-900/80 text-slate-200'}`}
+            >
+              Full catalog
+            </button>
+          </div>
+        ) : null}
 
         <button
           type="submit"
           disabled={disabled || loading}
           className="inline-flex rounded-full bg-cyan-400 px-5 py-3 font-semibold text-slate-950 transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:bg-cyan-200"
         >
-          {loading ? 'Searching...' : 'Search Tidal'}
+          {loading ? 'Searching...' : isUploaded ? 'Search songs' : 'Search Tidal'}
         </button>
       </form>
 
