@@ -4,6 +4,7 @@ import { buildDashboardState } from '@/lib/dashboard'
 import { SingerDashboardView } from '@/components/singer-dashboard-view'
 import { getRoleHomePath } from '@/lib/roles'
 import { canSingerSignUp, getShowState, getSignupCapacity } from '@/lib/show-state'
+import { buildRootAuthRedirect } from '@/lib/root-auth'
 
 type SearchParams = Record<string, string | string[] | undefined>
 
@@ -16,6 +17,19 @@ export default async function Home({
   const params = await searchParams
   const auth = typeof params?.auth === 'string' ? params.auth : undefined
   const message = typeof params?.message === 'string' ? params.message : undefined
+
+  const code = typeof params?.code === 'string' ? params.code : undefined
+  const role = typeof params?.role === 'string' ? params.role : undefined
+
+  const authRedirect = buildRootAuthRedirect({
+    code,
+    role,
+    siteUrl: process.env.NEXT_PUBLIC_SITE_URL?.trim(),
+  })
+
+  if (authRedirect) {
+    redirect(authRedirect)
+  }
 
   const {
     data: { user },
