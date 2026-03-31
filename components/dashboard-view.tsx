@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { SingerRegistrationForm } from './singer-registration-form'
 
 type DashboardViewProps = {
   brand: {
@@ -76,56 +77,7 @@ export function DashboardView({
           <div className="grid gap-8">
             <Panel title="Singer experience" eyebrow="Public flow">
               <div className="grid gap-6 lg:grid-cols-[1fr_0.9fr]">
-                <form className="rounded-2xl border border-white/10 bg-white/5 p-5">
-                  <h3 className="text-lg font-semibold text-white">Quick registration</h3>
-                  <p className="mt-1 text-slate-400">
-                    Capture first name, last name, and email before the singer joins the queue.
-                  </p>
-                  <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                    <div className="space-y-2 sm:col-span-1">
-                      <label htmlFor="first-name" className="text-sm font-medium text-slate-200">
-                        First name
-                      </label>
-                      <input
-                        id="first-name"
-                        name="first-name"
-                        type="text"
-                        placeholder="Maya"
-                        className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none"
-                      />
-                    </div>
-                    <div className="space-y-2 sm:col-span-1">
-                      <label htmlFor="last-name" className="text-sm font-medium text-slate-200">
-                        Last name
-                      </label>
-                      <input
-                        id="last-name"
-                        name="last-name"
-                        type="text"
-                        placeholder="Chen"
-                        className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none"
-                      />
-                    </div>
-                    <div className="space-y-2 sm:col-span-2">
-                      <label htmlFor="email" className="text-sm font-medium text-slate-200">
-                        Email
-                      </label>
-                      <input
-                        id="email"
-                        name="email"
-                        type="email"
-                        placeholder="maya@example.com"
-                        className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none"
-                      />
-                    </div>
-                  </div>
-                  <button
-                    type="submit"
-                    className="mt-4 inline-flex rounded-full bg-cyan-400 px-5 py-3 font-semibold text-slate-950 transition hover:bg-cyan-300"
-                  >
-                    Join the queue
-                  </button>
-                </form>
+                <SingerRegistrationForm />
 
                 <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
                   <h3 className="text-lg font-semibold text-white">Tidal song search</h3>
