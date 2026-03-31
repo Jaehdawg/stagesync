@@ -61,12 +61,6 @@ const fallbackBandLinks = [
   { label: 'Website', href: 'https://example.com' },
 ]
 
-const fallbackQueueItems: QueueItemInput[] = [
-  { position: 1, name: 'Maya Chen', song: 'Dreams - Fleetwood Mac', status: 'Singing now' },
-  { position: 2, name: 'Jordan Lee', song: 'Mr. Brightside - The Killers', status: 'Up next' },
-  { position: 3, name: 'Sam Rivera', song: 'Shallow - Lady Gaga & Bradley Cooper', status: 'Waiting' },
-]
-
 const singerActions = [
   'Quick registration with first, last, and email',
   'Tidal search with playlist/full catalog toggle',
@@ -76,7 +70,7 @@ const singerActions = [
 ]
 
 export function buildDashboardState(source: DashboardSource = {}): DashboardState {
-  const queueSourceItems: QueueItemInput[] = source.queueItems?.length ? source.queueItems : fallbackQueueItems
+  const queueSourceItems: QueueItemInput[] = source.queueItems ?? []
   const bandName = source.bandProfile?.band_name?.trim() || 'StageSync'
   const activeShows = source.activeShowCount ?? 12
   const songsInQueue = source.songsInQueue ?? (source.queueItems?.length ?? 38)
@@ -118,10 +112,9 @@ export function buildDashboardState(source: DashboardSource = {}): DashboardStat
     ],
     singerActions,
     queueItems: queueSourceItems.map((item, index) => {
-      const fallbackItem = fallbackQueueItems[index % fallbackQueueItems.length]
-      const name = (item.name?.trim() || fallbackItem.name) as string
-      const song = (item.song?.trim() || fallbackItem.song) as string
-      const status = (item.status?.trim() || fallbackItem.status) as string
+      const name = (item.name?.trim() || 'Guest singer') as string
+      const song = (item.song?.trim() || 'Requested song') as string
+      const status = (item.status?.trim() || 'Waiting') as string
 
       return {
         id: item.id ?? null,

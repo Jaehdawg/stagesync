@@ -63,7 +63,7 @@ describe('buildDashboardState', () => {
     const state = buildDashboardState()
 
     expect(state.brand.title).toBe('StageSync')
-    expect(state.queueItems).toHaveLength(3)
+    expect(state.queueItems).toHaveLength(0)
     expect(state.bandLinks[3]).toEqual({ label: 'Website', href: 'https://example.com' })
   })
 })

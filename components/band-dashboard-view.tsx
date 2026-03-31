@@ -203,46 +203,52 @@ export function BandDashboardView({
           ) : null}
 
           <Panel title="Queue management" eyebrow="Queue admin">
-            <div className="space-y-3">
-              {queueItems.map((item) => (
-                <div key={item.id ?? `${item.position}-${item.name}`} className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <p className="text-xs uppercase tracking-[0.22em] text-slate-400">Position {item.position}</p>
-                      <h3 className="mt-1 text-base font-semibold text-white">{item.song}</h3>
-                      <p className="text-sm text-slate-400">{item.name}</p>
+            {queueItems.length ? (
+              <div className="space-y-3">
+                {queueItems.map((item) => (
+                  <div key={item.id ?? `${item.position}-${item.name}`} className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.22em] text-slate-400">Position {item.position}</p>
+                        <h3 className="mt-1 text-base font-semibold text-white">{item.song}</h3>
+                        <p className="text-sm text-slate-400">{item.name}</p>
+                      </div>
+                      <span className="rounded-full bg-emerald-400/15 px-3 py-1 text-xs font-semibold text-emerald-300">
+                        {item.status}
+                      </span>
                     </div>
-                    <span className="rounded-full bg-emerald-400/15 px-3 py-1 text-xs font-semibold text-emerald-300">
-                      {item.status}
-                    </span>
-                  </div>
-                  <div className="mt-4 flex flex-wrap gap-2 text-xs font-medium text-slate-200">
-                    {['played', 'remove', 'up', 'down'].map((action) => (
-                      <form
-                        key={action}
-                        action={`/api/queue/${item.id ?? ''}/state`}
-                        method="post"
-                      >
-                        <input type="hidden" name="action" value={action} />
-                        <button
-                          type="submit"
-                          disabled={!item.id}
-                          className="rounded-full border border-white/10 px-3 py-1 disabled:cursor-not-allowed disabled:opacity-50"
+                    <div className="mt-4 flex flex-wrap gap-2 text-xs font-medium text-slate-200">
+                      {['played', 'remove', 'up', 'down'].map((action) => (
+                        <form
+                          key={action}
+                          action={`/api/queue/${item.id ?? ''}/state`}
+                          method="post"
                         >
-                          {action === 'played'
-                            ? 'Played'
-                            : action === 'remove'
-                              ? 'Remove'
-                              : action === 'up'
-                                ? 'Move up'
-                                : 'Move down'}
-                        </button>
-                      </form>
-                    ))}
+                          <input type="hidden" name="action" value={action} />
+                          <button
+                            type="submit"
+                            disabled={!item.id}
+                            className="rounded-full border border-white/10 px-3 py-1 disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            {action === 'played'
+                              ? 'Played'
+                              : action === 'remove'
+                                ? 'Remove'
+                                : action === 'up'
+                                  ? 'Move up'
+                                  : 'Move down'}
+                          </button>
+                        </form>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <p className="rounded-2xl border border-dashed border-white/10 bg-white/5 px-4 py-6 text-slate-400">
+                No queue items yet. Singer requests will show up here automatically.
+              </p>
+            )}
           </Panel>
         </div>
 
