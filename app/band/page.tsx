@@ -1,4 +1,3 @@
-import { redirect } from 'next/navigation'
 import { createClient } from '@/utils/supabase/server'
 import { buildDashboardState } from '@/lib/dashboard'
 import { canSingerSignUp, getShowState, getSignupCapacity } from '@/lib/show-state'
@@ -90,10 +89,16 @@ export default async function BandPage() {
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">Band portal</p>
             <h1 className="mt-2 text-4xl font-semibold text-white">StageSync Band Login</h1>
             <p className="mt-3 max-w-2xl text-slate-300">
-              Band members sign in here to manage the show, queue, and profile settings.
+              Band members sign in here with a username and password to manage the show, queue, and profile settings.
             </p>
           </header>
-          <BandAccessForm />
+          <BandAccessForm
+            role="band"
+            title="Band login"
+            description="Use your band username and password to access show controls."
+            submitLabel="Sign in"
+            successMessage="Band login successful."
+          />
         </div>
       </main>
     )
@@ -108,10 +113,6 @@ export default async function BandPage() {
   const userRole = profile?.role
 
   if (userRole !== 'band') {
-    if (userRole === 'admin') {
-      redirect('/admin')
-    }
-
     return (
       <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100 sm:px-6 lg:px-8">
         <div className="mx-auto grid w-full max-w-5xl gap-6 lg:grid-cols-[1fr_0.9fr]">
@@ -122,7 +123,13 @@ export default async function BandPage() {
               You&apos;re currently signed in as a singer. Use a band email to get the band dashboard.
             </p>
           </header>
-          <BandAccessForm />
+          <BandAccessForm
+            role="band"
+            title="Band login"
+            description="Use your band username and password to switch into the band dashboard."
+            submitLabel="Sign in"
+            successMessage="Band login successful."
+          />
         </div>
       </main>
     )

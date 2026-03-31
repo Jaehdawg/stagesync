@@ -1,6 +1,5 @@
-import { redirect } from 'next/navigation'
 import { createClient } from '@/utils/supabase/server'
-import { getRoleHomePath } from '@/lib/roles'
+import { BandAccessForm } from '@/components/band-access-form'
 
 export default async function AdminPage() {
   const supabase = await createClient()
@@ -10,7 +9,26 @@ export default async function AdminPage() {
   } = await supabase.auth.getUser()
 
   if (!user) {
-    redirect('/')
+    return (
+      <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100 sm:px-6 lg:px-8">
+        <div className="mx-auto grid w-full max-w-5xl gap-6 lg:grid-cols-[1fr_0.9fr]">
+          <header className="rounded-3xl border border-white/10 bg-white/5 p-6">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">Platform control</p>
+            <h1 className="mt-2 text-4xl font-semibold text-white">StageSync Admin Login</h1>
+            <p className="mt-3 max-w-2xl text-slate-300">
+              Admins sign in here with a username and password to manage bands, users, and analytics.
+            </p>
+          </header>
+          <BandAccessForm
+            role="admin"
+            title="Admin login"
+            description="Use your admin username and password to access system controls."
+            submitLabel="Sign in"
+            successMessage="Admin login successful."
+          />
+        </div>
+      </main>
+    )
   }
 
   const { data: profile } = await supabase
@@ -19,9 +37,27 @@ export default async function AdminPage() {
     .eq('id', user.id)
     .maybeSingle()
 
-  const target = getRoleHomePath(profile?.role)
-  if (target !== '/admin') {
-    redirect(target)
+  if (profile?.role !== 'admin') {
+    return (
+      <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100 sm:px-6 lg:px-8">
+        <div className="mx-auto grid w-full max-w-5xl gap-6 lg:grid-cols-[1fr_0.9fr]">
+          <header className="rounded-3xl border border-white/10 bg-white/5 p-6">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">Platform control</p>
+            <h1 className="mt-2 text-4xl font-semibold text-white">Switch to an admin account</h1>
+            <p className="mt-3 max-w-2xl text-slate-300">
+              You&apos;re currently signed in as a singer. Use an admin username and password to access the admin dashboard.
+            </p>
+          </header>
+          <BandAccessForm
+            role="admin"
+            title="Admin login"
+            description="Use your admin username and password to access system controls."
+            submitLabel="Sign in"
+            successMessage="Admin login successful."
+          />
+        </div>
+      </main>
+    )
   }
 
   return (
