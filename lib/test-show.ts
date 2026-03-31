@@ -18,7 +18,6 @@ export type TestShowSettingsRow = {
   allow_tips: boolean | null
   signup_buffer_minutes: number | null
   show_duration_minutes: number | null
-  tidal_playlist_url: string | null
 }
 
 export async function getLatestTestShow(supabase: SupabaseClient): Promise<TestShowRow | null> {

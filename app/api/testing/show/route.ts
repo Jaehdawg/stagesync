@@ -3,7 +3,6 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { getTestSession } from '@/lib/test-session'
 import { createTestShow, updateTestShowState } from '@/lib/test-show'
 import { createServiceClient } from '@/utils/supabase/service'
-import { upsertShowSongSource } from '@/lib/show-song-source'
 
 function getSupabase(request: NextRequest) {
   return createServerClient(
@@ -73,6 +72,7 @@ export async function POST(request: NextRequest) {
             event_id: targetEventId,
             signup_buffer_minutes: Number.isFinite(signupBufferMinutes) ? signupBufferMinutes : 1,
             show_duration_minutes: Number.isFinite(showDurationMinutes) ? showDurationMinutes : 60,
+            playlist_only: mode === 'tidal_playlist',
           },
           { onConflict: 'event_id' }
         )
@@ -81,11 +81,21 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ message: error.message }, { status: 500 })
       }
 
-      await upsertShowSongSource(serviceSupabase, {
-        eventId: targetEventId,
-        sourceMode: mode,
-        tidalPlaylistUrl: playlistUrl,
-      })
+      const { error: eventError } = await serviceSupabase
+        .from('events')
+        .update({
+          description:
+            mode === 'tidal_playlist'
+              ? playlistUrl
+              : mode === 'tidal_catalog'
+                ? '__TIDAL_CATALOG__'
+                : null,
+        })
+        .eq('id', targetEventId)
+
+      if (eventError) {
+        return NextResponse.json({ message: eventError.message }, { status: 500 })
+      }
     } else if (action === 'start' || action === 'pause' || action === 'resume' || action === 'end') {
       await updateTestShowState(supabase, { eventId, action })
     } else {

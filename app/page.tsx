@@ -6,7 +6,6 @@ import { SingerDashboardView } from '@/components/singer-dashboard-view'
 import { getRoleHomePath } from '@/lib/roles'
 import { canSingerSignUp, getShowState, getSignupCapacity } from '@/lib/show-state'
 import { buildRootAuthRedirect } from '@/lib/root-auth'
-import { getLatestShowSongSource } from '@/lib/show-song-source'
 
 type SearchParams = Record<string, string | string[] | undefined>
 
@@ -62,7 +61,7 @@ export default async function Home({
       .select('band_name, website_url, facebook_url, instagram_url, tiktok_url, paypal_url, venmo_url, cashapp_url, custom_message')
       .limit(1)
       .maybeSingle(),
-    supabase.from('events').select('id, name, is_active, allow_signups').order('created_at', { ascending: false }).limit(1),
+    supabase.from('events').select('id, name, description, is_active, allow_signups').order('created_at', { ascending: false }).limit(1),
     supabase
       .from('queue_items')
       .select('position, status, song_id, performer_id')
@@ -92,11 +91,11 @@ export default async function Home({
   const showSettingsResponse = currentShow?.id
     ? await supabase
         .from('show_settings')
-        .select('show_duration_minutes, signup_buffer_minutes, playlist_only, tidal_playlist_url')
+        .select('show_duration_minutes, signup_buffer_minutes, playlist_only')
         .eq('event_id', currentShow.id)
         .maybeSingle()
     : { data: null }
-  const currentSongSource = await getLatestShowSongSource(supabase, currentShow?.id)
+  const sourceDescription = currentShow?.description?.trim() ?? null
   const showDurationMinutes = showSettingsResponse.data?.show_duration_minutes ?? 60
   const signupBufferMinutes = showSettingsResponse.data?.signup_buffer_minutes ?? 1
   const signupCapacity = getSignupCapacity({
@@ -135,8 +134,13 @@ export default async function Home({
     showState,
     showDurationMinutes,
     signupBufferMinutes,
-    songSourceMode: currentSongSource?.source_mode ?? 'uploaded',
-    tidalPlaylistUrl: currentSongSource?.source_mode === 'tidal_playlist' ? currentSongSource.tidal_playlist_url ?? null : null,
+    songSourceMode:
+      showSettingsResponse.data?.playlist_only
+        ? 'tidal_playlist'
+        : sourceDescription === '__TIDAL_CATALOG__'
+          ? 'tidal_catalog'
+          : 'uploaded',
+    tidalPlaylistUrl: showSettingsResponse.data?.playlist_only ? sourceDescription ?? null : null,
   })
 
   return (
