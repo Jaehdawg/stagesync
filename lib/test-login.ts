@@ -84,3 +84,7 @@ export function getTestLoginPasswordHash(username: string, password: string) {
 export function getTestLoginSeed(role: TestLoginRole, username: string) {
   return TEST_LOGIN_SEEDS.find((seed) => seed.role === role && seed.username === username) ?? null
 }
+
+export function listSeedTestLogins() {
+  return TEST_LOGIN_SEEDS.map(({ role, username }) => ({ role, username }))
+}
