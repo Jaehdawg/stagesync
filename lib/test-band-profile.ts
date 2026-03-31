@@ -29,14 +29,14 @@ export async function updateTestBandProfile(
 ): Promise<TestBandProfileRow> {
   const { data, error } = await supabase.rpc('test_update_band_profile', {
     p_band_name: input.band_name ?? '',
-    p_website_url: input.website_url ?? '',
+    p_cashapp_url: input.cashapp_url ?? '',
+    p_custom_message: input.custom_message ?? '',
     p_facebook_url: input.facebook_url ?? '',
     p_instagram_url: input.instagram_url ?? '',
     p_tiktok_url: input.tiktok_url ?? '',
     p_paypal_url: input.paypal_url ?? '',
     p_venmo_url: input.venmo_url ?? '',
-    p_cashapp_url: input.cashapp_url ?? '',
-    p_custom_message: input.custom_message ?? '',
+    p_website_url: input.website_url ?? '',
   })
 
   if (error || !data) {

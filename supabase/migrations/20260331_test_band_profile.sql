@@ -72,16 +72,16 @@ AS $$
   WHERE id = (SELECT id FROM test_band_profiles ORDER BY created_at DESC LIMIT 1);
 $$;
 
-CREATE OR REPLACE FUNCTION test_update_band_profile(
+CREATE OR REPLACE FUNCTION test_update_band_profile_impl(
   p_band_name TEXT,
-  p_website_url TEXT,
+  p_cashapp_url TEXT,
+  p_custom_message TEXT,
   p_facebook_url TEXT,
   p_instagram_url TEXT,
-  p_tiktok_url TEXT,
   p_paypal_url TEXT,
+  p_tiktok_url TEXT,
   p_venmo_url TEXT,
-  p_cashapp_url TEXT,
-  p_custom_message TEXT
+  p_website_url TEXT
 )
 RETURNS test_band_profiles
 LANGUAGE plpgsql
@@ -139,6 +139,43 @@ BEGIN
     updated_at = NOW()
   WHERE id = target_id
   RETURNING * INTO updated_profile;
+
+  RETURN updated_profile;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION test_update_band_profile(
+  p_band_name TEXT,
+  p_cashapp_url TEXT,
+  p_custom_message TEXT,
+  p_facebook_url TEXT,
+  p_instagram_url TEXT,
+  p_paypal_url TEXT,
+  p_tiktok_url TEXT,
+  p_venmo_url TEXT,
+  p_website_url TEXT
+)
+RETURNS test_band_profiles
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  updated_profile test_band_profiles;
+BEGIN
+  SELECT *
+  INTO updated_profile
+  FROM test_update_band_profile_impl(
+    p_band_name,
+    p_cashapp_url,
+    p_custom_message,
+    p_facebook_url,
+    p_instagram_url,
+    p_paypal_url,
+    p_tiktok_url,
+    p_venmo_url,
+    p_website_url
+  );
 
   RETURN updated_profile;
 END;
