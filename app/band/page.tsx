@@ -7,6 +7,8 @@ import { getTestSession } from '@/lib/test-session'
 import { getLatestTestShow, getLatestTestShowSettings } from '@/lib/test-show'
 import { getLatestTestBandProfile } from '@/lib/test-band-profile'
 import { getTestLogin } from '@/lib/test-login-list'
+import { headers } from 'next/headers'
+import { buildSingerSignupUrl, slugifyBandName } from '@/lib/public-links'
 
 async function getBandState(
   supabase: Awaited<ReturnType<typeof createClient>>,
@@ -138,11 +140,17 @@ async function getBandTestState(supabase: Awaited<ReturnType<typeof createClient
 export default async function BandPage() {
   const testSession = await getTestSession()
   const supabase = await createClient()
+  const requestHeaders = await headers()
+  const forwardedProto = requestHeaders.get('x-forwarded-proto') ?? 'https'
+  const forwardedHost = requestHeaders.get('x-forwarded-host') ?? requestHeaders.get('host')
+  const siteUrl = requestHeaders.get('origin') ?? (forwardedHost ? `${forwardedProto}://${forwardedHost}` : undefined)
+  const appUrl = siteUrl ?? process.env.NEXT_PUBLIC_SITE_URL?.trim() ?? 'https://stagesync-six.vercel.app'
 
   if (testSession?.role === 'band') {
     const state = await getBandTestState(supabase)
     const currentBandLogin = await getTestLogin(supabase, testSession.username)
     const isBandAdmin = currentBandLogin?.band_access_level !== 'member'
+    const singerSignupUrl = buildSingerSignupUrl(appUrl, slugifyBandName(state.brand.title), state.currentShowId)
 
     return (
       <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100 sm:px-6 lg:px-8">
@@ -166,7 +174,7 @@ export default async function BandPage() {
             </form>
           </header>
 
-          <BandDashboardView {...state} testMode bandAccessLevel={isBandAdmin ? 'admin' : 'member'} />
+          <BandDashboardView {...state} testMode bandAccessLevel={isBandAdmin ? 'admin' : 'member'} singerSignupUrl={singerSignupUrl} />
         </div>
       </main>
     )
@@ -229,6 +237,7 @@ export default async function BandPage() {
   }
 
   const state = await getBandState(supabase)
+  const singerSignupUrl = buildSingerSignupUrl(appUrl, slugifyBandName(state.brand.title), state.currentShowId)
 
   return (
     <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100 sm:px-6 lg:px-8">
@@ -246,7 +255,7 @@ export default async function BandPage() {
           </form>
         </header>
 
-        <BandDashboardView {...state} />
+        <BandDashboardView {...state} singerSignupUrl={singerSignupUrl} />
       </div>
     </main>
   )

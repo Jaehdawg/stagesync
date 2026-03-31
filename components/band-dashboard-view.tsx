@@ -1,3 +1,5 @@
+import { buildQrCodeImageUrl } from '../lib/public-links'
+
 export type BandDashboardState = {
   brand: {
     label: string
@@ -18,6 +20,7 @@ export type BandDashboardState = {
   signupBufferMinutes?: number | null
   bandAccessLevel?: 'admin' | 'member'
   testMode?: boolean
+  singerSignupUrl?: string | null
 }
 
 function Panel({
@@ -55,6 +58,7 @@ export function BandDashboardView({
   signupBufferMinutes,
   bandAccessLevel = 'admin',
   testMode = false,
+  singerSignupUrl = null,
 }: BandDashboardState) {
   const canManageShow = bandAccessLevel !== 'member'
   const controls =
@@ -326,6 +330,34 @@ export function BandDashboardView({
                 </button>
               </form>
             ) : null}
+          </Panel>
+
+          <Panel title="Singer signup link" eyebrow="Shareable public flow">
+            {singerSignupUrl ? (
+              <div className="space-y-4">
+                <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
+                  <p className="text-xs uppercase tracking-[0.22em] text-slate-400">Public URL</p>
+                  <a
+                    href={singerSignupUrl}
+                    className="mt-2 block break-all text-sm text-cyan-200 underline decoration-cyan-400/40 underline-offset-4"
+                  >
+                    {singerSignupUrl}
+                  </a>
+                </div>
+                <div className="flex items-center gap-4 rounded-2xl border border-white/10 bg-slate-900/60 p-4">
+                  <img
+                    src={buildQrCodeImageUrl(singerSignupUrl)}
+                    alt="Singer signup QR code"
+                    className="h-24 w-24 rounded-xl border border-white/10 bg-white p-2"
+                  />
+                  <p className="text-sm text-slate-300">
+                    Scan this QR code to open the singer sign-up page for this band.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <p className="text-slate-400">A public link will appear once the band has a profile and active show.</p>
+            )}
           </Panel>
 
           <Panel title="Payment links" eyebrow="Tips">

@@ -21,6 +21,7 @@ const state = {
   currentShowId: 'show-1',
   showState: 'active' as const,
   signupStatusMessage: 'Signups are open.',
+  singerSignupUrl: 'https://stagesync.example/?band=neon-echo&show=show-1',
 }
 
 describe('BandDashboardView', () => {
@@ -68,5 +69,13 @@ describe('BandDashboardView', () => {
     const { container } = render(<BandDashboardView {...state} />)
 
     expect(container.querySelector('form[action="/api/queue/queue-1/state"]')).toBeInTheDocument()
+  })
+
+  it('shows the singer signup link and QR code', () => {
+    render(<BandDashboardView {...state} />)
+
+    expect(screen.getByRole('heading', { name: /singer signup link/i })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /https:\/\/stagesync\.example/ })).toBeInTheDocument()
+    expect(screen.getByAltText(/singer signup qr code/i)).toBeInTheDocument()
   })
 })

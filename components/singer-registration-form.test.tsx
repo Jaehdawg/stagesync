@@ -1,8 +1,10 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { vi } from 'vitest'
 import { SingerRegistrationForm } from './singer-registration-form'
 
 describe('SingerRegistrationForm', () => {
   it('sends a magic link with singer details', async () => {
+    vi.stubEnv('NEXT_PUBLIC_SITE_URL', 'https://stagesync.example')
     const signInWithOtp = vi.fn().mockResolvedValue({ error: null })
 
     render(
@@ -22,7 +24,7 @@ describe('SingerRegistrationForm', () => {
     expect(signInWithOtp).toHaveBeenCalledWith({
       email: 'maya@example.com',
       options: {
-        emailRedirectTo: expect.stringContaining('/auth/callback?role=singer'),
+        emailRedirectTo: 'https://stagesync.example/auth/callback?role=singer',
         data: {
           first_name: 'Maya',
           last_name: 'Chen',
@@ -31,10 +33,13 @@ describe('SingerRegistrationForm', () => {
       },
     })
 
+    vi.unstubAllEnvs()
+
     expect(screen.getByText(/check your email/i)).toBeInTheDocument()
   })
 
   it('shows an error when signup fails', async () => {
+    vi.unstubAllEnvs()
     const signInWithOtp = vi.fn().mockResolvedValue({ error: { message: 'Bad email' } })
 
     render(
@@ -54,6 +59,7 @@ describe('SingerRegistrationForm', () => {
   })
 
   it('disables signup when the show is not accepting singers', async () => {
+    vi.unstubAllEnvs()
     render(
       <SingerRegistrationForm
         disabled
