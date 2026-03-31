@@ -1,7 +1,7 @@
 export type RootAuthParams = {
   code?: string
   role?: string
-  siteUrl?: string
+  siteUrl: string
 }
 
 export function buildRootAuthRedirect({ code, role, siteUrl }: RootAuthParams) {
@@ -9,7 +9,7 @@ export function buildRootAuthRedirect({ code, role, siteUrl }: RootAuthParams) {
     return null
   }
 
-  const callbackUrl = new URL('/auth/callback', siteUrl || 'http://localhost:3000')
+  const callbackUrl = new URL('/auth/callback', siteUrl)
   callbackUrl.searchParams.set('code', code)
 
   if (role === 'band' || role === 'singer' || role === 'admin') {

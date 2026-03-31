@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation'
+import { headers } from 'next/headers'
 import { createClient } from '@/utils/supabase/server'
 import { buildDashboardState } from '@/lib/dashboard'
 import { SingerDashboardView } from '@/components/singer-dashboard-view'
@@ -21,10 +22,15 @@ export default async function Home({
   const code = typeof params?.code === 'string' ? params.code : undefined
   const role = typeof params?.role === 'string' ? params.role : undefined
 
+  const requestHeaders = await headers()
+  const forwardedProto = requestHeaders.get('x-forwarded-proto') ?? 'https'
+  const forwardedHost = requestHeaders.get('x-forwarded-host') ?? requestHeaders.get('host')
+  const siteUrl = requestHeaders.get('origin') ?? (forwardedHost ? `${forwardedProto}://${forwardedHost}` : undefined)
+
   const authRedirect = buildRootAuthRedirect({
     code,
     role,
-    siteUrl: process.env.NEXT_PUBLIC_SITE_URL?.trim(),
+    siteUrl: siteUrl ?? process.env.NEXT_PUBLIC_SITE_URL?.trim() ?? 'https://stagesync-six.vercel.app',
   })
 
   if (authRedirect) {

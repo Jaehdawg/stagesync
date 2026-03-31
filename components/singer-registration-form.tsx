@@ -45,7 +45,7 @@ export function SingerRegistrationForm({ supabaseClient, disabled = false, statu
     setMessage(null)
 
     const client = supabaseClient ?? createClient()
-    const appUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim() || window.location.origin
+    const appUrl = window.location.origin
 
     const { error } = await client.auth.signInWithOtp({
       email,
