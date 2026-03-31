@@ -38,6 +38,18 @@ async function getBandState(
       .limit(6),
   ])
 
+  const currentShow = events?.[0]
+  const currentSettings = currentShow?.id
+    ? await supabase
+        .from('show_settings')
+        .select('show_duration_minutes, signup_buffer_minutes')
+        .eq('event_id', currentShow.id)
+        .maybeSingle()
+    : { data: null }
+
+  const showDurationMinutes = currentSettings.data?.show_duration_minutes ?? 60
+  const signupBufferMinutes = currentSettings.data?.signup_buffer_minutes ?? 1
+
   const songIds = [...new Set((queueItems ?? []).map((item) => item.song_id).filter((id): id is string => Boolean(id)))]
   const performerIds = [
     ...new Set((queueItems ?? []).map((item) => item.performer_id).filter((id): id is string => Boolean(id))),
@@ -54,12 +66,11 @@ async function getBandState(
 
   const songsById = new Map((songs ?? []).map((song) => [song.id, song]))
   const profilesById = new Map((profiles ?? []).map((profile) => [profile.id, profile]))
-  const currentShow = events?.[0]
   const showState = getShowState(currentShow)
   const signupEnabled = canSingerSignUp(currentShow)
   const signupCapacity = getSignupCapacity({
-    show_duration_minutes: 60,
-    buffer_minutes: 1,
+    show_duration_minutes: showDurationMinutes,
+    buffer_minutes: signupBufferMinutes,
   })
 
   return buildDashboardState({
@@ -91,6 +102,8 @@ async function getBandState(
           : 'This show has ended and singer signups are closed.',
     currentShowId: currentShow?.id ?? null,
     showState,
+    showDurationMinutes,
+    signupBufferMinutes,
   })
 }
 
