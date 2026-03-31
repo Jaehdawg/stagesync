@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from 'react'
 import { createClient } from '../utils/supabase/client'
+import { buildAuthCallbackUrl } from '../lib/auth'
 
 type SupabaseAuthClient = {
   auth: {
@@ -38,11 +39,12 @@ export function SingerRegistrationForm({ supabaseClient }: SingerRegistrationFor
     setMessage(null)
 
     const client = supabaseClient ?? createClient()
+    const appUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim() || window.location.origin
 
     const { error } = await client.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        emailRedirectTo: buildAuthCallbackUrl(appUrl),
         data: {
           first_name: firstName,
           last_name: lastName,

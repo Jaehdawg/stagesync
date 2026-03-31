@@ -2,6 +2,8 @@ import { createClient } from '@/utils/supabase/server'
 import { buildDashboardState } from '@/lib/dashboard'
 import { DashboardView } from '@/components/dashboard-view'
 
+type SearchParams = Record<string, string | string[] | undefined>
+
 type QueueItemRow = {
   position: number | null
   status: string | null
@@ -22,8 +24,15 @@ type ProfileRow = {
   last_name: string | null
 }
 
-export default async function Home() {
+export default async function Home({
+  searchParams,
+}: {
+  searchParams?: Promise<SearchParams>
+}) {
   const supabase = await createClient()
+  const params = await searchParams
+  const auth = typeof params?.auth === 'string' ? params.auth : undefined
+  const message = typeof params?.message === 'string' ? params.message : undefined
 
   const [{ data: bandProfile }, { data: events }, { data: queueItems }] = await Promise.all([
     supabase
@@ -77,5 +86,16 @@ export default async function Home() {
     }),
   })
 
-  return <DashboardView {...state} />
+  return (
+    <>
+      {auth ? (
+        <div className="border-b border-cyan-400/20 bg-cyan-400/10 px-4 py-3 text-center text-sm text-cyan-100">
+          {auth === 'success' ? 'Magic link confirmed. You’re signed in.' : null}
+          {auth === 'missing-code' ? 'Missing auth code in the callback URL.' : null}
+          {auth === 'error' ? `Sign-in issue: ${message ?? 'Unable to complete the login.'}` : null}
+        </div>
+      ) : null}
+      <DashboardView {...state} />
+    </>
+  )
 }
