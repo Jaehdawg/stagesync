@@ -32,4 +32,11 @@ describe('BandDashboardView', () => {
     expect(screen.queryByRole('heading', { name: /quick registration/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: /singer experience/i })).not.toBeInTheDocument()
   })
+
+  it('shows a create show form when there is no current show in test mode', () => {
+    render(<BandDashboardView {...state} currentShowId={null} testMode currentShowName={null} />)
+
+    expect(screen.getByRole('button', { name: /create show/i })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /pause signups/i })).not.toBeInTheDocument()
+  })
 })

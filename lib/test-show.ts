@@ -1,0 +1,53 @@
+import type { SupabaseClient } from '@supabase/supabase-js'
+
+export type TestShowRow = {
+  id: string
+  name: string
+  description: string | null
+  is_active: boolean | null
+  allow_signups: boolean | null
+  access_code: string | null
+  created_at: string | null
+}
+
+export async function getLatestTestShow(supabase: SupabaseClient): Promise<TestShowRow | null> {
+  const { data, error } = await supabase.rpc('test_latest_show')
+
+  if (error) {
+    return null
+  }
+
+  return (data?.[0] as TestShowRow | undefined) ?? null
+}
+
+export async function createTestShow(
+  supabase: SupabaseClient,
+  input: { name?: string; description?: string }
+): Promise<TestShowRow> {
+  const { data, error } = await supabase.rpc('test_create_show', {
+    p_name: input.name ?? '',
+    p_description: input.description ?? '',
+  })
+
+  if (error || !data) {
+    throw new Error(error?.message || 'Unable to create show')
+  }
+
+  return data as TestShowRow
+}
+
+export async function updateTestShowState(
+  supabase: SupabaseClient,
+  input: { eventId?: string | null; action: 'start' | 'pause' | 'resume' | 'end' }
+): Promise<TestShowRow> {
+  const { data, error } = await supabase.rpc('test_update_show_state', {
+    p_event_id: input.eventId ?? null,
+    p_action: input.action,
+  })
+
+  if (error || !data) {
+    throw new Error(error?.message || 'Unable to update show')
+  }
+
+  return data as TestShowRow
+}

@@ -2,8 +2,9 @@ import { createClient } from '@/utils/supabase/server'
 import { buildDashboardState } from '@/lib/dashboard'
 import { canSingerSignUp, getShowState, getSignupCapacity } from '@/lib/show-state'
 import { BandAccessForm } from '@/components/band-access-form'
-import { BandDashboardView } from '@/components/band-dashboard-view'
+import { BandDashboardView, type BandDashboardState } from '@/components/band-dashboard-view'
 import { getTestSession } from '@/lib/test-session'
+import { getLatestTestShow } from '@/lib/test-show'
 
 async function getBandState(supabase: Awaited<ReturnType<typeof createClient>>) {
   const [{ data: bandProfile }, { data: events }, { data: queueItems }] = await Promise.all([
@@ -75,12 +76,36 @@ async function getBandState(supabase: Awaited<ReturnType<typeof createClient>>) 
   })
 }
 
+async function getBandTestState(supabase: Awaited<ReturnType<typeof createClient>>): Promise<BandDashboardState> {
+  const currentShow = await getLatestTestShow(supabase)
+  const state = await getBandState(supabase)
+
+  return {
+    ...state,
+    currentShowId: currentShow?.id ?? null,
+    currentShowName: currentShow?.name ?? 'StageSync Show',
+    showState: currentShow?.is_active
+      ? currentShow.allow_signups === false
+        ? 'paused'
+        : 'active'
+      : 'ended',
+    signupEnabled: Boolean(currentShow?.is_active && currentShow?.allow_signups),
+    signupStatusMessage: currentShow
+      ? currentShow.is_active
+        ? currentShow.allow_signups === false
+          ? 'Signups are paused by the band.'
+          : 'Signups are open for the test show.'
+        : 'This show has ended and singer signups are closed.'
+      : 'No show exists yet. Create one to begin.',
+  }
+}
+
 export default async function BandPage() {
   const testSession = await getTestSession()
   const supabase = await createClient()
 
   if (testSession?.role === 'band') {
-    const state = await getBandState(supabase)
+    const state = await getBandTestState(supabase)
 
     return (
       <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100 sm:px-6 lg:px-8">
@@ -93,7 +118,7 @@ export default async function BandPage() {
             </p>
           </header>
 
-          <BandDashboardView {...state} />
+          <BandDashboardView {...state} testMode />
         </div>
       </main>
     )

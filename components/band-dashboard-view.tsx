@@ -1,4 +1,4 @@
-type BandDashboardState = {
+export type BandDashboardState = {
   brand: {
     label: string
     title: string
@@ -10,8 +10,11 @@ type BandDashboardState = {
   paymentLinks: { label: string; href: string }[]
   customMessage: string
   currentShowId?: string | null
+  currentShowName?: string | null
   showState: 'active' | 'paused' | 'ended'
   signupStatusMessage: string
+  signupEnabled?: boolean
+  testMode?: boolean
 }
 
 function Panel({
@@ -42,8 +45,10 @@ export function BandDashboardView({
   paymentLinks,
   customMessage,
   currentShowId,
+  currentShowName,
   showState,
   signupStatusMessage,
+  testMode = false,
 }: BandDashboardState) {
   const controls =
     showState === 'active'
@@ -87,21 +92,64 @@ export function BandDashboardView({
       <div className="grid gap-8 xl:grid-cols-[1.15fr_0.85fr]">
         <div className="grid gap-8">
           <Panel title="Show controls" eyebrow="Operations">
-            <div className="grid gap-3 sm:grid-cols-3">
-              {controls.map((control) => (
-                <form key={control.value} action={`/api/shows/${currentShowId ?? ''}/state`} method="post">
-                  <input type="hidden" name="action" value={control.value} />
-                  <button
-                    type="submit"
-                    disabled={!currentShowId}
-                    className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    {control.label}
-                  </button>
-                </form>
-              ))}
-            </div>
-            <p className="mt-4 text-slate-400">{signupStatusMessage}</p>
+            {!currentShowId && testMode ? (
+              <form className="space-y-4" action="/api/testing/show" method="post">
+                <input type="hidden" name="action" value="create" />
+                <div className="space-y-2">
+                  <label htmlFor="show-name" className="text-sm font-medium text-slate-200">
+                    Show name
+                  </label>
+                  <input
+                    id="show-name"
+                    name="name"
+                    type="text"
+                    defaultValue={currentShowName ?? 'StageSync Live'}
+                    className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label htmlFor="show-description" className="text-sm font-medium text-slate-200">
+                    Description
+                  </label>
+                  <input
+                    id="show-description"
+                    name="description"
+                    type="text"
+                    defaultValue="Live karaoke show"
+                    className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-medium text-white"
+                >
+                  Create show
+                </button>
+              </form>
+            ) : (
+              <>
+                <div className="grid gap-3 sm:grid-cols-3">
+                  {controls.map((control) => (
+                    <form
+                      key={control.value}
+                      action={testMode ? '/api/testing/show' : `/api/shows/${currentShowId ?? ''}/state`}
+                      method="post"
+                    >
+                      <input type="hidden" name="action" value={control.value} />
+                      <input type="hidden" name="eventId" value={currentShowId ?? ''} />
+                      <button
+                        type="submit"
+                        disabled={!currentShowId}
+                        className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {control.label}
+                      </button>
+                    </form>
+                  ))}
+                </div>
+                <p className="mt-4 text-slate-400">{signupStatusMessage}</p>
+              </>
+            )}
           </Panel>
 
           <Panel title="Queue management" eyebrow="Queue admin">
