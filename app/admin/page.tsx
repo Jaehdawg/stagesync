@@ -15,7 +15,7 @@ export default async function AdminPage() {
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">Platform control</p>
             <h1 className="mt-2 text-4xl font-semibold text-white">StageSync Admin</h1>
             <p className="mt-3 max-w-2xl text-slate-300">
-              Logged in as testing account <span className="font-semibold">{testSession.username}</span>.
+              Logged in as <span className="font-semibold">{testSession.username}</span>.
             </p>
             <form className="mt-4" action="/api/auth/logout" method="post">
               <button type="submit" className="rounded-full border border-white/10 px-4 py-2 text-sm font-medium text-white hover:border-cyan-400/50">
