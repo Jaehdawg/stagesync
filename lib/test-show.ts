@@ -18,6 +18,8 @@ export type TestShowSettingsRow = {
   allow_tips: boolean | null
   signup_buffer_minutes: number | null
   show_duration_minutes: number | null
+  song_source_mode: 'uploaded' | 'tidal_playlist' | 'tidal_catalog' | null
+  tidal_playlist_url: string | null
 }
 
 export async function getLatestTestShow(supabase: SupabaseClient): Promise<TestShowRow | null> {
@@ -75,13 +77,20 @@ export async function getLatestTestShowSettings(supabase: SupabaseClient, eventI
 
 export async function updateTestShowSettings(
   supabase: SupabaseClient,
-  input: { eventId?: string | null; showDurationMinutes?: number; signupBufferMinutes?: number; songSourceMode?: 'uploaded' | 'tidal_playlist' | 'tidal_catalog' }
+  input: {
+    eventId?: string | null
+    showDurationMinutes?: number
+    signupBufferMinutes?: number
+    songSourceMode?: 'uploaded' | 'tidal_playlist' | 'tidal_catalog'
+    tidalPlaylistUrl?: string | null
+  }
 ): Promise<TestShowSettingsRow> {
   const { data, error } = await supabase.rpc('test_update_show_settings', {
     p_event_id: input.eventId ?? null,
     p_show_duration_minutes: input.showDurationMinutes ?? 60,
     p_signup_buffer_minutes: input.signupBufferMinutes ?? 1,
     p_song_source_mode: input.songSourceMode ?? 'uploaded',
+    p_tidal_playlist_url: input.tidalPlaylistUrl ?? null,
   })
 
   if (error || !data) {

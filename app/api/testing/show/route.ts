@@ -1,8 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { getTestSession } from '@/lib/test-session'
-import { createTestShow, updateTestShowState } from '@/lib/test-show'
-import { createServiceClient } from '@/utils/supabase/service'
+import { createTestShow, updateTestShowSettings, updateTestShowState } from '@/lib/test-show'
 
 function getSupabase(request: NextRequest) {
   return createServerClient(
@@ -44,20 +43,6 @@ export async function POST(request: NextRequest) {
     if (action === 'create') {
       await createTestShow(supabase, { name, description })
     } else if (action === 'settings') {
-      const serviceSupabase = createServiceClient()
-      const latestShowResponse = await supabase
-        .from('events')
-        .select('id')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle()
-
-      const targetEventId = eventId || latestShowResponse.data?.id || null
-
-      if (!targetEventId) {
-        return NextResponse.json({ message: 'No show available to update.' }, { status: 400 })
-      }
-
       const mode = songSourceMode === 'tidal_playlist' || songSourceMode === 'tidal_catalog' ? songSourceMode : 'uploaded'
       const playlistUrl = tidalPlaylistUrl.trim() || null
 
@@ -65,37 +50,13 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ message: 'Add a Tidal playlist URL before saving playlist mode.' }, { status: 400 })
       }
 
-      const { error } = await serviceSupabase
-        .from('show_settings')
-        .upsert(
-          {
-            event_id: targetEventId,
-            signup_buffer_minutes: Number.isFinite(signupBufferMinutes) ? signupBufferMinutes : 1,
-            show_duration_minutes: Number.isFinite(showDurationMinutes) ? showDurationMinutes : 60,
-            playlist_only: mode === 'tidal_playlist',
-          },
-          { onConflict: 'event_id' }
-        )
-
-      if (error) {
-        return NextResponse.json({ message: error.message }, { status: 500 })
-      }
-
-      const { error: eventError } = await serviceSupabase
-        .from('events')
-        .update({
-          description:
-            mode === 'tidal_playlist'
-              ? playlistUrl
-              : mode === 'tidal_catalog'
-                ? '__TIDAL_CATALOG__'
-                : null,
-        })
-        .eq('id', targetEventId)
-
-      if (eventError) {
-        return NextResponse.json({ message: eventError.message }, { status: 500 })
-      }
+      await updateTestShowSettings(supabase, {
+        eventId,
+        showDurationMinutes: Number.isFinite(showDurationMinutes) ? showDurationMinutes : 60,
+        signupBufferMinutes: Number.isFinite(signupBufferMinutes) ? signupBufferMinutes : 1,
+        songSourceMode: mode,
+        tidalPlaylistUrl: playlistUrl,
+      })
     } else if (action === 'start' || action === 'pause' || action === 'resume' || action === 'end') {
       await updateTestShowState(supabase, { eventId, action })
     } else {
