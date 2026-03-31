@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/utils/supabase/server'
 import { buildDashboardState } from '@/lib/dashboard'
 import { getRoleHomePath } from '@/lib/roles'
+import { canSingerSignUp, getShowState, getSignupCapacity } from '@/lib/show-state'
 import { BandAccessForm } from '@/components/band-access-form'
 import { BandDashboardView } from '@/components/band-dashboard-view'
 
@@ -12,7 +13,7 @@ async function getBandState(supabase: Awaited<ReturnType<typeof createClient>>) 
       .select('band_name, website_url, facebook_url, instagram_url, tiktok_url, paypal_url, venmo_url, cashapp_url, custom_message')
       .limit(1)
       .maybeSingle(),
-    supabase.from('events').select('id').order('created_at', { ascending: false }).limit(1),
+    supabase.from('events').select('id, name, is_active, allow_signups').order('created_at', { ascending: false }).limit(1),
     supabase
       .from('queue_items')
       .select('position, status, song_id, performer_id')
@@ -36,6 +37,13 @@ async function getBandState(supabase: Awaited<ReturnType<typeof createClient>>) 
 
   const songsById = new Map((songs ?? []).map((song) => [song.id, song]))
   const profilesById = new Map((profiles ?? []).map((profile) => [profile.id, profile]))
+  const currentShow = events?.[0]
+  const showState = getShowState(currentShow)
+  const signupEnabled = canSingerSignUp(currentShow)
+  const signupCapacity = getSignupCapacity({
+    show_duration_minutes: 60,
+    buffer_minutes: 1,
+  })
 
   return buildDashboardState({
     bandProfile,
@@ -56,6 +64,15 @@ async function getBandState(supabase: Awaited<ReturnType<typeof createClient>>) 
         song: song ? `${song.title} - ${song.artist}` : 'Requested song',
       }
     }),
+    signupEnabled,
+    signupStatusMessage:
+      showState === 'active'
+        ? `Signups are open. Estimated signup capacity: ${signupCapacity} songs for this set.`
+        : showState === 'paused'
+          ? 'Signups are paused by the band.'
+          : 'This show has ended and singer signups are closed.',
+    currentShowId: currentShow?.id ?? null,
+    showState,
   })
 }
 

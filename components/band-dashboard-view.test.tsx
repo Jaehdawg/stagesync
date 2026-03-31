@@ -18,6 +18,9 @@ const state = {
   bandLinks: [{ label: 'Website', href: 'https://example.com' }],
   paymentLinks: [{ label: 'PayPal', href: 'https://paypal.com' }],
   customMessage: 'Thanks!',
+  currentShowId: 'show-1',
+  showState: 'active' as const,
+  signupStatusMessage: 'Signups are open.',
 }
 
 describe('BandDashboardView', () => {

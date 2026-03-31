@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { SingerRegistrationForm } from './singer-registration-form'
+import { SongRequestForm } from './song-request-form'
 
 type DashboardState = {
   brand: {
@@ -108,6 +109,12 @@ export function SingerDashboardView(state: DashboardState) {
                       <p className="font-medium text-white">Suggested result</p>
                       <p className="text-slate-400">Dreams — Fleetwood Mac</p>
                     </div>
+                  </div>
+                  <div className="mt-4">
+                    <SongRequestForm
+                      disabled={!state.signupEnabled}
+                      statusMessage={state.signupStatusMessage}
+                    />
                   </div>
                 </div>
               </div>

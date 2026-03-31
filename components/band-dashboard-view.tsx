@@ -9,6 +9,9 @@ type BandDashboardState = {
   bandLinks: { label: string; href: string }[]
   paymentLinks: { label: string; href: string }[]
   customMessage: string
+  currentShowId?: string | null
+  showState: 'active' | 'paused' | 'ended'
+  signupStatusMessage: string
 }
 
 function Panel({
@@ -38,7 +41,23 @@ export function BandDashboardView({
   bandLinks,
   paymentLinks,
   customMessage,
+  currentShowId,
+  showState,
+  signupStatusMessage,
 }: BandDashboardState) {
+  const controls =
+    showState === 'active'
+      ? [
+          { label: 'Pause signups', value: 'pause' },
+          { label: 'End show', value: 'end' },
+        ]
+      : showState === 'paused'
+        ? [
+            { label: 'Resume signups', value: 'resume' },
+            { label: 'End show', value: 'end' },
+          ]
+        : [{ label: 'Start show', value: 'start' }]
+
   return (
     <main className="space-y-8">
       <header className="rounded-3xl border border-cyan-400/20 bg-slate-950/70 p-6 shadow-2xl shadow-cyan-950/20 backdrop-blur">
@@ -69,19 +88,20 @@ export function BandDashboardView({
         <div className="grid gap-8">
           <Panel title="Show controls" eyebrow="Operations">
             <div className="grid gap-3 sm:grid-cols-3">
-              <button className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-medium text-white">
-                Start show
-              </button>
-              <button className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-medium text-white">
-                Pause signups
-              </button>
-              <button className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-medium text-white">
-                End show
-              </button>
+              {controls.map((control) => (
+                <form key={control.value} action={`/api/shows/${currentShowId ?? ''}/state`} method="post">
+                  <input type="hidden" name="action" value={control.value} />
+                  <button
+                    type="submit"
+                    disabled={!currentShowId}
+                    className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {control.label}
+                  </button>
+                </form>
+              ))}
             </div>
-            <p className="mt-4 text-slate-400">
-              Bands can control when singers can join, when a show is active, and when requests should stop.
-            </p>
+            <p className="mt-4 text-slate-400">{signupStatusMessage}</p>
           </Panel>
 
           <Panel title="Queue management" eyebrow="Queue admin">

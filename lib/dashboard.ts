@@ -25,6 +25,8 @@ export type DashboardSource = {
   queueItems?: QueueItemInput[]
   signupEnabled?: boolean
   signupStatusMessage?: string
+  currentShowId?: string | null
+  showState?: 'active' | 'paused' | 'ended'
 }
 
 export type DashboardState = {
@@ -41,6 +43,8 @@ export type DashboardState = {
   customMessage: string
   signupEnabled: boolean
   signupStatusMessage: string
+  currentShowId?: string | null
+  showState: 'active' | 'paused' | 'ended'
 }
 
 const fallbackBandLinks = [
@@ -119,5 +123,7 @@ export function buildDashboardState(source: DashboardSource = {}): DashboardStat
     signupEnabled: source.signupEnabled ?? true,
     signupStatusMessage:
       source.signupStatusMessage ?? 'Sign up while the show is active to add songs to the queue.',
+    currentShowId: source.currentShowId ?? null,
+    showState: source.showState ?? 'ended',
   }
 }
