@@ -17,6 +17,11 @@ export default async function AdminPage() {
             <p className="mt-3 max-w-2xl text-slate-300">
               Logged in as testing account <span className="font-semibold">{testSession.username}</span>.
             </p>
+            <form className="mt-4" action="/api/auth/logout" method="post">
+              <button type="submit" className="rounded-full border border-white/10 px-4 py-2 text-sm font-medium text-white hover:border-cyan-400/50">
+                Log out
+              </button>
+            </form>
           </header>
 
           <section className="grid gap-4 md:grid-cols-3">

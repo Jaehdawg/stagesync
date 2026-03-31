@@ -34,18 +34,23 @@ export default async function AdminBandsPage() {
   return (
     <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100 sm:px-6 lg:px-8">
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
-        <header className="rounded-3xl border border-white/10 bg-white/5 p-6">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">Platform control</p>
-              <h1 className="mt-2 text-4xl font-semibold text-white">Manage bands</h1>
-              <p className="mt-3 max-w-2xl text-slate-300">Create, edit, and delete band login accounts.</p>
+          <header className="rounded-3xl border border-white/10 bg-white/5 p-6">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">Platform control</p>
+                <h1 className="mt-2 text-4xl font-semibold text-white">Manage bands</h1>
+                <p className="mt-3 max-w-2xl text-slate-300">Create, edit, and delete band login accounts.</p>
+              </div>
+              <Link href="/admin" className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-white hover:border-cyan-400/50">
+                Back to admin
+              </Link>
             </div>
-            <Link href="/admin" className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-white hover:border-cyan-400/50">
-              Back to admin
-            </Link>
-          </div>
-        </header>
+            <form className="mt-4" action="/api/auth/logout" method="post">
+              <button type="submit" className="rounded-full border border-white/10 px-4 py-2 text-sm font-medium text-white hover:border-cyan-400/50">
+                Log out
+              </button>
+            </form>
+          </header>
 
         <section className="rounded-3xl border border-white/10 bg-white/5 p-6">
           <h2 className="text-2xl font-semibold text-white">Create band</h2>
