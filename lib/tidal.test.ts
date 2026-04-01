@@ -297,6 +297,157 @@ describe('tidal helpers', () => {
     }
   })
 
+  it('walks the playlist API end to end with pagination, track titles, artist names, and durations', async () => {
+    const originalClientId = process.env.TIDAL_CLIENT_ID
+    const originalClientSecret = process.env.TIDAL_CLIENT_SECRET
+    delete process.env.TIDAL_BROWSER_TOKEN
+    process.env.TIDAL_CLIENT_ID = 'client-id'
+    process.env.TIDAL_CLIENT_SECRET = 'client-secret'
+
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input)
+
+      if (url === 'https://auth.tidal.com/v1/oauth2/token') {
+        return {
+          ok: true,
+          json: async () => ({ access_token: 'tidal-bearer-token' }),
+        } as Response
+      }
+
+      if (url.includes('/playlists/abc123/relationships/items')) {
+        expect(init?.headers).toMatchObject({
+          accept: 'application/vnd.api+json',
+          authorization: 'Bearer tidal-bearer-token',
+        })
+
+        if (url.includes('offset=0')) {
+          return {
+            ok: true,
+            json: async () => ({
+              totalNumberOfItems: 3,
+              data: [
+                { id: '64186726', type: 'tracks' },
+                { id: '136685782', type: 'tracks' },
+              ],
+              links: { next: '/playlists/abc123/relationships/items?offset=2&limit=2&countryCode=US' },
+            }),
+          } as Response
+        }
+
+        return {
+          ok: true,
+          json: async () => ({
+            totalNumberOfItems: 3,
+            data: [{ id: '128550', type: 'tracks' }],
+          }),
+        } as Response
+      }
+
+      if (url.includes('/tracks/64186726?')) {
+        return {
+          ok: true,
+          json: async () => ({
+            data: {
+              id: '64186726',
+              type: 'tracks',
+              attributes: { title: 'Dreams', duration: 'PT5M' },
+            },
+          }),
+        } as Response
+      }
+
+      if (url.includes('/tracks/136685782?')) {
+        return {
+          ok: true,
+          json: async () => ({
+            data: {
+              id: '136685782',
+              type: 'tracks',
+              attributes: { title: 'Bad Decisions', duration: 'PT4M53S' },
+            },
+          }),
+        } as Response
+      }
+
+      if (url.includes('/tracks/128550?')) {
+        return {
+          ok: true,
+          json: async () => ({
+            data: {
+              id: '128550',
+              type: 'tracks',
+              attributes: { title: 'Fix You', duration: 'PT4M56S' },
+            },
+          }),
+        } as Response
+      }
+
+      if (url.includes('/tracks/64186726/relationships/artists')) {
+        return {
+          ok: true,
+          json: async () => ({ data: [{ id: '25055', type: 'artists' }] }),
+        } as Response
+      }
+
+      if (url.includes('/tracks/136685782/relationships/artists')) {
+        return {
+          ok: true,
+          json: async () => ({ data: [{ id: '99999', type: 'artists' }] }),
+        } as Response
+      }
+
+      if (url.includes('/tracks/128550/relationships/artists')) {
+        return {
+          ok: true,
+          json: async () => ({ data: [{ id: '13866', type: 'artists' }] }),
+        } as Response
+      }
+
+      if (url.includes('/artists/25055?')) {
+        return {
+          ok: true,
+          json: async () => ({ data: { id: '25055', type: 'artists', attributes: { name: 'Counting Crows' } } }),
+        } as Response
+      }
+
+      if (url.includes('/artists/99999?')) {
+        return {
+          ok: true,
+          json: async () => ({ data: { id: '99999', type: 'artists', attributes: { name: 'The Strokes' } } }),
+        } as Response
+      }
+
+      if (url.includes('/artists/13866?')) {
+        return {
+          ok: true,
+          json: async () => ({ data: { id: '13866', type: 'artists', attributes: { name: 'Coldplay' } } }),
+        } as Response
+      }
+
+      throw new Error(`Unexpected fetch: ${url}`)
+    })
+
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(fetchTidalPlaylistTracks('https://tidal.com/playlist/abc123', { limit: 2 })).resolves.toEqual([
+      { id: '64186726', title: 'Dreams', artist: 'Counting Crows', album: null, duration: 300 },
+      { id: '136685782', title: 'Bad Decisions', artist: 'The Strokes', album: null, duration: 293 },
+      { id: '128550', title: 'Fix You', artist: 'Coldplay', album: null, duration: 296 },
+    ])
+
+    if (originalClientId === undefined) {
+      delete process.env.TIDAL_CLIENT_ID
+    } else {
+      process.env.TIDAL_CLIENT_ID = originalClientId
+    }
+
+    if (originalClientSecret === undefined) {
+      delete process.env.TIDAL_CLIENT_SECRET
+    } else {
+      process.env.TIDAL_CLIENT_SECRET = originalClientSecret
+    }
+  })
+
   it('returns empty results when no token is configured', async () => {
     const result = await searchTidalTracks('Dreams')
     expect(result).toEqual([])
