@@ -132,8 +132,7 @@ export async function updateTestShowSettings(
   if (findError) throw new Error(findError.message)
 
   const next = {
-    ...existing,
-    ...payload,
+    ...(existing ?? {}),
     band_id: normalizedBandId ?? (existing?.band_id ?? null),
     event_id: normalizedEventId ?? (existing?.event_id ?? null),
     show_duration_minutes: showDurationMinutes ?? existing?.show_duration_minutes ?? null,

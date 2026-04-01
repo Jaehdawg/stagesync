@@ -56,14 +56,14 @@ export async function POST(request: NextRequest) {
 
       await updateTestShowSettings(supabase, {
         band_id: testSession.activeBandId,
-        eventId,
+        event_id: eventId,
         showDurationMinutes: Number.isFinite(showDurationMinutes) ? showDurationMinutes : 60,
         signupBufferMinutes: Number.isFinite(signupBufferMinutes) ? signupBufferMinutes : 1,
         songSourceMode: mode,
         tidalPlaylistUrl: currentSettings?.tidal_playlist_url ?? null,
       })
     } else if (action === 'start' || action === 'pause' || action === 'resume' || action === 'end') {
-      await updateTestShowState(supabase, { eventId, action })
+      await updateTestShowState(supabase, { event_id: eventId, action })
     } else {
       return NextResponse.json({ message: 'Unknown action.' }, { status: 400 })
     }
