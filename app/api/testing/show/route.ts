@@ -28,26 +28,34 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: 'Testing login required.' }, { status: 401 })
   }
 
+  if (!testSession.activeBandId) {
+    return NextResponse.json({ message: 'No active band selected.' }, { status: 400 })
+  }
+
   const supabase = getSupabase(request)
   const formData = await request.formData()
   const action = String(formData.get('action') ?? '')
   const eventId = String(formData.get('eventId') ?? '') || null
   const name = String(formData.get('name') ?? '')
   const description = String(formData.get('description') ?? '')
-    const showDurationMinutes = Number(formData.get('showDurationMinutes'))
-    const signupBufferMinutes = Number(formData.get('signupBufferMinutes'))
-    const songSourceMode = String(formData.get('songSourceMode') ?? '')
+  const showDurationMinutes = Number(formData.get('showDurationMinutes'))
+  const signupBufferMinutes = Number(formData.get('signupBufferMinutes'))
+  const songSourceMode = String(formData.get('songSourceMode') ?? '')
 
-    try {
+  try {
     if (action === 'create') {
-      await createTestShow(supabase, { name, description })
+      const { data: band } = await supabase.from('bands').select('band_name').eq('id', testSession.activeBandId).maybeSingle()
+      await createTestShow(supabase, { band_id: testSession.activeBandId, band_name: band?.band_name ?? null, name, description })
     } else if (action === 'settings') {
       const mode = songSourceMode === 'tidal_playlist' ? songSourceMode : 'uploaded'
-      const { data: currentSettings } = eventId
-        ? await supabase.from('show_settings').select('tidal_playlist_url').eq('event_id', eventId).maybeSingle()
-        : { data: null }
+      const { data: currentSettings } = await supabase
+        .from('test_show_settings')
+        .select('tidal_playlist_url')
+        .eq('band_id', testSession.activeBandId)
+        .maybeSingle()
 
       await updateTestShowSettings(supabase, {
+        band_id: testSession.activeBandId,
         eventId,
         showDurationMinutes: Number.isFinite(showDurationMinutes) ? showDurationMinutes : 60,
         signupBufferMinutes: Number.isFinite(signupBufferMinutes) ? signupBufferMinutes : 1,

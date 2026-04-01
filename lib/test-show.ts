@@ -12,7 +12,9 @@ export type TestShowRow = {
   description?: string | null
   is_active?: boolean | null
   allow_signups?: boolean | null
+  ended_at?: string | null
   created_at?: string | null
+  updated_at?: string | null
 }
 
 export type TestShowSettingsRow = {
@@ -80,10 +82,15 @@ export async function getLatestTestShowSettings(supabase: SupabaseLike, bandId?:
 }
 
 export async function createTestShow(supabase: SupabaseLike, payload: Partial<TestShowRow> & { band_name?: string | null }) {
+  const bandId = normalizeBandId(payload.band_id)
+  if (!bandId) {
+    throw new Error('band_id is required.')
+  }
+
   const { data, error } = await supabase
     .from('test_shows')
     .insert({
-      band_id: normalizeBandId(payload.band_id),
+      band_id: bandId,
       band_name: payload.band_name ?? null,
       host_id: payload.host_id ?? null,
       name: payload.name ?? null,
@@ -158,15 +165,32 @@ export async function updateTestShowState(
     throw new Error('eventId is required.')
   }
 
-  if (!supabase.rpc) {
-    throw new Error('Supabase RPC is unavailable.')
+  const update =
+    payload.action === 'start'
+      ? { is_active: true, allow_signups: true, ended_at: null }
+      : payload.action === 'pause'
+        ? { is_active: true, allow_signups: false }
+        : payload.action === 'resume'
+          ? { is_active: true, allow_signups: true }
+          : payload.action === 'end'
+            ? { is_active: false, allow_signups: false, ended_at: new Date().toISOString() }
+            : null
+
+  if (!update) {
+    throw new Error(`Unknown show action: ${payload.action}`)
   }
 
-  const { data, error } = await supabase.rpc('test_update_show_state', {
-    p_event_id: eventId,
-    p_action: payload.action,
-  })
+  const { data, error } = await supabase
+    .from('test_shows')
+    .update(update)
+    .eq('id', eventId)
+    .select('*')
+    .maybeSingle()
 
   if (error) throw new Error(error.message)
+  if (!data) {
+    throw new Error('No show available to update')
+  }
+
   return data
 }
