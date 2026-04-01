@@ -20,7 +20,6 @@ export type BandDashboardState = {
   showDurationMinutes?: number | null
   signupBufferMinutes?: number | null
   songSourceMode?: 'uploaded' | 'tidal_playlist'
-  tidalPlaylistUrl?: string | null
   bandAccessLevel?: 'admin' | 'member'
   testMode?: boolean
   singerSignupUrl?: string | null
@@ -60,7 +59,6 @@ export function BandDashboardView({
   showDurationMinutes,
   signupBufferMinutes,
   songSourceMode = 'uploaded',
-  tidalPlaylistUrl = null,
   bandAccessLevel = 'admin',
   testMode = false,
   singerSignupUrl = null,
@@ -197,9 +195,9 @@ export function BandDashboardView({
                             className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none"
                           />
                         </div>
-                      <div className="space-y-2 sm:col-span-2">
-                        <label htmlFor="song-source-mode" className="text-sm font-medium text-slate-200">
-                          Song source
+                        <div className="space-y-2 sm:col-span-2">
+                          <label htmlFor="song-source-mode" className="text-sm font-medium text-slate-200">
+                            Song source
                           </label>
                           <select
                             id="song-source-mode"
@@ -209,37 +207,15 @@ export function BandDashboardView({
                           >
                             <option value="uploaded">Uploaded song list</option>
                             <option value="tidal_playlist">Tidal playlist</option>
-                        </select>
+                          </select>
+                        </div>
                       </div>
-                      <div className="space-y-2 sm:col-span-2">
-                        <label htmlFor="tidal-playlist-url" className="text-sm font-medium text-slate-200">
-                          Tidal playlist URL
-                        </label>
-                        <input
-                          id="tidal-playlist-url"
-                          name="tidalPlaylistUrl"
-                          type="url"
-                          defaultValue={tidalPlaylistUrl ?? ''}
-                          placeholder="https://tidal.com/browse/playlist/..."
-                          className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none"
-                        />
-                      </div>
-                    </div>
                       <button
                         type="submit"
                         className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-medium text-white"
                       >
                         Save settings
                       </button>
-                    </form>
-                    <form className="mt-6 space-y-4 rounded-2xl border border-white/10 bg-white/5 p-4" action="/api/band/songs/import" method="post" encType="multipart/form-data">
-                      <h3 className="text-lg font-semibold text-white">Upload song CSV</h3>
-                      <p className="text-slate-400">Upload a CSV with columns for song title, artist, and duration to build the band’s song library.</p>
-                      <div className="space-y-2">
-                        <label htmlFor="song-csv" className="text-sm font-medium text-slate-200">CSV file</label>
-                        <input id="song-csv" name="csvFile" type="file" accept=".csv,text/csv" className="block w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white file:mr-4 file:rounded-full file:border-0 file:bg-cyan-400 file:px-4 file:py-2 file:font-semibold file:text-slate-950" />
-                      </div>
-                      <button type="submit" className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-medium text-white">Import CSV</button>
                     </form>
                   </>
                 ) : null}

@@ -458,6 +458,28 @@ function extractPlaylistId(url: string) {
   }
 }
 
+async function fetchBrowserPlaylistPage(playlistId: string, token: string, offset: number, limit: number) {
+  const payload = await fetchTidalJson([
+    `/v1/playlists/${playlistId}/items`,
+  ], '', {
+    limit,
+    params: {
+      offset: String(offset),
+      locale: 'en_US',
+      deviceType: 'BROWSER',
+      countryCode: 'US',
+    },
+    headers: {
+      accept: 'application/json',
+      'x-tidal-token': token,
+      referer: `https://tidal.com/playlist/${playlistId}`,
+      'user-agent': 'Mozilla/5.0',
+    },
+  })
+
+  return (payload as TidalJson | null) ?? null
+}
+
 export async function fetchTidalPlaylistTracks(playlistUrl: string, options: { limit?: number } = {}) {
   const playlistId = extractPlaylistId(playlistUrl)
   if (!playlistId) {
@@ -465,6 +487,34 @@ export async function fetchTidalPlaylistTracks(playlistUrl: string, options: { l
   }
 
   const limit = Math.min(Math.max(options.limit ?? 200, 1), 500)
+  const browserToken = process.env.TIDAL_BROWSER_TOKEN?.trim() || ''
+
+  if (browserToken) {
+    const pageSize = Math.min(limit, 100)
+    const tracks: TidalTrack[] = []
+    let offset = 0
+    let total = Number.POSITIVE_INFINITY
+
+    while (tracks.length < total) {
+      const payload = await fetchBrowserPlaylistPage(playlistId, browserToken, offset, pageSize)
+      if (!payload) break
+
+      const pageTracks = extractTidalTracks(payload)
+      tracks.push(...pageTracks)
+
+      const reportedTotal = Number((payload as TidalJson).totalNumberOfItems)
+      if (Number.isFinite(reportedTotal) && reportedTotal >= 0) {
+        total = reportedTotal
+      } else if (pageTracks.length < pageSize) {
+        total = tracks.length
+      }
+
+      if (!pageTracks.length) break
+      offset += pageSize
+    }
+
+    return [...new Map(tracks.map((track) => [track.id, track])).values()]
+  }
 
   const token = await getTidalAccessToken()
   if (!token) {

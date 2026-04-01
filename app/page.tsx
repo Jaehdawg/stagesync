@@ -134,7 +134,6 @@ export default async function Home({
     showDurationMinutes,
     signupBufferMinutes,
     songSourceMode: showSettingsResponse.data?.song_source_mode ?? 'uploaded',
-    tidalPlaylistUrl: showSettingsResponse.data?.tidal_playlist_url ?? null,
   })
 
   return (

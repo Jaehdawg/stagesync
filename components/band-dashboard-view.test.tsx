@@ -56,6 +56,7 @@ describe('BandDashboardView', () => {
     expect(screen.getByRole('button', { name: /save settings/i })).toBeInTheDocument()
     expect(screen.getByLabelText(/show duration/i)).toHaveValue(90)
     expect(screen.getByLabelText(/buffer between songs/i)).toHaveValue(2)
+    expect(screen.queryByLabelText(/tidal playlist url/i)).not.toBeInTheDocument()
   })
 
   it('shows band profile editing in test mode', () => {
@@ -63,6 +64,7 @@ describe('BandDashboardView', () => {
 
     expect(screen.getByRole('button', { name: /save band profile/i })).toBeInTheDocument()
     expect(screen.getByLabelText(/band name/i)).toHaveValue('Neon Echo')
+    expect(screen.queryByRole('heading', { name: /upload song csv/i })).not.toBeInTheDocument()
   })
 
   it('wires queue actions to the queue item id', () => {

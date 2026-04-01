@@ -34,28 +34,25 @@ export async function POST(request: NextRequest) {
   const eventId = String(formData.get('eventId') ?? '') || null
   const name = String(formData.get('name') ?? '')
   const description = String(formData.get('description') ?? '')
-  const showDurationMinutes = Number(formData.get('showDurationMinutes'))
-  const signupBufferMinutes = Number(formData.get('signupBufferMinutes'))
-  const songSourceMode = String(formData.get('songSourceMode') ?? '')
-  const tidalPlaylistUrl = String(formData.get('tidalPlaylistUrl') ?? '')
+    const showDurationMinutes = Number(formData.get('showDurationMinutes'))
+    const signupBufferMinutes = Number(formData.get('signupBufferMinutes'))
+    const songSourceMode = String(formData.get('songSourceMode') ?? '')
 
-  try {
+    try {
     if (action === 'create') {
       await createTestShow(supabase, { name, description })
     } else if (action === 'settings') {
       const mode = songSourceMode === 'tidal_playlist' ? songSourceMode : 'uploaded'
-      const playlistUrl = tidalPlaylistUrl.trim() || null
-
-      if (mode === 'tidal_playlist' && !playlistUrl) {
-        return NextResponse.json({ message: 'Add a Tidal playlist URL before saving playlist mode.' }, { status: 400 })
-      }
+      const { data: currentSettings } = eventId
+        ? await supabase.from('show_settings').select('tidal_playlist_url').eq('event_id', eventId).maybeSingle()
+        : { data: null }
 
       await updateTestShowSettings(supabase, {
         eventId,
         showDurationMinutes: Number.isFinite(showDurationMinutes) ? showDurationMinutes : 60,
         signupBufferMinutes: Number.isFinite(signupBufferMinutes) ? signupBufferMinutes : 1,
         songSourceMode: mode,
-        tidalPlaylistUrl: playlistUrl,
+        tidalPlaylistUrl: currentSettings?.tidal_playlist_url ?? null,
       })
     } else if (action === 'start' || action === 'pause' || action === 'resume' || action === 'end') {
       await updateTestShowState(supabase, { eventId, action })

@@ -106,7 +106,6 @@ async function getBandState(
     showDurationMinutes,
     signupBufferMinutes,
     songSourceMode: currentSettings.data?.song_source_mode ?? 'uploaded',
-    tidalPlaylistUrl: currentSettings.data?.tidal_playlist_url ?? null,
   })
 }
 
@@ -136,7 +135,6 @@ async function getBandTestState(supabase: Awaited<ReturnType<typeof createClient
     showDurationMinutes: currentSettings?.show_duration_minutes ?? 60,
     signupBufferMinutes: currentSettings?.signup_buffer_minutes ?? 1,
     songSourceMode: currentSettings?.song_source_mode ?? 'uploaded',
-    tidalPlaylistUrl: currentSettings?.tidal_playlist_url ?? null,
   }
 }
 
