@@ -2,6 +2,7 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { getShowState } from '@/lib/show-state'
 import { createServiceClient } from '@/utils/supabase/service'
+import { getTestSession } from '@/lib/test-session'
 
 function normalizeSongId(title: string, artist: string) {
   return `${title}-${artist}`
@@ -65,13 +66,16 @@ export async function POST(request: NextRequest) {
   }
 
   const songId = normalizeSongId(title, artist)
+  const testSession = await getTestSession()
+  const bandId = testSession?.activeBandId ?? null
 
   const { error: songError } = await serviceSupabase.from('songs').upsert({
     id: songId,
     title,
     artist,
     archived_at: null,
-  })
+    band_id: bandId,
+  }, { onConflict: 'band_id,id' })
 
   if (songError) {
     return NextResponse.json({ message: songError.message }, { status: 500 })

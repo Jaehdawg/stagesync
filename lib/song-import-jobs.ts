@@ -37,7 +37,7 @@ async function upsertSongs(bandId: string, songs: SongImportRecord[]) {
       band_id: bandId,
       archived_at: null,
     })),
-    { onConflict: 'id' }
+    { onConflict: 'band_id,id' }
   )
 
   if (error) {

@@ -28,8 +28,9 @@ export async function POST(request: NextRequest) {
       archived_at: null,
       source_type: 'manual',
       source_ref: null,
+      band_id: null,
     },
-    { onConflict: 'id' }
+    { onConflict: 'band_id,id' }
   )
 
   if (error) {

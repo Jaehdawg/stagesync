@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
       band_id: testSession.activeBandId,
       archived_at: null,
     })),
-    { onConflict: 'id' }
+    { onConflict: 'band_id,id' }
   )
 
   if (error) {
