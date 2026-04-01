@@ -3,6 +3,7 @@ export type TidalTrack = {
   title: string
   artist: string
   album?: string | null
+  duration?: number | null
 }
 
 type TidalJson = Record<string, unknown>
@@ -41,6 +42,13 @@ function readString(value: unknown): string {
   return typeof value === 'string' ? value.trim() : ''
 }
 
+function readText(value: unknown): string {
+  if (typeof value === 'string') return value.trim()
+  if (typeof value === 'number' && Number.isFinite(value)) return String(value)
+  if (typeof value === 'bigint') return String(value)
+  return ''
+}
+
 function readNestedString(value: unknown, key: string): string {
   if (!value || typeof value !== 'object') return ''
   return readString((value as Record<string, unknown>)[key])
@@ -48,7 +56,7 @@ function readNestedString(value: unknown, key: string): string {
 
 function getIdKey(resource: TidalJson) {
   const type = readString(resource.type)
-  const id = readString(resource.id)
+  const id = readText(resource.id)
   return type && id ? `${type}:${id}` : null
 }
 
@@ -66,6 +74,13 @@ function resolveTrackResource(resource: unknown, included: Map<string, TidalJson
   const resolved = resolveResourceReference(resource, included)
   if (!resolved) {
     return null
+  }
+
+  if (resolved.item && typeof resolved.item === 'object') {
+    const nestedItem = resolveTrackResource(resolved.item, included)
+    if (nestedItem) {
+      return nestedItem
+    }
   }
 
   const type = readString(resolved.type).toLowerCase()
@@ -173,13 +188,17 @@ function resolveArtistsFromRelationship(resource: TidalJson, included: Map<strin
 }
 
 function normalizeTrack(resource: TidalJson, included: Map<string, TidalJson>): TidalTrack | null {
-  const source = resource.track && typeof resource.track === 'object'
-    ? { ...(resource.track as TidalJson), ...resource }
-    : resource
+  const source = resource.item && typeof resource.item === 'object'
+    ? { ...(resource.item as TidalJson), ...resource }
+    : resource.track && typeof resource.track === 'object'
+      ? { ...(resource.track as TidalJson), ...resource }
+      : resource
 
-  const id = readString(source.id ?? source.trackId ?? source.tidalId)
+  const id = readText(source.id ?? source.trackId ?? source.tidalId ?? source.itemId)
   const attrs = (source.attributes as TidalJson | undefined) ?? {}
   const title = readString(attrs.title ?? source.title ?? source.name)
+  const durationValue = source.duration ?? attrs.duration
+  const duration = typeof durationValue === 'number' && Number.isFinite(durationValue) ? durationValue : null
   let artist =
     readNestedString(source.artist, 'name') ||
     readString(source.artistName ?? source.artist ?? source.performer ?? source.artist_name)
@@ -222,7 +241,13 @@ function normalizeTrack(resource: TidalJson, included: Map<string, TidalJson>): 
     artist = 'Unknown artist'
   }
 
-  return { id, title, artist, album }
+  return {
+    id,
+    title,
+    artist,
+    album,
+    ...(duration != null ? { duration } : {}),
+  }
 }
 
 export function extractTidalTracks(payload: unknown): TidalTrack[] {
@@ -271,13 +296,23 @@ export function extractTidalTracks(payload: unknown): TidalTrack[] {
   return [...unique.values()]
 }
 
-async function fetchTidalJson(paths: string[], token: string, options: { query?: string; limit: number }) {
-  const { query, limit } = options
+async function fetchTidalJson(
+  paths: string[],
+  token: string,
+  options: { query?: string; limit: number; params?: Record<string, string>; headers?: Record<string, string> }
+) {
+  const { query, limit, params, headers: extraHeaders } = options
 
   for (const path of paths) {
     const url = new URL(path, getTidalBaseUrl())
     url.searchParams.set('limit', String(limit))
     url.searchParams.set('countryCode', 'US')
+
+    if (params) {
+      for (const [key, value] of Object.entries(params)) {
+        url.searchParams.set(key, value)
+      }
+    }
 
     if (query) {
       url.searchParams.set('query', query)
@@ -291,11 +326,14 @@ async function fetchTidalJson(paths: string[], token: string, options: { query?:
       url.searchParams.set('include', 'items')
     }
 
+    const headers: Record<string, string> = {
+      accept: 'application/vnd.api+json',
+      ...(token ? { authorization: `Bearer ${token}` } : {}),
+      ...(extraHeaders ?? {}),
+    }
+
     const response = await fetch(url, {
-      headers: {
-        authorization: `Bearer ${token}`,
-        accept: 'application/vnd.api+json',
-      },
+      headers,
     })
 
     if (response.ok) {
@@ -394,10 +432,40 @@ function extractPlaylistId(url: string) {
   }
 }
 
+function getTidalBrowserToken() {
+  return process.env.TIDAL_BROWSER_TOKEN?.trim() || ''
+}
+
 export async function fetchTidalPlaylistTracks(playlistUrl: string, options: { limit?: number } = {}) {
   const playlistId = extractPlaylistId(playlistUrl)
   if (!playlistId) {
     return []
+  }
+
+  const limit = Math.min(Math.max(options.limit ?? 200, 1), 500)
+  const browserToken = getTidalBrowserToken()
+
+  if (browserToken) {
+    const payload = await fetchTidalJson([
+      `/v1/playlists/${playlistId}/items`,
+    ], '', {
+      limit,
+      params: {
+        offset: '0',
+        locale: 'en_US',
+        deviceType: 'BROWSER',
+      },
+      headers: {
+        accept: 'application/json',
+        'x-tidal-token': browserToken,
+        referer: `https://tidal.com/playlist/${playlistId}`,
+        'user-agent': 'Mozilla/5.0',
+      },
+    })
+
+    if (payload) {
+      return extractTidalTracks(payload)
+    }
   }
 
   const token = await getTidalAccessToken()
@@ -405,7 +473,6 @@ export async function fetchTidalPlaylistTracks(playlistUrl: string, options: { l
     return []
   }
 
-  const limit = Math.min(Math.max(options.limit ?? 200, 1), 500)
   const payload = await fetchTidalJson([
     `/playlists/${playlistId}/relationships/items`,
   ], token, { limit })

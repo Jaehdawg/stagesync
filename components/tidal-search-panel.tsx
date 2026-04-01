@@ -7,6 +7,7 @@ type TidalTrack = {
   title: string
   artist: string
   album?: string | null
+  duration?: number | null
 }
 
 type TidalSearchPanelProps = {
@@ -43,6 +44,17 @@ export function TidalSearchPanel({ disabled = false, statusMessage, sourceMode =
     }
 
     setMessage(payload.message ?? 'Song request added to the queue.')
+  }
+
+  function formatDuration(durationSeconds?: number | null) {
+    if (typeof durationSeconds !== 'number' || !Number.isFinite(durationSeconds) || durationSeconds <= 0) {
+      return ''
+    }
+
+    const totalSeconds = Math.floor(durationSeconds)
+    const minutes = Math.floor(totalSeconds / 60)
+    const seconds = totalSeconds % 60
+    return `${minutes}:${String(seconds).padStart(2, '0')}`
   }
 
   useEffect(() => {
@@ -189,7 +201,11 @@ export function TidalSearchPanel({ disabled = false, statusMessage, sourceMode =
           >
             <div>
               <p className="font-medium text-white">{track.artist}</p>
-              <p className="text-sm text-slate-400">{track.title}{track.album ? ` • ${track.album}` : ''}</p>
+              <p className="text-sm text-slate-400">
+                {track.title}
+                {track.duration != null ? ` • ${formatDuration(track.duration)}` : ''}
+                {track.album ? ` • ${track.album}` : ''}
+              </p>
             </div>
             <span className="rounded-full border border-white/10 px-3 py-1 text-xs font-medium text-slate-200">Pick song</span>
           </button>
