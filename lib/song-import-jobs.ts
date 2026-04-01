@@ -1,0 +1,111 @@
+import { createServiceClient } from '@/utils/supabase/service'
+import { buildTidalPlaylistSongs, type SongImportRecord } from './song-library'
+
+type SongImportJob = {
+  id: string
+  source_type: 'tidal_playlist'
+  source_url: string | null
+  source_ref: string | null
+}
+
+type JobUpdate = {
+  status?: 'queued' | 'running' | 'completed' | 'failed'
+  message?: string | null
+  error_message?: string | null
+  total_items?: number
+  processed_items?: number
+  imported_items?: number
+  started_at?: string | null
+  finished_at?: string | null
+}
+
+async function updateJob(jobId: string, patch: JobUpdate) {
+  const supabase = createServiceClient()
+  const { error } = await supabase.from('song_import_jobs').update(patch).eq('id', jobId)
+  if (error) {
+    throw new Error(error.message)
+  }
+}
+
+async function upsertSongs(songs: SongImportRecord[]) {
+  const supabase = createServiceClient()
+  const { error } = await supabase.from('songs').upsert(
+    songs.map((song) => ({
+      ...song,
+      archived_at: null,
+    })),
+    { onConflict: 'id' }
+  )
+
+  if (error) {
+    throw new Error(error.message)
+  }
+}
+
+export async function createTidalPlaylistImportJob(playlistUrl: string) {
+  const supabase = createServiceClient()
+  const id = crypto.randomUUID()
+  const sourceRef = playlistUrl.trim().match(/playlist\/([a-zA-Z0-9_-]+)/i)?.[1] ?? null
+
+  const { error } = await supabase.from('song_import_jobs').insert({
+    id,
+    source_type: 'tidal_playlist',
+    source_url: playlistUrl,
+    source_ref: sourceRef,
+    status: 'queued',
+    total_items: 0,
+    processed_items: 0,
+    imported_items: 0,
+    message: 'Queued for processing.',
+  })
+
+  if (error) {
+    throw new Error(error.message)
+  }
+
+  return { id, sourceRef }
+}
+
+export async function runTidalPlaylistImportJob(job: SongImportJob) {
+  try {
+    await updateJob(job.id, {
+      status: 'running',
+      started_at: new Date().toISOString(),
+      message: 'Fetching playlist from Tidal...',
+      error_message: null,
+    })
+
+    const songs = await buildTidalPlaylistSongs(job.source_url ?? '')
+
+    await updateJob(job.id, {
+      total_items: songs.length,
+      processed_items: songs.length,
+      imported_items: songs.length,
+      message: songs.length ? `Imported ${songs.length} songs.` : 'No songs were imported.',
+    })
+
+    if (songs.length) {
+      await upsertSongs(songs)
+    }
+
+    await updateJob(job.id, {
+      status: 'completed',
+      finished_at: new Date().toISOString(),
+      message: songs.length ? `Imported ${songs.length} songs.` : 'No songs were imported.',
+    })
+  } catch (error) {
+    await updateJob(job.id, {
+      status: 'failed',
+      finished_at: new Date().toISOString(),
+      error_message: error instanceof Error ? error.message : 'Unable to import playlist.',
+      message: 'Tidal import failed.',
+    })
+    throw error
+  }
+}
+
+export function queueTidalPlaylistImport(job: SongImportJob) {
+  void Promise.resolve().then(() => runTidalPlaylistImportJob(job)).catch(() => {
+    // The job row already records failure; background scheduling should never throw to the request.
+  })
+}

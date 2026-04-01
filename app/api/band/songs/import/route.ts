@@ -3,21 +3,23 @@ import { createServiceClient } from '@/utils/supabase/service'
 import { isBandAdminRequest } from '@/lib/band-auth'
 import {
   buildGoogleSheetExportUrl,
-  buildTidalPlaylistSongs,
   extractGoogleSheetId,
   parseSongsCsv,
   type SongImportRecord,
 } from '@/lib/song-library'
+import { createTidalPlaylistImportJob, queueTidalPlaylistImport } from '@/lib/song-import-jobs'
 
 async function readImportSongs(formData: FormData): Promise<SongImportRecord[]> {
+  const importType = String(formData.get('importType') ?? '').trim()
+
   const csvFile = formData.get('csvFile')
-  if (csvFile instanceof File) {
+  if (importType === 'csv' && csvFile instanceof File) {
     const text = await csvFile.text()
     return parseSongsCsv(text, 'uploaded', null)
   }
 
   const sheetUrl = String(formData.get('sheetUrl') ?? '').trim()
-  if (sheetUrl) {
+  if (importType === 'google_sheet' && sheetUrl) {
     const exportUrl = buildGoogleSheetExportUrl(sheetUrl)
     if (!exportUrl) {
       throw new Error('Invalid Google Sheet URL.')
@@ -30,11 +32,6 @@ async function readImportSongs(formData: FormData): Promise<SongImportRecord[]> 
 
     const text = await response.text()
     return parseSongsCsv(text, 'google_sheet', extractGoogleSheetId(sheetUrl))
-  }
-
-  const playlistUrl = String(formData.get('playlistUrl') ?? '').trim()
-  if (playlistUrl) {
-    return buildTidalPlaylistSongs(playlistUrl)
   }
 
   return []
@@ -52,6 +49,24 @@ export async function POST(request: NextRequest) {
     songs = await readImportSongs(formData)
   } catch (error) {
     return NextResponse.json({ message: error instanceof Error ? error.message : 'Unable to import songs.' }, { status: 400 })
+  }
+
+  const importType = String(formData.get('importType') ?? '').trim()
+  if (importType === 'tidal_playlist') {
+    const playlistUrl = String(formData.get('playlistUrl') ?? '').trim()
+    if (!playlistUrl) {
+      return NextResponse.json({ message: 'Playlist URL is required.' }, { status: 400 })
+    }
+
+    const job = await createTidalPlaylistImportJob(playlistUrl)
+    queueTidalPlaylistImport({
+      id: job.id,
+      source_type: 'tidal_playlist',
+      source_url: playlistUrl,
+      source_ref: job.sourceRef,
+    })
+
+    return NextResponse.redirect(new URL(`/band/songs?import=queued&job=${job.id}`, request.url), { status: 303 })
   }
 
   if (!songs.length) {

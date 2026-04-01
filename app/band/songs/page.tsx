@@ -36,6 +36,8 @@ export default async function BandSongsPage({
   const params = await searchParams
   const page = Math.max(1, Number(typeof params?.page === 'string' ? params.page : '1') || 1)
   const q = typeof params?.q === 'string' ? params.q.trim() : ''
+  const importState = typeof params?.import === 'string' ? params.import : ''
+  const importJobId = typeof params?.job === 'string' ? params.job.trim() : ''
 
   let accessGranted = false
   let username = ''
@@ -75,6 +77,14 @@ export default async function BandSongsPage({
   const serviceSupabase = createServiceClient()
   const pageSize = 12
   const offset = (page - 1) * pageSize
+
+  const { data: importJob } = importState && importJobId
+    ? await serviceSupabase
+      .from('song_import_jobs')
+      .select('id, status, message, error_message, processed_items, imported_items, total_items, source_url')
+      .eq('id', importJobId)
+      .maybeSingle()
+    : { data: null }
 
   let query = serviceSupabase
     .from('songs')
@@ -122,6 +132,16 @@ export default async function BandSongsPage({
         <section className="rounded-3xl border border-white/10 bg-white/5 p-6">
           <h2 className="text-2xl font-semibold text-white">Import songs</h2>
           <p className="mt-2 text-sm text-slate-300">Every import lands in the same songs table, so singers can search one library no matter where the list came from.</p>
+          {importState === 'queued' && importJob ? (
+            <div className="mt-4 rounded-2xl border border-cyan-400/30 bg-cyan-400/10 p-4 text-sm text-cyan-100">
+              <p className="font-semibold">Tidal import queued</p>
+              <p className="mt-1 text-cyan-50/90">{importJob.message ?? 'The background job is processing the playlist now.'}</p>
+              <p className="mt-1 text-cyan-50/70">
+                Progress: {importJob.processed_items ?? 0}/{importJob.total_items ?? 0} · Imported {importJob.imported_items ?? 0}
+              </p>
+              {importJob.error_message ? <p className="mt-1 text-rose-200">Error: {importJob.error_message}</p> : null}
+            </div>
+          ) : null}
           <div className="mt-6 grid gap-4 lg:grid-cols-3">
             <form className="rounded-2xl border border-white/10 bg-slate-950/50 p-5" action="/api/band/songs/import" method="post" encType="multipart/form-data">
               <input type="hidden" name="importType" value="csv" />
