@@ -152,7 +152,7 @@ with finding_north as (
 update public.profiles set active_band_id = coalesce(active_band_id, (select id from finding_north)) where active_band_id is null;
 
 insert into public.band_memberships (band_id, member_type, member_key, band_access_level)
-select distinct tl.active_band_id, 'test_login', tl.username, tl.role
+select distinct tl.active_band_id, 'test_login', tl.username, coalesce(tl.band_access_level, case when tl.role = 'band' then 'admin' else 'member' end)
 from public.test_logins tl
 where tl.active_band_id is not null
   and not exists (
@@ -172,8 +172,14 @@ alter table public.show_settings alter column band_id set not null;
 alter table public.singer_messages alter column band_id set not null;
 alter table public.song_import_jobs alter column band_id set not null;
 
+alter table public.queue_items drop constraint if exists queue_items_song_id_fkey;
 alter table public.songs drop constraint if exists songs_pkey;
 alter table public.songs add constraint songs_pkey primary key (band_id, id);
+alter table public.queue_items
+  add constraint queue_items_song_id_fkey
+  foreign key (band_id, song_id)
+  references public.songs (band_id, id)
+  on delete cascade;
 
 create index if not exists idx_band_memberships_member on public.band_memberships (member_type, member_key, band_id);
 create index if not exists idx_band_memberships_band on public.band_memberships (band_id);
@@ -183,4 +189,3 @@ create index if not exists idx_songs_band_id on public.songs (band_id);
 create index if not exists idx_show_settings_band_id on public.show_settings (band_id);
 create index if not exists idx_singer_messages_band_id on public.singer_messages (band_id);
 create index if not exists idx_song_import_jobs_band_id on public.song_import_jobs (band_id);
-
