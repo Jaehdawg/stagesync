@@ -33,6 +33,11 @@ function normalizeBandId(value: unknown) {
   return typeof value === 'string' && value.trim() ? value.trim() : null
 }
 
+function isMissingTableError(error: unknown, tableName: string) {
+  const message = error instanceof Error ? error.message : typeof error === 'string' ? error : ''
+  return message.includes(`public.${tableName}`) || message.includes(tableName) || (error as any)?.code === 'PGRST205'
+}
+
 async function listShowsByBandId(supabase: SupabaseLike, bandId: string) {
   const { data, error } = await supabase
     .from('test_shows')
@@ -40,17 +45,25 @@ async function listShowsByBandId(supabase: SupabaseLike, bandId: string) {
     .eq('band_id', bandId)
     .order('created_at', { ascending: false })
 
-  if (error) throw new Error(error.message)
+  if (error) {
+    if (isMissingTableError(error, 'test_shows')) return []
+    throw new Error(error.message)
+  }
   return (data ?? []) as TestShowRow[]
 }
 
 export async function getLatestTestShow(supabase: SupabaseLike, bandId?: string | null) {
   const normalizedBandId = normalizeBandId(bandId)
-  const shows = normalizedBandId ? await listShowsByBandId(supabase, normalizedBandId) : await (async () => {
-    const { data, error } = await supabase.from('test_shows').select('*').order('created_at', { ascending: false })
-    if (error) throw new Error(error.message)
-    return (data ?? []) as TestShowRow[]
-  })()
+  const shows = normalizedBandId
+    ? await listShowsByBandId(supabase, normalizedBandId)
+    : await (async () => {
+        const { data, error } = await supabase.from('test_shows').select('*').order('created_at', { ascending: false })
+        if (error) {
+          if (isMissingTableError(error, 'test_shows')) return []
+          throw new Error(error.message)
+        }
+        return (data ?? []) as TestShowRow[]
+      })()
 
   return shows[0] ?? null
 }
@@ -59,7 +72,10 @@ export async function getLatestTestShowSettings(supabase: SupabaseLike, bandId?:
   const normalizedBandId = normalizeBandId(bandId)
   const query = supabase.from('test_show_settings').select('*').order('created_at', { ascending: false })
   const { data, error } = normalizedBandId ? await query.eq('band_id', normalizedBandId).limit(1) : await query.limit(1)
-  if (error) throw new Error(error.message)
+  if (error) {
+    if (isMissingTableError(error, 'test_show_settings')) return null
+    throw new Error(error.message)
+  }
   return (data ?? [null])[0] as TestShowSettingsRow | null
 }
 
