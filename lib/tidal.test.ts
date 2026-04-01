@@ -176,29 +176,37 @@ describe('tidal helpers', () => {
     }
   })
 
-  it('fetches private playlist tracks through the browser token path with pagination', async () => {
-    const originalBrowserToken = process.env.TIDAL_BROWSER_TOKEN
-    process.env.TIDAL_BROWSER_TOKEN = 'txNoH4kkV41MfH25'
+  it('fetches private playlist tracks through the server-side API flow with pagination', async () => {
+    const originalClientId = process.env.TIDAL_CLIENT_ID
+    const originalClientSecret = process.env.TIDAL_CLIENT_SECRET
+    delete process.env.TIDAL_BROWSER_TOKEN
+    process.env.TIDAL_CLIENT_ID = 'client-id'
+    process.env.TIDAL_CLIENT_SECRET = 'client-secret'
 
     const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input)
 
-      if (url.includes('/v1/playlists/abc123/items')) {
+      if (url === 'https://auth.tidal.com/v1/oauth2/token') {
+        return {
+          ok: true,
+          json: async () => ({ access_token: 'tidal-bearer-token' }),
+        } as Response
+      }
+
+      if (url.includes('/playlists/abc123/relationships/items')) {
+        expect(url).toContain('https://openapi.tidal.com/v2/playlists/abc123/relationships/items')
         expect(init?.headers).toMatchObject({
-          accept: 'application/json',
-          'x-tidal-token': 'txNoH4kkV41MfH25',
-          referer: 'https://tidal.com/playlist/abc123',
+          accept: 'application/vnd.api+json',
+          authorization: 'Bearer tidal-bearer-token',
         })
 
         if (url.includes('offset=0')) {
           return {
             ok: true,
             json: async () => ({
-              totalNumberOfItems: 3,
-              items: [
-                { item: { id: 1, title: 'Dreams', duration: 300, artist: { name: 'Fleetwood Mac' } } },
-                { item: { id: 2, title: 'Maps', duration: 240, artist: { name: 'Yeah Yeah Yeahs' } } },
-              ],
+              totalNumberOfItems: 2,
+              data: [{ id: '64186726', type: 'tracks' }],
+              links: { next: 'https://openapi.tidal.com/v2/playlists/abc123/relationships/items?offset=1&limit=1&countryCode=US' },
             }),
           } as Response
         }
@@ -206,9 +214,63 @@ describe('tidal helpers', () => {
         return {
           ok: true,
           json: async () => ({
-            totalNumberOfItems: 3,
-            items: [{ item: { id: 3, title: 'Mr. Jones', duration: 271, artist: { name: 'Counting Crows' } } }],
+            totalNumberOfItems: 2,
+            data: [{ id: '12345', type: 'tracks' }],
           }),
+        } as Response
+      }
+
+      if (url.includes('/tracks/64186726/relationships/artists')) {
+        return {
+          ok: true,
+          json: async () => ({ data: [{ id: '25055', type: 'artists' }] }),
+        } as Response
+      }
+
+      if (url.includes('/tracks/12345/relationships/artists')) {
+        return {
+          ok: true,
+          json: async () => ({ data: [{ id: '33236', type: 'artists' }] }),
+        } as Response
+      }
+
+      if (url.includes('/tracks/64186726?')) {
+        return {
+          ok: true,
+          json: async () => ({
+            data: {
+              id: '64186726',
+              type: 'tracks',
+              attributes: { title: 'Dreams', duration: 'PT5M' },
+            },
+          }),
+        } as Response
+      }
+
+      if (url.includes('/tracks/12345?')) {
+        return {
+          ok: true,
+          json: async () => ({
+            data: {
+              id: '12345',
+              type: 'tracks',
+              attributes: { title: 'Flowers', duration: 'PT3M20S' },
+            },
+          }),
+        } as Response
+      }
+
+      if (url.includes('/artists/25055?')) {
+        return {
+          ok: true,
+          json: async () => ({ data: { id: '25055', type: 'artists', attributes: { name: 'Counting Crows' } } }),
+        } as Response
+      }
+
+      if (url.includes('/artists/33236?')) {
+        return {
+          ok: true,
+          json: async () => ({ data: { id: '33236', type: 'artists', attributes: { name: 'Miley Cyrus' } } }),
         } as Response
       }
 
@@ -217,16 +279,21 @@ describe('tidal helpers', () => {
 
     vi.stubGlobal('fetch', fetchMock)
 
-    await expect(fetchTidalPlaylistTracks('https://tidal.com/browse/playlist/abc123', { limit: 2 })).resolves.toEqual([
-      { id: '1', title: 'Dreams', artist: 'Fleetwood Mac', album: null, duration: 300 },
-      { id: '2', title: 'Maps', artist: 'Yeah Yeah Yeahs', album: null, duration: 240 },
-      { id: '3', title: 'Mr. Jones', artist: 'Counting Crows', album: null, duration: 271 },
+    await expect(fetchTidalPlaylistTracks('https://tidal.com/browse/playlist/abc123', { limit: 1 })).resolves.toEqual([
+      { id: '64186726', title: 'Dreams', artist: 'Counting Crows', album: null, duration: 300 },
+      { id: '12345', title: 'Flowers', artist: 'Miley Cyrus', album: null, duration: 200 },
     ])
 
-    if (originalBrowserToken === undefined) {
-      delete process.env.TIDAL_BROWSER_TOKEN
+    if (originalClientId === undefined) {
+      delete process.env.TIDAL_CLIENT_ID
     } else {
-      process.env.TIDAL_BROWSER_TOKEN = originalBrowserToken
+      process.env.TIDAL_CLIENT_ID = originalClientId
+    }
+
+    if (originalClientSecret === undefined) {
+      delete process.env.TIDAL_CLIENT_SECRET
+    } else {
+      process.env.TIDAL_CLIENT_SECRET = originalClientSecret
     }
   })
 
