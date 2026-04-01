@@ -95,19 +95,22 @@ describe('tidal helpers', () => {
                 id: playlistId,
                 type: 'playlists',
                 attributes: { numberOfItems: 56 },
-                relationships: {
-                  items: {
-                    data: [
-                      { id: '136685782', type: 'tracks' },
-                      { id: '1906289', type: 'tracks' },
-                    ],
-                  },
+              relationships: {
+                items: {
+                  data: [
+                    { id: '136685782', type: 'tracks' },
+                    { id: '1906289', type: 'tracks' },
+                  ],
                 },
               },
-              included: [
-                {
-                  id: '136685782',
-                  type: 'tracks',
+              links: {
+                next: `/playlists/${playlistId}?offset=20&countryCode=US&limit=20&include=items%2Citems.artists`,
+              },
+            },
+            included: [
+              {
+                id: '136685782',
+                type: 'tracks',
                   attributes: { title: 'Bad Decisions', duration: 'PT4M53S' },
                   relationships: { artists: { data: [{ id: '29037', type: 'artists' }] } },
                 },
@@ -120,9 +123,6 @@ describe('tidal helpers', () => {
                 { id: '29037', type: 'artists', attributes: { name: 'The Strokes' } },
                 { id: '39438', type: 'artists', attributes: { name: 'Kings Of Leon' } },
               ],
-              links: {
-                next: `/playlists/${playlistId}?offset=20&countryCode=US&limit=20&include=items%2Citems.artists`,
-              },
             }),
           } as Response
         }

@@ -496,6 +496,29 @@ function extractPlaylistId(url: string) {
   }
 }
 
+function extractNextPlaylistCursor(payload: unknown): string | null {
+  if (!payload || typeof payload !== 'object') return null
+
+  const record = payload as TidalJson
+  const candidates: unknown[] = [
+    record.links,
+    (record.data as TidalJson | undefined)?.links,
+    ((record.data as TidalJson | undefined)?.relationships as TidalJson | undefined)?.items,
+    (record.relationships as TidalJson | undefined)?.items,
+  ]
+
+  for (const candidate of candidates) {
+    if (!candidate || typeof candidate !== 'object') continue
+    const linkRecord = candidate as TidalJson
+    const next = linkRecord.next ?? (linkRecord.links as TidalJson | undefined)?.next
+    if (typeof next === 'string' && next.trim()) {
+      return next.trim()
+    }
+  }
+
+  return null
+}
+
 export async function fetchTidalPlaylistTracks(playlistUrl: string, options: { limit?: number } = {}) {
   const playlistId = extractPlaylistId(playlistUrl)
   if (!playlistId) {
@@ -546,9 +569,7 @@ export async function fetchTidalPlaylistTracks(playlistUrl: string, options: { l
 
     tracks.push(...pageTracks)
 
-    nextUrl = typeof playlistRecord.links === 'object' && playlistRecord.links && typeof (playlistRecord.links as TidalJson).next === 'string'
-      ? String((playlistRecord.links as TidalJson).next)
-      : null
+    nextUrl = extractNextPlaylistCursor(playlistPayload)
 
     if (nextUrl) {
       continue
