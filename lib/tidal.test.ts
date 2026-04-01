@@ -58,13 +58,13 @@ describe('tidal helpers', () => {
 
     vi.stubGlobal('fetch', fetchMock)
 
-    await expect(fetchTidalPlaylistTracks('https://tidal.com/browse/playlist/abc123')).resolves.toEqual([
+    await expect(fetchTidalPlaylistTracks('https://tidal.com/playlist/abc123')).resolves.toEqual([
       { id: '64186726', title: 'Dreams', artist: 'Fleetwood Mac', album: 'Rumours', duration: 300 },
     ])
 
     expect(fetchMock).toHaveBeenCalledOnce()
     const [input, init] = fetchMock.mock.calls[0]
-    expect(String(input)).toContain('/v1/playlists/abc123/items')
+    expect(String(input)).toContain('https://listen.tidal.com/v1/playlists/abc123/items')
     expect(String(input)).toContain('offset=0')
     expect(String(input)).toContain('deviceType=BROWSER')
     expect(init?.headers).toMatchObject({

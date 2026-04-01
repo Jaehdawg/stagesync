@@ -13,6 +13,11 @@ function getTidalBaseUrl() {
   return base.endsWith('/') ? base : `${base}/`
 }
 
+function getTidalPlaylistBaseUrl() {
+  const base = process.env.TIDAL_PLAYLIST_API_BASE_URL?.trim() || 'https://listen.tidal.com/'
+  return base.endsWith('/') ? base : `${base}/`
+}
+
 async function getTidalAccessToken() {
   const clientId = process.env.TIDAL_CLIENT_ID?.trim()
   const clientSecret = process.env.TIDAL_CLIENT_SECRET?.trim()
@@ -299,12 +304,12 @@ export function extractTidalTracks(payload: unknown): TidalTrack[] {
 async function fetchTidalJson(
   paths: string[],
   token: string,
-  options: { query?: string; limit: number; params?: Record<string, string>; headers?: Record<string, string> }
+  options: { query?: string; limit: number; params?: Record<string, string>; headers?: Record<string, string>; baseUrl?: string }
 ) {
-  const { query, limit, params, headers: extraHeaders } = options
+  const { query, limit, params, headers: extraHeaders, baseUrl } = options
 
   for (const path of paths) {
-    const url = new URL(path, getTidalBaseUrl())
+    const url = new URL(path, baseUrl ?? getTidalBaseUrl())
     url.searchParams.set('limit', String(limit))
     url.searchParams.set('countryCode', 'US')
 
@@ -461,6 +466,7 @@ export async function fetchTidalPlaylistTracks(playlistUrl: string, options: { l
         referer: `https://tidal.com/playlist/${playlistId}`,
         'user-agent': 'Mozilla/5.0',
       },
+      baseUrl: getTidalPlaylistBaseUrl(),
     })
 
     if (payload) {
