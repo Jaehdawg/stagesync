@@ -18,6 +18,8 @@ export default async function Home({
   const message = typeof params?.message === 'string' ? params.message : undefined
   const code = typeof params?.code === 'string' ? params.code : undefined
   const role = typeof params?.role === 'string' ? params.role : undefined
+  const band = typeof params?.band === 'string' ? params.band : undefined
+  const show = typeof params?.show === 'string' ? params.show : undefined
 
   const requestHeaders = await headers()
   const forwardedProto = requestHeaders.get('x-forwarded-proto') ?? 'https'
@@ -32,6 +34,13 @@ export default async function Home({
 
   if (authRedirect) {
     redirect(authRedirect)
+  }
+
+  if (band || show) {
+    const singerUrl = new URL('/singer', siteUrl ?? process.env.NEXT_PUBLIC_SITE_URL?.trim() ?? 'https://stagesync-six.vercel.app')
+    if (band) singerUrl.searchParams.set('band', band)
+    if (show) singerUrl.searchParams.set('show', show)
+    redirect(singerUrl.toString())
   }
 
   const {

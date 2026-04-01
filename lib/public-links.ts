@@ -7,7 +7,7 @@ export function slugifyBandName(name: string) {
 }
 
 export function buildSingerSignupUrl(baseUrl: string, bandSlug: string, showId?: string | null) {
-  const url = new URL('/', baseUrl)
+  const url = new URL('/singer', baseUrl)
   url.searchParams.set('band', bandSlug)
 
   if (showId) {
