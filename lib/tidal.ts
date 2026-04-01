@@ -5,32 +5,11 @@ export type TidalTrack = {
   album?: string | null
 }
 
-type TokenCache = {
-  token: string
-  expiresAt: number
-} | null
-
-let tokenCache: TokenCache = null
+type TidalJson = Record<string, unknown>
 
 function getTidalBaseUrl() {
-  return process.env.TIDAL_API_BASE_URL?.trim() || 'https://openapi.tidal.com/v2'
-}
-
-function readString(value: unknown): string {
-  return typeof value === 'string' ? value.trim() : ''
-}
-
-function readNestedString(value: unknown, key: string): string {
-  if (!value || typeof value !== 'object') {
-    return ''
-  }
-
-  return readString((value as Record<string, unknown>)[key])
-}
-
-function readResourceValue(resource: Record<string, unknown> | null | undefined, key: string): string {
-  if (!resource) return ''
-  return readString(resource[key])
+  const base = process.env.TIDAL_API_BASE_URL?.trim() || 'https://openapi.tidal.com/v2/'
+  return base.endsWith('/') ? base : `${base}/`
 }
 
 async function getTidalAccessToken() {
@@ -39,10 +18,6 @@ async function getTidalAccessToken() {
 
   if (!clientId || !clientSecret) {
     return null
-  }
-
-  if (tokenCache && tokenCache.expiresAt > Date.now() + 30_000) {
-    return tokenCache.token
   }
 
   const response = await fetch('https://auth.tidal.com/v1/oauth2/token', {
@@ -58,126 +33,206 @@ async function getTidalAccessToken() {
     return null
   }
 
-  const data = (await response.json().catch(() => ({}))) as { access_token?: string; expires_in?: number }
-  if (!data.access_token) {
-    return null
-  }
-
-  tokenCache = {
-    token: data.access_token,
-    expiresAt: Date.now() + (data.expires_in ?? 3600) * 1000,
-  }
-
-  return tokenCache.token
+  const payload = (await response.json().catch(() => ({}))) as { access_token?: string }
+  return payload.access_token ?? null
 }
 
-function normalizeTrack(item: Record<string, unknown>, includedByKey?: Map<string, Record<string, unknown>>): TidalTrack | null {
-  const source = item.track && typeof item.track === 'object' ? { ...item, ...(item.track as Record<string, unknown>) } : item
+function readString(value: unknown): string {
+  return typeof value === 'string' ? value.trim() : ''
+}
+
+function readNestedString(value: unknown, key: string): string {
+  if (!value || typeof value !== 'object') return ''
+  return readString((value as Record<string, unknown>)[key])
+}
+
+function getIdKey(resource: TidalJson) {
+  const type = readString(resource.type)
+  const id = readString(resource.id)
+  return type && id ? `${type}:${id}` : null
+}
+
+function collectIncludedResources(payload: unknown) {
+  const map = new Map<string, TidalJson>()
+
+  const add = (resource: unknown) => {
+    if (!resource || typeof resource !== 'object') return
+    const record = resource as TidalJson
+    const key = getIdKey(record)
+    if (key) {
+      map.set(key, record)
+    }
+  }
+
+  if (payload && typeof payload === 'object') {
+    const record = payload as TidalJson
+
+    if (Array.isArray(record.included)) {
+      for (const resource of record.included) add(resource)
+    }
+
+    if (Array.isArray(record.data)) {
+      for (const resource of record.data) add(resource)
+    }
+
+    if (record.data && typeof record.data === 'object') {
+      add(record.data)
+
+      const relationships = (record.data as TidalJson).relationships as TidalJson | undefined
+      const directHits = relationships?.directHits as TidalJson | undefined
+      if (Array.isArray(directHits?.data)) {
+        for (const resource of directHits.data) add(resource)
+      }
+    }
+
+    if (Array.isArray(record.results)) {
+      for (const resource of record.results) add(resource)
+    }
+  }
+
+  return map
+}
+
+function normalizeArtistFromResource(resource: TidalJson): string {
+  const attrs = (resource.attributes as TidalJson | undefined) ?? {}
+  const directName = readString(attrs.name) || readString(resource.name)
+  if (directName) return directName
+
+  const title = readString(attrs.title)
+  if (title) return title
+
+  return ''
+}
+
+async function fetchArtistName(trackId: string, token: string) {
+  const payload = await fetchTidalJson([
+    `/tracks/${trackId}/relationships/artists`,
+  ], token, { limit: 10 })
+
+  if (!payload) {
+    return ''
+  }
+
+  const included = collectIncludedResources(payload)
+  const names = extractArtistNames(payload, included)
+  return names.join(', ')
+}
+
+function resolveArtistsFromRelationship(resource: TidalJson, included: Map<string, TidalJson>) {
+  const relationshipArtists = (resource.relationships as TidalJson | undefined)?.artists as TidalJson | undefined
+  const refs = Array.isArray(relationshipArtists?.data) ? relationshipArtists.data : []
+  const names: string[] = []
+
+  for (const ref of refs) {
+    if (!ref || typeof ref !== 'object') continue
+    const refRecord = ref as TidalJson
+    const key = getIdKey(refRecord)
+    if (!key) continue
+    const artistResource = included.get(key)
+    const name = artistResource ? normalizeArtistFromResource(artistResource) : ''
+    if (name) names.push(name)
+  }
+
+  return names
+}
+
+function normalizeTrack(resource: TidalJson, included: Map<string, TidalJson>): TidalTrack | null {
+  const source = resource.track && typeof resource.track === 'object'
+    ? { ...(resource.track as TidalJson), ...resource }
+    : resource
 
   const id = readString(source.id ?? source.trackId ?? source.tidalId)
-  let title = readString(source.title ?? source.name)
-  let artist = readNestedString(source.artist, 'name') || readString(source.artistName ?? source.artist ?? source.performer ?? source.artist_name)
-  let album = readNestedString(source.album, 'title') || readString(source.albumTitle ?? source.album) || null
+  const title = readString((source.attributes as TidalJson | undefined)?.title ?? source.title ?? source.name)
+  let artist =
+    readNestedString(source.artist, 'name') ||
+    readString(source.artistName ?? source.artist ?? source.performer ?? source.artist_name)
+  const album = readNestedString(source.album, 'title') || readString(source.albumTitle ?? source.album) || null
 
-  if ((!title || !artist || !album) && includedByKey && id) {
-    const trackResource = includedByKey.get(`tracks:${id}`)
-    if (trackResource) {
-      const attrs = (trackResource.attributes as Record<string, unknown> | undefined) ?? null
-      const relationships = (trackResource.relationships as Record<string, unknown> | undefined) ?? null
-      const trackTitle = readResourceValue(attrs, 'title')
-      const trackAlbum = readResourceValue(attrs, 'albumTitle') || readResourceValue(attrs, 'album')
-      const artistId = (() => {
-        const artists = relationships?.artists as { data?: Array<{ id?: unknown }> } | undefined
-        return Array.isArray(artists?.data) ? readString(artists?.data[0]?.id) : ''
-      })()
+  if (!id || !title) return null
 
-      if (!title) {
-        title = trackTitle
+  if (!artist) {
+    const trackKey = `tracks:${id}`
+    const includedTrack = included.get(trackKey)
+    if (includedTrack) {
+      const attrs = (includedTrack.attributes as TidalJson | undefined) ?? {}
+      const includedTitle = readString(attrs.title)
+      const includedAlbum = readString(attrs.albumTitle) || readString(attrs.album) || null
+      if (includedTitle && !title) {
+        // unreachable in practice, but keep the branch for completeness
       }
-      if (!album) {
-        album = trackAlbum || null
+      if (!artist) {
+        const names = resolveArtistsFromRelationship(includedTrack, included)
+        if (names.length) artist = names.join(', ')
       }
-      if (!artist && artistId) {
-        const artistResource = includedByKey.get(`artists:${artistId}`)
-        const artistAttrs = (artistResource?.attributes as Record<string, unknown> | undefined) ?? null
-        artist = readResourceValue(artistAttrs, 'name')
+      if (!artist) {
+        artist = readString(attrs.artist) || readString(attrs.artistName)
+      }
+      if (!artist && includedAlbum) {
+        artist = readString(attrs.artistName) || readString(attrs.artist)
       }
     }
   }
 
-  if (!id || !title || !artist) {
-    return null
+  if (!artist) {
+    const names = resolveArtistsFromRelationship(source, included)
+    if (names.length) artist = names.join(', ')
+  }
+
+  if (!artist) {
+    artist = 'Unknown artist'
   }
 
   return { id, title, artist, album }
 }
 
 export function extractTidalTracks(payload: unknown): TidalTrack[] {
-  const candidateArrays: unknown[] = []
-  const includedByKey = new Map<string, Record<string, unknown>>()
+  const included = collectIncludedResources(payload)
+  const candidates: unknown[] = []
 
   if (Array.isArray(payload)) {
-    candidateArrays.push(payload)
+    candidates.push(payload)
   } else if (payload && typeof payload === 'object') {
-    const record = payload as Record<string, unknown>
-    candidateArrays.push(record.tracks, record.items, record.data, record.results)
+    const record = payload as TidalJson
+    candidates.push(record.tracks, record.items, record.data, record.results)
 
-    if (Array.isArray(record.included)) {
-      for (const included of record.included) {
-        if (included && typeof included === 'object') {
-          const resource = included as Record<string, unknown>
-          const type = readString(resource.type)
-          const id = readString(resource.id)
-          if (type && id) {
-            includedByKey.set(`${type}:${id}`, resource)
-          }
-          candidateArrays.push(resource)
-        }
-      }
+    if (record.data && typeof record.data === 'object') {
+      const relationships = (record.data as TidalJson).relationships as TidalJson | undefined
+      const directHits = relationships?.directHits as TidalJson | undefined
+      candidates.push(directHits?.data)
     }
 
     if (Array.isArray(record.sections)) {
       for (const section of record.sections) {
         if (section && typeof section === 'object') {
-          const sectionRecord = section as Record<string, unknown>
-          candidateArrays.push(sectionRecord.tracks, sectionRecord.items, sectionRecord.data)
-
-          if (Array.isArray(sectionRecord.included)) {
-            for (const included of sectionRecord.included) {
-              if (included && typeof included === 'object') {
-                const resource = included as Record<string, unknown>
-                const type = readString(resource.type)
-                const id = readString(resource.id)
-                if (type && id) {
-                  includedByKey.set(`${type}:${id}`, resource)
-                }
-                candidateArrays.push(resource)
-              }
-            }
-          }
+          const sectionRecord = section as TidalJson
+          candidates.push(sectionRecord.tracks, sectionRecord.items, sectionRecord.data)
         }
       }
     }
   }
 
   const tracks: TidalTrack[] = []
-  for (const candidate of candidateArrays) {
+
+  for (const candidate of candidates) {
     if (!Array.isArray(candidate)) continue
     for (const item of candidate) {
-      if (item && typeof item === 'object') {
-        const track = normalizeTrack(item as Record<string, unknown>, includedByKey)
-        if (track) {
-          tracks.push(track)
-        }
-      }
+      if (!item || typeof item !== 'object') continue
+      const track = normalizeTrack(item as TidalJson, included)
+      if (track) tracks.push(track)
     }
   }
 
-  return tracks
+  const unique = new Map<string, TidalTrack>()
+  for (const track of tracks) {
+    unique.set(track.id, track)
+  }
+
+  return [...unique.values()]
 }
 
 async function fetchTidalJson(paths: string[], token: string, options: { query?: string; limit: number }) {
   const { query, limit } = options
+
   for (const path of paths) {
     const url = new URL(path, getTidalBaseUrl())
     url.searchParams.set('limit', String(limit))
@@ -187,53 +242,104 @@ async function fetchTidalJson(paths: string[], token: string, options: { query?:
       url.searchParams.set('query', query)
     }
 
+    if (path.startsWith('/searchSuggestions/')) {
+      url.searchParams.set('include', 'directHits')
+    }
+
+    if (path.startsWith('/playlists/')) {
+      url.searchParams.set('include', 'items')
+    }
+
     const response = await fetch(url, {
       headers: {
         authorization: `Bearer ${token}`,
-        accept: 'application/json',
+        accept: 'application/vnd.api+json',
       },
     })
 
-    if (!response.ok) {
-      continue
-    }
-
-    const payload = await response.json().catch(() => null)
-    const tracks = extractTidalTracks(payload)
-    if (tracks.length) {
-      return tracks
+    if (response.ok) {
+      return response.json().catch(() => null)
     }
   }
 
-  return []
+  return null
+}
+
+async function enrichTrackArtists(tracks: TidalTrack[], token: string) {
+  const cache = new Map<string, string>()
+
+  return Promise.all(tracks.map(async (track) => {
+    if (track.artist && track.artist !== 'Unknown artist') {
+      return track
+    }
+
+    const cached = cache.get(track.id)
+    if (cached) {
+      return { ...track, artist: cached }
+    }
+
+    const artist = (await fetchArtistName(track.id, token)) || track.artist || 'Unknown artist'
+    cache.set(track.id, artist)
+    return { ...track, artist }
+  }))
+}
+
+function extractArtistNames(payload: unknown, included = collectIncludedResources(payload)) {
+  const names: string[] = []
+
+  const addFromResource = (resource: unknown) => {
+    if (!resource || typeof resource !== 'object') return
+    const record = resource as TidalJson
+    const type = readString(record.type)
+    if (type && type !== 'artists') return
+    const name = normalizeArtistFromResource(record)
+    if (name) names.push(name)
+  }
+
+  if (payload && typeof payload === 'object') {
+    const record = payload as TidalJson
+
+    if (Array.isArray(record.data)) {
+      for (const item of record.data) addFromResource(item)
+    } else {
+      addFromResource(record.data)
+    }
+
+    if (Array.isArray(record.included)) {
+      for (const item of record.included) addFromResource(item)
+    }
+  }
+
+  if (!names.length) {
+    for (const resource of included.values()) {
+      addFromResource(resource)
+    }
+  }
+
+  return [...new Set(names)]
 }
 
 export async function searchTidalTracks(query: string, options: { limit?: number; playlistOnly?: boolean } = {}) {
-  const trimmed = query.trim()
-  if (!trimmed) {
-    return []
-  }
-
-  const limit = Math.min(Math.max(options.limit ?? 10, 1), 25)
   const token = await getTidalAccessToken()
-
   if (!token) {
     return []
   }
 
-  const searchPaths = [
-    `/searchSuggestions/${encodeURIComponent(trimmed)}/relationships/directHits`,
+  const trimmed = query.trim()
+  const limit = Math.min(Math.max(options.limit ?? 20, 1), 100)
+  const paths = [
     `/searchSuggestions/${encodeURIComponent(trimmed)}`,
   ]
 
-  return fetchTidalJson(searchPaths, token, { limit })
+  const payload = await fetchTidalJson(paths, token, { query: trimmed, limit })
+  if (!payload) return []
+
+  return enrichTrackArtists(extractTidalTracks(payload), token)
 }
 
 function extractPlaylistId(url: string) {
   const trimmed = url.trim()
-  if (!trimmed) {
-    return null
-  }
+  if (!trimmed) return null
 
   try {
     const parsed = new URL(trimmed)
@@ -259,10 +365,13 @@ export async function fetchTidalPlaylistTracks(playlistUrl: string, options: { l
   }
 
   const limit = Math.min(Math.max(options.limit ?? 200, 1), 500)
-  const playlistPaths = [
+  const payload = await fetchTidalJson([
     `/playlists/${playlistId}/relationships/items`,
-    `/playlists/${playlistId}`,
-  ]
+  ], token, { limit })
 
-  return fetchTidalJson(playlistPaths, token, { limit })
+  if (!payload) {
+    return []
+  }
+
+  return enrichTrackArtists(extractTidalTracks(payload), token)
 }
