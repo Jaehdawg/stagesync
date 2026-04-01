@@ -244,6 +244,11 @@ export function BandDashboardView({
                     </form>
                   </>
                 ) : null}
+                <div className="mt-4 flex flex-wrap gap-3">
+                  <a href="/band/songs" className="rounded-full border border-white/10 px-4 py-2 text-sm font-medium text-white hover:border-cyan-400/50">
+                    Open song library
+                  </a>
+                </div>
                 <p className="mt-4 text-slate-400">{signupStatusMessage}</p>
               </>
             )}

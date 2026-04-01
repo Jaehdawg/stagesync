@@ -35,14 +35,14 @@ describe('TidalSearchPanel', () => {
 
     render(<TidalSearchPanel sourceMode="tidal_catalog" />)
 
-    fireEvent.change(screen.getByLabelText(/search songs/i), { target: { value: 'Dreams' } })
+    fireEvent.change(screen.getByLabelText(/search tidal catalog/i), { target: { value: 'Dreams' } })
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledWith('/api/tidal/search?query=Dreams'))
     expect(screen.getByText(/found 1 tidal result/i)).toBeInTheDocument()
     expect(screen.getByText('Fleetwood Mac')).toBeInTheDocument()
   })
 
-  it('shows the linked tidal playlist when provided', async () => {
+  it('shows the linked tidal playlist while browsing the band song library', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({ tracks: [] }),
@@ -52,9 +52,10 @@ describe('TidalSearchPanel', () => {
 
     render(<TidalSearchPanel sourceMode="tidal_playlist" playlistUrl="https://tidal.com/browse/playlist/abc123" />)
 
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith('/api/tidal/playlist?url=https%3A%2F%2Ftidal.com%2Fbrowse%2Fplaylist%2Fabc123'))
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith('/api/songs/search?query='))
 
     expect(screen.getByText(/playlist:/i)).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /https:\/\/tidal\.com\/browse\/playlist\/abc123/i })).toBeInTheDocument()
+    expect(screen.getByLabelText(/search song library/i)).toBeInTheDocument()
   })
 })

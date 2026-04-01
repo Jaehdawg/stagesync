@@ -70,6 +70,7 @@ export async function POST(request: NextRequest) {
     id: songId,
     title,
     artist,
+    archived_at: null,
   })
 
   if (songError) {

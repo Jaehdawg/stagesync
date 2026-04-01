@@ -7,7 +7,8 @@ export async function GET(request: NextRequest) {
   const supabase = createServiceClient()
   const baseQuery = supabase
     .from('songs')
-    .select('id, title, artist')
+    .select('id, title, artist, duration_ms')
+    .is('archived_at', null)
     .order('artist', { ascending: true })
     .order('title', { ascending: true })
 
@@ -20,6 +21,6 @@ export async function GET(request: NextRequest) {
   }
 
   return NextResponse.json({
-    tracks: (data ?? []).map((song) => ({ id: song.id, title: song.title, artist: song.artist })),
+    tracks: (data ?? []).map((song) => ({ id: song.id, title: song.title, artist: song.artist, duration: song.duration_ms ?? null })),
   })
 }

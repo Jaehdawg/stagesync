@@ -19,7 +19,6 @@ type TidalSearchPanelProps = {
 
 export function TidalSearchPanel({ disabled = false, statusMessage, sourceMode = 'tidal_catalog', playlistUrl = null }: TidalSearchPanelProps) {
   const isCatalogMode = sourceMode === 'tidal_catalog'
-  const isPlaylistMode = sourceMode === 'tidal_playlist'
   const isBrowseMode = !isCatalogMode
   const [query, setQuery] = useState('')
   const [tracks, setTracks] = useState<TidalTrack[]>([])
@@ -69,16 +68,13 @@ export function TidalSearchPanel({ disabled = false, statusMessage, sourceMode =
       setError(null)
       setMessage(null)
 
-      const endpoint = isPlaylistMode
-        ? `/api/tidal/playlist?url=${encodeURIComponent(playlistUrl ?? '')}`
-        : '/api/songs/search?query='
-      const response = await fetch(endpoint)
+      const response = await fetch(`/api/songs/search?query=${encodeURIComponent(query.trim())}`)
       const payload = (await response.json().catch(() => ({}))) as { tracks?: TidalTrack[]; message?: string }
 
       if (cancelled) return
 
       if (!response.ok) {
-        setError(payload.message ?? (isPlaylistMode ? 'Unable to load playlist songs.' : 'Unable to load songs.'))
+        setError(payload.message ?? 'Unable to load songs.')
         setTracks([])
         setLoading(false)
         return
@@ -94,9 +90,7 @@ export function TidalSearchPanel({ disabled = false, statusMessage, sourceMode =
       setMessage(
         nextTracks.length
           ? `Loaded ${nextTracks.length} song${nextTracks.length === 1 ? '' : 's'}.`
-          : isPlaylistMode
-            ? 'No songs found in the playlist.'
-            : 'No songs found.'
+          : 'No songs found.'
       )
       setLoading(false)
     }
@@ -106,7 +100,7 @@ export function TidalSearchPanel({ disabled = false, statusMessage, sourceMode =
     return () => {
       cancelled = true
     }
-  }, [isBrowseMode, isPlaylistMode, playlistUrl])
+  }, [isBrowseMode, query, disabled])
 
   useEffect(() => {
     if (!isCatalogMode) {
@@ -168,23 +162,23 @@ export function TidalSearchPanel({ disabled = false, statusMessage, sourceMode =
         </p>
       ) : null}
 
-      {isCatalogMode ? (
-        <div className="mt-4 space-y-4">
-          <div className="space-y-2">
-            <label htmlFor="tidal-query" className="text-sm font-medium text-slate-200">Search songs</label>
-            <input
-              id="tidal-query"
-              name="tidal-query"
-              type="search"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search by title, artist, or album"
-              className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none"
-            />
-          </div>
-          {loading ? <p className="text-sm text-slate-400">Searching...</p> : null}
+      <div className="mt-4 space-y-4">
+        <div className="space-y-2">
+          <label htmlFor="tidal-query" className="text-sm font-medium text-slate-200">
+            {isCatalogMode ? 'Search Tidal catalog' : 'Search song library'}
+          </label>
+          <input
+            id="tidal-query"
+            name="tidal-query"
+            type="search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder={isCatalogMode ? 'Search by title, artist, or album' : 'Search by title or artist'}
+            className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none"
+          />
         </div>
-      ) : null}
+        {loading ? <p className="text-sm text-slate-400">Searching...</p> : null}
+      </div>
 
       {statusMessage ? <p className="mt-3 text-sm text-slate-300">{statusMessage}</p> : null}
       {message ? <p className="mt-3 text-sm text-emerald-300">{message}</p> : null}

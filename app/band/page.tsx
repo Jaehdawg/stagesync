@@ -168,6 +168,7 @@ export default async function BandPage() {
               <div className="mt-4 flex flex-wrap gap-3">
                 <a href="/band/account" className="rounded-full border border-white/10 px-4 py-2 text-sm font-medium text-white hover:border-cyan-400/50">Account</a>
                 <a href="/band/members" className="rounded-full border border-white/10 px-4 py-2 text-sm font-medium text-white hover:border-cyan-400/50">Members</a>
+                <a href="/band/songs" className="rounded-full border border-white/10 px-4 py-2 text-sm font-medium text-white hover:border-cyan-400/50">Song library</a>
               </div>
             ) : null}
             <form className="mt-4" action="/api/auth/logout" method="post">
