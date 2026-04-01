@@ -161,6 +161,12 @@ function collectIncludedResources(payload: unknown) {
       }
     }
 
+    const relationships = (record.relationships as TidalJson | undefined) ?? {}
+    const items = relationships.items as TidalJson | undefined
+    if (Array.isArray(items?.data)) {
+      for (const resource of items.data) add(resource)
+    }
+
     if (Array.isArray(record.results)) {
       for (const resource of record.results) add(resource)
     }
@@ -285,6 +291,16 @@ export function extractTidalTracks(payload: unknown): TidalTrack[] {
     const record = payload as TidalJson
     candidates.push(record.tracks, record.items, record.data, record.results)
 
+    const relationships = (record.relationships as TidalJson | undefined) ?? {}
+    const itemsRelationship = relationships.items as TidalJson | undefined
+    candidates.push(itemsRelationship?.data)
+
+    if (record.data && typeof record.data === 'object') {
+      const dataRelationships = ((record.data as TidalJson).relationships as TidalJson | undefined) ?? {}
+      const dataItemsRelationship = dataRelationships.items as TidalJson | undefined
+      candidates.push(dataItemsRelationship?.data)
+    }
+
     if (record.data && typeof record.data === 'object') {
       const relationships = (record.data as TidalJson).relationships as TidalJson | undefined
       const directHits = relationships?.directHits as TidalJson | undefined
@@ -325,9 +341,9 @@ export function extractTidalTracks(payload: unknown): TidalTrack[] {
 async function fetchTidalJson(
   paths: string[],
   token: string,
-  options: { query?: string; limit: number; params?: Record<string, string>; headers?: Record<string, string>; retries?: number }
+  options: { query?: string; limit: number; params?: Record<string, string>; headers?: Record<string, string>; retries?: number; include?: string }
 ): Promise<TidalJson | null> {
-  const { query, limit, params, headers: extraHeaders, retries = 2 } = options
+  const { query, limit, params, headers: extraHeaders, retries = 2, include } = options
 
   for (const path of paths) {
     const url = new URL(path.replace(/^\//, ''), getTidalBaseUrl())
@@ -344,11 +360,11 @@ async function fetchTidalJson(
       url.searchParams.set('query', query)
     }
 
-    if (path.startsWith('/searchSuggestions/')) {
+    if (include) {
+      url.searchParams.set('include', include)
+    } else if (path.startsWith('/searchSuggestions/')) {
       url.searchParams.set('include', 'directHits')
-    }
-
-    if (path.startsWith('/playlists/')) {
+    } else if (path.startsWith('/playlists/')) {
       url.searchParams.set('include', 'items')
     }
 
@@ -375,6 +391,7 @@ async function fetchTidalJson(
         limit,
         params,
         headers: extraHeaders,
+        include,
         retries: retries - 1,
       })
 
@@ -492,7 +509,7 @@ export async function fetchTidalPlaylistTracks(playlistUrl: string, options: { l
     return []
   }
 
-  const pageSize = Math.min(limit, 200)
+  const pageSize = Math.min(limit, 20)
   const tracks: TidalTrack[] = []
   let offset = 0
   let nextUrl: string | null = null
@@ -500,12 +517,13 @@ export async function fetchTidalPlaylistTracks(playlistUrl: string, options: { l
 
   while (tracks.length < total) {
     const playlistPayload = nextUrl
-      ? await fetchTidalJson([nextUrl], token, { limit: pageSize })
+      ? await fetchTidalJson([nextUrl], token, { limit: pageSize, include: 'items,items.artists' })
       : await fetchTidalJson([
-          `/playlists/${playlistId}/relationships/items`,
+          `/playlists/${playlistId}`,
         ], token, {
           limit: pageSize,
           params: { offset: String(offset) },
+          include: 'items,items.artists',
         })
 
     if (!playlistPayload) {
@@ -513,53 +531,20 @@ export async function fetchTidalPlaylistTracks(playlistUrl: string, options: { l
     }
 
     const playlistRecord = playlistPayload as TidalJson
-    const playlistItems = Array.isArray(playlistRecord.data) ? playlistRecord.data : []
-
-    const reportedTotal = Number(playlistRecord.totalNumberOfItems)
+    const playlistData = (playlistRecord.data as TidalJson | undefined) ?? {}
+    const playlistAttributes = (playlistData.attributes as TidalJson | undefined) ?? {}
+    const reportedTotal = Number(playlistAttributes.numberOfItems ?? playlistRecord.totalNumberOfItems)
     if (Number.isFinite(reportedTotal) && reportedTotal >= 0) {
       total = reportedTotal
     }
 
-    if (!playlistItems.length) {
+    const pageTracks = extractTidalTracks(playlistPayload)
+
+    if (!pageTracks.length) {
       break
     }
 
-    const pageTracks: (TidalTrack | null)[] = []
-    for (const item of playlistItems) {
-      const trackId = readText((item as TidalJson | undefined)?.id)
-      if (!trackId) {
-        pageTracks.push(null)
-        continue
-      }
-
-      const trackPayload = await fetchTidalJson([
-        `/tracks/${trackId}`,
-      ], token, { limit: 1, retries: 3 })
-
-      const trackDetails = extractTidalTracks(trackPayload)[0]
-      if (!trackDetails) {
-        pageTracks.push(null)
-        continue
-      }
-
-      const artistPayload = await fetchTidalJson([
-        `/tracks/${trackId}/relationships/artists`,
-      ], token, { limit: 10, retries: 3 })
-
-      const artistRecord = (artistPayload as TidalJson | null) ?? {}
-      const artistRefs = Array.isArray(artistRecord.data) ? artistRecord.data : []
-      const firstArtist = artistRefs[0]
-      const artistId = readText((firstArtist as TidalJson | undefined)?.id)
-
-      const artist = artistId ? await fetchArtistName(artistId, token) : ''
-
-      pageTracks.push({
-        ...trackDetails,
-        artist: artist || trackDetails.artist || 'Unknown artist',
-      })
-    }
-
-    tracks.push(...pageTracks.filter((track): track is TidalTrack => Boolean(track)))
+    tracks.push(...pageTracks)
 
     nextUrl = typeof playlistRecord.links === 'object' && playlistRecord.links && typeof (playlistRecord.links as TidalJson).next === 'string'
       ? String((playlistRecord.links as TidalJson).next)
@@ -569,7 +554,7 @@ export async function fetchTidalPlaylistTracks(playlistUrl: string, options: { l
       continue
     }
 
-    if (playlistItems.length < pageSize) {
+    if (pageTracks.length < pageSize) {
       total = tracks.length
       break
     }
