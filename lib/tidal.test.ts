@@ -54,7 +54,7 @@ describe('tidal helpers', () => {
     ])
   })
 
-  it('fetches the f1abe534 playlist end to end through the playlist include flow', async () => {
+  it('fetches the f1abe534 playlist end to end through the relationships/items cursor flow', async () => {
     const originalClientId = process.env.TIDAL_CLIENT_ID
     const originalClientSecret = process.env.TIDAL_CLIENT_SECRET
     delete process.env.TIDAL_BROWSER_TOKEN
@@ -81,36 +81,24 @@ describe('tidal helpers', () => {
         } as Response
       }
 
-      if (url.includes(`/playlists/${playlistId}`)) {
+      if (url.includes(`/playlists/${playlistId}/relationships/items`)) {
         expect(init?.headers).toMatchObject({
           accept: 'application/vnd.api+json',
           authorization: 'Bearer tidal-bearer-token',
         })
 
-        if (url.includes('offset=0')) {
+        if (!url.includes('page%5Bcursor%5D=')) {
           return {
             ok: true,
             json: async () => ({
-              data: {
-                id: playlistId,
-                type: 'playlists',
-                attributes: { numberOfItems: 56 },
-              relationships: {
-                items: {
-                  data: [
-                    { id: '136685782', type: 'tracks' },
-                    { id: '1906289', type: 'tracks' },
-                  ],
-                },
-              },
-              links: {
-                next: `/playlists/${playlistId}?offset=20&countryCode=US&limit=20&include=items%2Citems.artists`,
-              },
-            },
-            included: [
-              {
-                id: '136685782',
-                type: 'tracks',
+              data: [
+                { id: '136685782', type: 'tracks' },
+                { id: '1906289', type: 'tracks' },
+              ],
+              included: [
+                {
+                  id: '136685782',
+                  type: 'tracks',
                   attributes: { title: 'Bad Decisions', duration: 'PT4M53S' },
                   relationships: { artists: { data: [{ id: '29037', type: 'artists' }] } },
                 },
@@ -123,6 +111,9 @@ describe('tidal helpers', () => {
                 { id: '29037', type: 'artists', attributes: { name: 'The Strokes' } },
                 { id: '39438', type: 'artists', attributes: { name: 'Kings Of Leon' } },
               ],
+              links: {
+                next: `/playlists/${playlistId}/relationships/items?include=items.artists&page%5Bcursor%5D=next-cursor-1`,
+              },
             }),
           } as Response
         }
@@ -130,16 +121,7 @@ describe('tidal helpers', () => {
         return {
           ok: true,
           json: async () => ({
-            data: {
-              id: playlistId,
-              type: 'playlists',
-              attributes: { numberOfItems: 56 },
-              relationships: {
-                items: {
-                  data: [{ id: '128550', type: 'tracks' }],
-                },
-              },
-            },
+            data: [{ id: '128550', type: 'tracks' }],
             included: [
               {
                 id: '128550',
@@ -149,6 +131,9 @@ describe('tidal helpers', () => {
               },
               { id: '8812', type: 'artists', attributes: { name: 'Coldplay' } },
             ],
+            links: {
+              next: null,
+            },
           }),
         } as Response
       }
@@ -177,7 +162,7 @@ describe('tidal helpers', () => {
     }
   })
 
-  it('retries a rate-limited playlist page fetch and still resolves the track list', async () => {
+  it('retries a rate-limited playlist cursor fetch and still resolves the track list', async () => {
     const originalClientId = process.env.TIDAL_CLIENT_ID
     const originalClientSecret = process.env.TIDAL_CLIENT_SECRET
     delete process.env.TIDAL_BROWSER_TOKEN
@@ -195,8 +180,8 @@ describe('tidal helpers', () => {
         } as Response
       }
 
-      if (url.includes(`/playlists/${playlistId}`)) {
-        const attempts = fetchMock.mock.calls.filter(([calledUrl]) => String(calledUrl).includes(`/playlists/${playlistId}`)).length
+      if (url.includes(`/playlists/${playlistId}/relationships/items`)) {
+        const attempts = fetchMock.mock.calls.filter(([calledUrl]) => String(calledUrl).includes(`/playlists/${playlistId}/relationships/items`)).length
         if (attempts === 1) {
           return {
             ok: false,
@@ -215,16 +200,7 @@ describe('tidal helpers', () => {
         return {
           ok: true,
           json: async () => ({
-            data: {
-              id: playlistId,
-              type: 'playlists',
-              attributes: { numberOfItems: 56 },
-              relationships: {
-                items: {
-                  data: [{ id: '136685782', type: 'tracks' }],
-                },
-              },
-            },
+            data: [{ id: '136685782', type: 'tracks' }],
             included: [
               {
                 id: '136685782',
@@ -234,6 +210,7 @@ describe('tidal helpers', () => {
               },
               { id: '29037', type: 'artists', attributes: { name: 'The Strokes' } },
             ],
+            links: { next: null },
           }),
         } as Response
       }

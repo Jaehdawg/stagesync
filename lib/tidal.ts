@@ -143,10 +143,6 @@ function collectIncludedResources(payload: unknown) {
   if (payload && typeof payload === 'object') {
     const record = payload as TidalJson
 
-    if (Array.isArray(record.included)) {
-      for (const resource of record.included) add(resource)
-    }
-
     if (Array.isArray(record.data)) {
       for (const resource of record.data) add(resource)
     }
@@ -169,6 +165,10 @@ function collectIncludedResources(payload: unknown) {
 
     if (Array.isArray(record.results)) {
       for (const resource of record.results) add(resource)
+    }
+
+    if (Array.isArray(record.included)) {
+      for (const resource of record.included) add(resource)
     }
   }
 
@@ -534,31 +534,20 @@ export async function fetchTidalPlaylistTracks(playlistUrl: string, options: { l
 
   const pageSize = Math.min(limit, 20)
   const tracks: TidalTrack[] = []
-  let offset = 0
   let nextUrl: string | null = null
-  let total = Number.POSITIVE_INFINITY
 
-  while (tracks.length < total) {
+  while (true) {
     const playlistPayload = nextUrl
       ? await fetchTidalJson([nextUrl], token, { limit: pageSize, include: 'items,items.artists' })
       : await fetchTidalJson([
-          `/playlists/${playlistId}`,
+          `/playlists/${playlistId}/relationships/items`,
         ], token, {
           limit: pageSize,
-          params: { offset: String(offset) },
           include: 'items,items.artists',
         })
 
     if (!playlistPayload) {
       break
-    }
-
-    const playlistRecord = playlistPayload as TidalJson
-    const playlistData = (playlistRecord.data as TidalJson | undefined) ?? {}
-    const playlistAttributes = (playlistData.attributes as TidalJson | undefined) ?? {}
-    const reportedTotal = Number(playlistAttributes.numberOfItems ?? playlistRecord.totalNumberOfItems)
-    if (Number.isFinite(reportedTotal) && reportedTotal >= 0) {
-      total = reportedTotal
     }
 
     const pageTracks = extractTidalTracks(playlistPayload)
@@ -576,11 +565,8 @@ export async function fetchTidalPlaylistTracks(playlistUrl: string, options: { l
     }
 
     if (pageTracks.length < pageSize) {
-      total = tracks.length
       break
     }
-
-    offset += pageSize
   }
 
   return tracks
