@@ -41,7 +41,7 @@ export default async function BandMembersPage() {
   }
 
   const logins = await listTestLogins(supabase)
-  const members = logins.filter((login) => login.role === 'band' && login.band_name === current.band_name && login.username !== current.username)
+  const members = logins.filter((login) => login.role === 'band' && login.active_band_id === testSession?.activeBandId && login.username !== current.username)
 
   return (
     <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100 sm:px-6 lg:px-8">

@@ -12,6 +12,7 @@ import { buildSingerSignupUrl, slugifyBandName } from '@/lib/public-links'
 
 async function getBandState(
   supabase: Awaited<ReturnType<typeof createClient>>,
+  bandId?: string | null,
   bandProfileOverride?: {
     band_name?: string | null
     website_url?: string | null
@@ -27,17 +28,32 @@ async function getBandState(
   type QueueRow = { id: string; position: number | null; status: string | null; song_id: string | null; performer_id: string | null }
 
   const [{ data: bandProfile }, { data: events }, { data: queueItems }] = await Promise.all([
-    supabase
-      .from('band_profiles')
-      .select('band_name, website_url, facebook_url, instagram_url, tiktok_url, paypal_url, venmo_url, cashapp_url, custom_message')
-      .limit(1)
-      .maybeSingle(),
-    supabase.from('events').select('id, name, is_active, allow_signups').order('created_at', { ascending: false }).limit(1),
-    supabase
-      .from('queue_items')
-      .select('id, position, status, song_id, performer_id')
-      .order('position', { ascending: true })
-      .limit(6),
+    bandId
+      ? supabase
+          .from('band_profiles')
+          .select('band_name, website_url, facebook_url, instagram_url, tiktok_url, paypal_url, venmo_url, cashapp_url, custom_message')
+          .eq('band_id', bandId)
+          .maybeSingle()
+      : supabase
+          .from('band_profiles')
+          .select('band_name, website_url, facebook_url, instagram_url, tiktok_url, paypal_url, venmo_url, cashapp_url, custom_message')
+          .limit(1)
+          .maybeSingle(),
+    bandId
+      ? supabase.from('events').select('id, name, band_id, is_active, allow_signups').eq('band_id', bandId).order('created_at', { ascending: false }).limit(1)
+      : supabase.from('events').select('id, name, band_id, is_active, allow_signups').order('created_at', { ascending: false }).limit(1),
+    bandId
+      ? supabase
+          .from('queue_items')
+          .select('id, position, status, song_id, performer_id')
+          .eq('band_id', bandId)
+          .order('position', { ascending: true })
+          .limit(6)
+      : supabase
+          .from('queue_items')
+          .select('id, position, status, song_id, performer_id')
+          .order('position', { ascending: true })
+          .limit(6),
   ])
 
   const currentShow = events?.[0]
@@ -115,7 +131,7 @@ async function getBandTestState(supabase: Awaited<ReturnType<typeof createClient
   const testBandProfile = await getTestBandProfileByBandId(supabase, activeBandId)
   const currentShow = await getLatestTestShow(supabase, activeBandId)
   const currentSettings = await getLatestTestShowSettings(supabase, activeBandId)
-  const state = await getBandState(supabase, testBandProfile ?? undefined)
+  const state = await getBandState(supabase, activeBandId, testBandProfile ?? undefined)
 
   return {
     ...state,
@@ -240,7 +256,7 @@ export default async function BandPage() {
     )
   }
 
-  const state = await getBandState(supabase)
+  const state = await getBandState(supabase, testSession?.activeBandId ?? null)
   const singerSignupUrl = buildSingerSignupUrl(appUrl, slugifyBandName(state.brand.title), state.currentShowId)
 
   return (

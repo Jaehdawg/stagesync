@@ -77,11 +77,23 @@ export default async function BandSongsPage({
   const serviceSupabase = createServiceClient()
   const pageSize = 12
   const offset = (page - 1) * pageSize
+  const activeBandId = testSession?.activeBandId ?? null
+
+  if (!activeBandId) {
+    return (
+      <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-5xl rounded-3xl border border-white/10 bg-white/5 p-6 text-slate-200">
+          No active band selected.
+        </div>
+      </main>
+    )
+  }
 
   const { data: importJob } = importState && importJobId
     ? await serviceSupabase
       .from('song_import_jobs')
       .select('id, status, message, error_message, processed_items, imported_items, total_items, source_url')
+      .eq('band_id', activeBandId)
       .eq('id', importJobId)
       .maybeSingle()
     : { data: null }
@@ -90,6 +102,7 @@ export default async function BandSongsPage({
     .from('songs')
     .select('id, title, artist, duration_ms, source_type, source_ref', { count: 'exact' })
     .is('archived_at', null)
+    .eq('band_id', activeBandId)
     .order('artist', { ascending: true })
     .order('title', { ascending: true })
     .range(offset, offset + pageSize - 1)
