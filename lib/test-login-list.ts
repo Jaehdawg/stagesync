@@ -6,6 +6,7 @@ export type TestLoginRow = {
   password_hash: string
   band_name: string | null
   band_access_level: 'admin' | 'member' | null
+  active_band_id?: string | null
 }
 
 export async function listTestLogins(supabase: SupabaseClient): Promise<TestLoginRow[]> {

@@ -35,6 +35,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: 'Band admin access required.' }, { status: 403 })
   }
 
+  const activeBandId = testSession.activeBandId ?? current.active_band_id ?? null
+  if (!activeBandId) {
+    return NextResponse.json({ message: 'No active band selected.' }, { status: 400 })
+  }
+
   const formData = await request.formData()
   const action = String(formData.get('action') ?? '')
   const username = String(formData.get('username') ?? '').trim()
@@ -55,7 +60,16 @@ export async function POST(request: NextRequest) {
         password_hash: getTestLoginPasswordHash(username, password),
         band_name: bandName || null,
         band_access_level: 'member',
+        active_band_id: activeBandId,
       })
+
+      await supabase.from('band_memberships').upsert({
+        band_id: activeBandId,
+        member_type: 'test_login',
+        member_key: username.toLowerCase(),
+        band_access_level: 'member',
+        active: true,
+      }, { onConflict: 'band_id,member_type,member_key' })
     } else {
       return NextResponse.json({ message: 'Unknown action.' }, { status: 400 })
     }

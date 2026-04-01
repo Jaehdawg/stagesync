@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
 
   const { data: currentShow } = await serviceSupabase
     .from('events')
-    .select('id, is_active, allow_signups')
+    .select('id, band_id, is_active, allow_signups')
     .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle()
@@ -83,6 +83,7 @@ export async function POST(request: NextRequest) {
 
   const { error: queueError } = await serviceSupabase.from('queue_items').insert({
     event_id: currentShow.id,
+    band_id: currentShow.band_id,
     performer_id: user.id,
     song_id: songId,
     status: 'pending',

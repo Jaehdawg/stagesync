@@ -35,6 +35,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: 'Band admin access required.' }, { status: 403 })
   }
 
+  const activeBandId = testSession.activeBandId ?? current.active_band_id ?? null
+
   const formData = await request.formData()
   const username = String(formData.get('username') ?? '').trim()
   const password = String(formData.get('password') ?? '')
@@ -50,6 +52,7 @@ export async function POST(request: NextRequest) {
       password_hash: getTestLoginPasswordHash(username, password),
       band_name: current.band_name,
       band_access_level: 'admin',
+      active_band_id: activeBandId,
     })
     .eq('username', current.username)
 
@@ -60,7 +63,7 @@ export async function POST(request: NextRequest) {
   const response = NextResponse.redirect(new URL('/band/account', request.url))
   response.cookies.set(
     'stagesync_test_session',
-    signTestSession({ role: 'band', username: username.toLowerCase() }),
+    signTestSession({ role: 'band', username: username.toLowerCase(), activeBandId }),
     {
       httpOnly: true,
       sameSite: 'lax',
