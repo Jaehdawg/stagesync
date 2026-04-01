@@ -4,6 +4,7 @@ import { isBandAdminRequest } from '@/lib/band-auth'
 import {
   buildGoogleSheetExportUrl,
   extractGoogleSheetId,
+  dedupeSongImportRecords,
   parseSongsCsv,
   type SongImportRecord,
 } from '@/lib/song-library'
@@ -74,8 +75,9 @@ export async function POST(request: NextRequest) {
   }
 
   const serviceSupabase = createServiceClient()
+  const uniqueSongs = dedupeSongImportRecords(songs)
   const { error } = await serviceSupabase.from('songs').upsert(
-    songs.map((song) => ({
+    uniqueSongs.map((song) => ({
       ...song,
       archived_at: null,
     })),

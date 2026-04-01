@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
-import { buildGoogleSheetExportUrl, buildTidalPlaylistSongs, parseSongsCsv } from './song-library'
+import { buildGoogleSheetExportUrl, buildTidalPlaylistSongs, dedupeSongImportRecords, parseSongsCsv } from './song-library'
 import { fetchTidalPlaylistTracks } from './tidal'
 
 vi.mock('./tidal', () => ({
@@ -38,6 +38,19 @@ describe('song library helpers', () => {
     expect(
       buildGoogleSheetExportUrl('https://docs.google.com/spreadsheets/d/sheet123/edit#gid=456')
     ).toBe('https://docs.google.com/spreadsheets/d/sheet123/export?format=csv&gid=456')
+  })
+
+  it('dedupes imported song records by id before upsert', () => {
+    expect(
+      dedupeSongImportRecords([
+        { id: 'dreams-fleetwood-mac', title: 'Dreams', artist: 'Fleetwood Mac', duration_ms: 300000, source_type: 'uploaded', source_ref: null },
+        { id: 'dreams-fleetwood-mac', title: 'Dreams', artist: 'Fleetwood Mac', duration_ms: 300000, source_type: 'tidal_playlist', source_ref: 'abc123' },
+        { id: 'mr-jones-counting-crows', title: 'Mr. Jones', artist: 'Counting Crows', duration_ms: 271000, source_type: 'uploaded', source_ref: null },
+      ])
+    ).toEqual([
+      { id: 'dreams-fleetwood-mac', title: 'Dreams', artist: 'Fleetwood Mac', duration_ms: 300000, source_type: 'uploaded', source_ref: null },
+      { id: 'mr-jones-counting-crows', title: 'Mr. Jones', artist: 'Counting Crows', duration_ms: 271000, source_type: 'uploaded', source_ref: null },
+    ])
   })
 
   it('maps tidal playlist tracks into importable song rows', async () => {

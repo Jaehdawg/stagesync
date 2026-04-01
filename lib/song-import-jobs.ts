@@ -1,5 +1,5 @@
 import { createServiceClient } from '@/utils/supabase/service'
-import { buildTidalPlaylistSongs, type SongImportRecord } from './song-library'
+import { buildTidalPlaylistSongs, dedupeSongImportRecords, type SongImportRecord } from './song-library'
 
 type SongImportJob = {
   id: string
@@ -29,8 +29,9 @@ async function updateJob(jobId: string, patch: JobUpdate) {
 
 async function upsertSongs(songs: SongImportRecord[]) {
   const supabase = createServiceClient()
+  const uniqueSongs = dedupeSongImportRecords(songs)
   const { error } = await supabase.from('songs').upsert(
-    songs.map((song) => ({
+    uniqueSongs.map((song) => ({
       ...song,
       archived_at: null,
     })),
@@ -76,22 +77,23 @@ export async function runTidalPlaylistImportJob(job: SongImportJob) {
     })
 
     const songs = await buildTidalPlaylistSongs(job.source_url ?? '')
+    const uniqueSongs = dedupeSongImportRecords(songs)
 
     await updateJob(job.id, {
-      total_items: songs.length,
-      processed_items: songs.length,
-      imported_items: songs.length,
-      message: songs.length ? `Imported ${songs.length} songs.` : 'No songs were imported.',
+      total_items: uniqueSongs.length,
+      processed_items: uniqueSongs.length,
+      imported_items: uniqueSongs.length,
+      message: uniqueSongs.length ? `Imported ${uniqueSongs.length} songs.` : 'No songs were imported.',
     })
 
-    if (songs.length) {
-      await upsertSongs(songs)
+    if (uniqueSongs.length) {
+      await upsertSongs(uniqueSongs)
     }
 
     await updateJob(job.id, {
       status: 'completed',
       finished_at: new Date().toISOString(),
-      message: songs.length ? `Imported ${songs.length} songs.` : 'No songs were imported.',
+      message: uniqueSongs.length ? `Imported ${uniqueSongs.length} songs.` : 'No songs were imported.',
     })
   } catch (error) {
     await updateJob(job.id, {

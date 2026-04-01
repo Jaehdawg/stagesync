@@ -11,6 +11,17 @@ export type SongImportRecord = {
   source_ref: string | null
 }
 
+export function dedupeSongImportRecords(songs: SongImportRecord[]) {
+  const unique = new Map<string, SongImportRecord>()
+  for (const song of songs) {
+    if (!song?.id) continue
+    if (!unique.has(song.id)) {
+      unique.set(song.id, song)
+    }
+  }
+  return [...unique.values()]
+}
+
 function splitCsvLine(line: string) {
   const values: string[] = []
   let current = ''
@@ -124,7 +135,7 @@ export async function buildTidalPlaylistSongs(playlistUrl: string): Promise<Song
   const playlistTracks = await fetchTidalPlaylistTracks(playlistUrl)
   const playlistId = playlistUrl.trim().match(/playlist\/([a-zA-Z0-9_-]+)/i)?.[1] ?? null
 
-  return playlistTracks
+  return dedupeSongImportRecords(playlistTracks
     .filter((track) => Boolean(track.title?.trim()) && Boolean(track.artist?.trim()))
     .map((track) => ({
       id: slugifySongId(track.title, track.artist),
@@ -134,4 +145,5 @@ export async function buildTidalPlaylistSongs(playlistUrl: string): Promise<Song
       source_type: 'tidal_playlist' as const,
       source_ref: playlistId,
     }))
+  )
 }
