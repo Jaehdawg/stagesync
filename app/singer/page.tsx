@@ -45,13 +45,13 @@ export default async function SingerPage({
       .eq('band_id', band.id)
       .maybeSingle(),
     supabase
-      .from('events')
+      .from('test_shows')
       .select('id, band_id, name, is_active, allow_signups')
       .eq('id', showId)
       .eq('band_id', band.id)
       .maybeSingle(),
     supabase
-      .from('show_settings')
+      .from('test_show_settings')
       .select('show_duration_minutes, signup_buffer_minutes, song_source_mode, tidal_playlist_url')
       .eq('event_id', showId)
       .maybeSingle(),
