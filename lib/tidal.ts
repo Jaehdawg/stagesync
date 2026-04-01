@@ -52,6 +52,42 @@ function getIdKey(resource: TidalJson) {
   return type && id ? `${type}:${id}` : null
 }
 
+function resolveResourceReference(resource: unknown, included: Map<string, TidalJson>): TidalJson | null {
+  if (!resource || typeof resource !== 'object') {
+    return null
+  }
+
+  const record = resource as TidalJson
+  const key = getIdKey(record)
+  return key ? included.get(key) ?? record : record
+}
+
+function resolveTrackResource(resource: unknown, included: Map<string, TidalJson>): TidalJson | null {
+  const resolved = resolveResourceReference(resource, included)
+  if (!resolved) {
+    return null
+  }
+
+  const type = readString(resolved.type).toLowerCase()
+  if (type === 'tracks' || type === 'track') {
+    return resolved
+  }
+
+  const relationships = (resolved.relationships as TidalJson | undefined) ?? {}
+  for (const relationName of ['track', 'item', 'song']) {
+    const relation = relationships[relationName] as TidalJson | undefined
+    const data = relation?.data
+    const firstRelated = Array.isArray(data) ? data[0] : data
+    const relatedResource = resolveResourceReference(firstRelated, included)
+    const nestedTrack = relatedResource ? resolveTrackResource(relatedResource, included) : null
+    if (nestedTrack) {
+      return nestedTrack
+    }
+  }
+
+  return resolved
+}
+
 function collectIncludedResources(payload: unknown) {
   const map = new Map<string, TidalJson>()
 
@@ -142,11 +178,15 @@ function normalizeTrack(resource: TidalJson, included: Map<string, TidalJson>): 
     : resource
 
   const id = readString(source.id ?? source.trackId ?? source.tidalId)
-  const title = readString((source.attributes as TidalJson | undefined)?.title ?? source.title ?? source.name)
+  const attrs = (source.attributes as TidalJson | undefined) ?? {}
+  const title = readString(attrs.title ?? source.title ?? source.name)
   let artist =
     readNestedString(source.artist, 'name') ||
     readString(source.artistName ?? source.artist ?? source.performer ?? source.artist_name)
-  const album = readNestedString(source.album, 'title') || readString(source.albumTitle ?? source.album) || null
+  const album =
+    readNestedString(source.album, 'title') ||
+    readString(attrs.albumTitle ?? attrs.album ?? source.albumTitle ?? source.album) ||
+    null
 
   if (!id || !title) return null
 
@@ -154,9 +194,9 @@ function normalizeTrack(resource: TidalJson, included: Map<string, TidalJson>): 
     const trackKey = `tracks:${id}`
     const includedTrack = included.get(trackKey)
     if (includedTrack) {
-      const attrs = (includedTrack.attributes as TidalJson | undefined) ?? {}
-      const includedTitle = readString(attrs.title)
-      const includedAlbum = readString(attrs.albumTitle) || readString(attrs.album) || null
+      const includedAttrs = (includedTrack.attributes as TidalJson | undefined) ?? {}
+      const includedTitle = readString(includedAttrs.title)
+      const includedAlbum = readString(includedAttrs.albumTitle) || readString(includedAttrs.album) || null
       if (includedTitle && !title) {
         // unreachable in practice, but keep the branch for completeness
       }
@@ -165,10 +205,10 @@ function normalizeTrack(resource: TidalJson, included: Map<string, TidalJson>): 
         if (names.length) artist = names.join(', ')
       }
       if (!artist) {
-        artist = readString(attrs.artist) || readString(attrs.artistName)
+        artist = readString(includedAttrs.artist) || readString(includedAttrs.artistName)
       }
       if (!artist && includedAlbum) {
-        artist = readString(attrs.artistName) || readString(attrs.artist)
+        artist = readString(includedAttrs.artistName) || readString(includedAttrs.artist)
       }
     }
   }
@@ -217,7 +257,8 @@ export function extractTidalTracks(payload: unknown): TidalTrack[] {
     if (!Array.isArray(candidate)) continue
     for (const item of candidate) {
       if (!item || typeof item !== 'object') continue
-      const track = normalizeTrack(item as TidalJson, included)
+      const resolvedItem = resolveTrackResource(item, included) ?? item
+      const track = normalizeTrack(resolvedItem as TidalJson, included)
       if (track) tracks.push(track)
     }
   }
