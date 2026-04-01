@@ -28,11 +28,16 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: 'Band test login required.' }, { status: 401 })
   }
 
+  if (!testSession.activeBandId) {
+    return NextResponse.json({ message: 'No active band selected.' }, { status: 400 })
+  }
+
   const supabase = getSupabase(request)
   const formData = await request.formData()
 
   try {
     await upsertTestBandProfile(supabase, {
+      band_id: testSession.activeBandId,
       band_name: String(formData.get('bandName') ?? ''),
       website_url: String(formData.get('websiteUrl') ?? ''),
       facebook_url: String(formData.get('facebookUrl') ?? ''),

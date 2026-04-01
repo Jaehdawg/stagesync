@@ -87,7 +87,7 @@ export async function upsertTestBandProfile(supabase: SupabaseLike, profile: Tes
 
   const { data, error } = await supabase
     .from('test_band_profiles')
-    .upsert(payload, { onConflict: 'band_name' })
+    .upsert(payload, { onConflict: 'band_id' })
     .select('*')
     .maybeSingle()
 
