@@ -3,6 +3,7 @@ import { buildTidalPlaylistSongs, dedupeSongImportRecords, type SongImportRecord
 
 type SongImportJob = {
   id: string
+  band_id: string
   source_type: 'tidal_playlist'
   source_url: string | null
   source_ref: string | null
@@ -27,12 +28,13 @@ async function updateJob(jobId: string, patch: JobUpdate) {
   }
 }
 
-async function upsertSongs(songs: SongImportRecord[]) {
+async function upsertSongs(bandId: string, songs: SongImportRecord[]) {
   const supabase = createServiceClient()
   const uniqueSongs = dedupeSongImportRecords(songs)
   const { error } = await supabase.from('songs').upsert(
     uniqueSongs.map((song) => ({
       ...song,
+      band_id: bandId,
       archived_at: null,
     })),
     { onConflict: 'id' }
@@ -43,13 +45,14 @@ async function upsertSongs(songs: SongImportRecord[]) {
   }
 }
 
-export async function createTidalPlaylistImportJob(playlistUrl: string) {
+export async function createTidalPlaylistImportJob(bandId: string, playlistUrl: string) {
   const supabase = createServiceClient()
   const id = crypto.randomUUID()
   const sourceRef = playlistUrl.trim().match(/playlist\/([a-zA-Z0-9_-]+)/i)?.[1] ?? null
 
   const { error } = await supabase.from('song_import_jobs').insert({
     id,
+    band_id: bandId,
     source_type: 'tidal_playlist',
     source_url: playlistUrl,
     source_ref: sourceRef,
@@ -87,7 +90,7 @@ export async function runTidalPlaylistImportJob(job: SongImportJob) {
     })
 
     if (uniqueSongs.length) {
-      await upsertSongs(uniqueSongs)
+    await upsertSongs(job.band_id, uniqueSongs)
     }
 
     await updateJob(job.id, {

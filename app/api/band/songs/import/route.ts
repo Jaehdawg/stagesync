@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { createServiceClient } from '@/utils/supabase/service'
 import { isBandAdminRequest } from '@/lib/band-auth'
+import { getTestSession } from '@/lib/test-session'
 import {
   buildGoogleSheetExportUrl,
   extractGoogleSheetId,
@@ -43,6 +44,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: 'Band access required.' }, { status: 401 })
   }
 
+  const testSession = await getTestSession()
+  if (!testSession?.activeBandId) {
+    return NextResponse.json({ message: 'No active band selected.' }, { status: 400 })
+  }
+
   const formData = await request.formData()
 
   let songs: SongImportRecord[] = []
@@ -59,9 +65,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'Playlist URL is required.' }, { status: 400 })
     }
 
-    const job = await createTidalPlaylistImportJob(playlistUrl)
+    const job = await createTidalPlaylistImportJob(testSession.activeBandId, playlistUrl)
     queueTidalPlaylistImport({
       id: job.id,
+      band_id: testSession.activeBandId,
       source_type: 'tidal_playlist',
       source_url: playlistUrl,
       source_ref: job.sourceRef,
@@ -79,6 +86,7 @@ export async function POST(request: NextRequest) {
   const { error } = await serviceSupabase.from('songs').upsert(
     uniqueSongs.map((song) => ({
       ...song,
+      band_id: testSession.activeBandId,
       archived_at: null,
     })),
     { onConflict: 'id' }
