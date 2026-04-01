@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
     if (action === 'create') {
       await createTestShow(supabase, { name, description })
     } else if (action === 'settings') {
-      const mode = songSourceMode === 'tidal_playlist' || songSourceMode === 'tidal_catalog' ? songSourceMode : 'uploaded'
+      const mode = songSourceMode === 'tidal_playlist' ? songSourceMode : 'uploaded'
       const playlistUrl = tidalPlaylistUrl.trim() || null
 
       if (mode === 'tidal_playlist' && !playlistUrl) {

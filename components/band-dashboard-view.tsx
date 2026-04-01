@@ -19,7 +19,7 @@ export type BandDashboardState = {
   signupEnabled?: boolean
   showDurationMinutes?: number | null
   signupBufferMinutes?: number | null
-  songSourceMode?: 'uploaded' | 'tidal_playlist' | 'tidal_catalog'
+  songSourceMode?: 'uploaded' | 'tidal_playlist'
   tidalPlaylistUrl?: string | null
   bandAccessLevel?: 'admin' | 'member'
   testMode?: boolean
@@ -209,7 +209,6 @@ export function BandDashboardView({
                           >
                             <option value="uploaded">Uploaded song list</option>
                             <option value="tidal_playlist">Tidal playlist</option>
-                            <option value="tidal_catalog">Full Tidal catalog</option>
                         </select>
                       </div>
                       <div className="space-y-2 sm:col-span-2">

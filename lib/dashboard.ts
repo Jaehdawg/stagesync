@@ -31,7 +31,7 @@ export type DashboardSource = {
   showState?: 'active' | 'paused' | 'ended'
   showDurationMinutes?: number | null
   signupBufferMinutes?: number | null
-  songSourceMode?: 'uploaded' | 'tidal_playlist' | 'tidal_catalog'
+  songSourceMode?: 'uploaded' | 'tidal_playlist'
   tidalPlaylistUrl?: string | null
 }
 
@@ -54,7 +54,7 @@ export type DashboardState = {
   showState: 'active' | 'paused' | 'ended'
   showDurationMinutes?: number | null
   signupBufferMinutes?: number | null
-  songSourceMode?: 'uploaded' | 'tidal_playlist' | 'tidal_catalog'
+  songSourceMode?: 'uploaded' | 'tidal_playlist'
   tidalPlaylistUrl?: string | null
 }
 
@@ -67,7 +67,7 @@ const fallbackBandLinks = [
 
 const singerActions = [
   'Quick registration with first, last, and email',
-  'Tidal search with playlist/full catalog toggle',
+  'Tidal search with playlist toggle',
   'Live queue position tracking',
   'Lyrics view',
   'Tip links and custom band message',

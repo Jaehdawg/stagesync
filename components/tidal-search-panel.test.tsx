@@ -25,37 +25,21 @@ describe('TidalSearchPanel', () => {
     expect(screen.getByText('Maps')).toBeInTheDocument()
   })
 
-  it('searches the full tidal catalog with typeahead when configured', async () => {
+  it('searches the stored song library with typeahead when configured for tidal playlists', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
-      json: async () => ({ tracks: [{ id: 'tidal-1', title: 'Dreams', artist: 'Fleetwood Mac', album: 'Rumours' }] }),
-    })
-
-    vi.stubGlobal('fetch', fetchMock)
-
-    render(<TidalSearchPanel sourceMode="tidal_catalog" />)
-
-    fireEvent.change(screen.getByLabelText(/search tidal catalog/i), { target: { value: 'Dreams' } })
-
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith('/api/tidal/search?query=Dreams'))
-    expect(screen.getByText(/found 1 tidal result/i)).toBeInTheDocument()
-    expect(screen.getByText('Fleetwood Mac')).toBeInTheDocument()
-  })
-
-  it('shows the linked tidal playlist while browsing the band song library', async () => {
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({ tracks: [] }),
+      json: async () => ({ tracks: [{ id: 'song-1', title: 'Dreams', artist: 'Fleetwood Mac', album: 'Rumours' }] }),
     })
 
     vi.stubGlobal('fetch', fetchMock)
 
     render(<TidalSearchPanel sourceMode="tidal_playlist" playlistUrl="https://tidal.com/browse/playlist/abc123" />)
 
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith('/api/songs/search?query='))
+    fireEvent.change(screen.getByLabelText(/search song library/i), { target: { value: 'Dreams' } })
 
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith('/api/songs/search?query=Dreams'))
+    expect(screen.getByText(/loaded 1 song/i)).toBeInTheDocument()
+    expect(screen.getByText('Fleetwood Mac')).toBeInTheDocument()
     expect(screen.getByText(/playlist:/i)).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /https:\/\/tidal\.com\/browse\/playlist\/abc123/i })).toBeInTheDocument()
-    expect(screen.getByLabelText(/search song library/i)).toBeInTheDocument()
   })
 })

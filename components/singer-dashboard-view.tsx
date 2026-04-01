@@ -16,7 +16,7 @@ type DashboardState = {
   customMessage: string
   signupEnabled: boolean
   signupStatusMessage: string
-  songSourceMode?: 'uploaded' | 'tidal_playlist' | 'tidal_catalog'
+  songSourceMode?: 'uploaded' | 'tidal_playlist'
   tidalPlaylistUrl?: string | null
 }
 
@@ -43,7 +43,7 @@ function Panel({
 }
 
 export function SingerDashboardView(state: DashboardState) {
-  const songSourceMode = state.songSourceMode ?? 'tidal_catalog'
+  const songSourceMode = state.songSourceMode ?? 'uploaded'
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(34,211,238,0.14),_transparent_40%),linear-gradient(180deg,#020617_0%,#0f172a_100%)] px-4 py-8 text-slate-100 sm:px-6 lg:px-8">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-8">

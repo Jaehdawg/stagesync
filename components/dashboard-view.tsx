@@ -82,14 +82,11 @@ export function DashboardView({
                 <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
                   <h3 className="text-lg font-semibold text-white">Tidal song search</h3>
                   <p className="mt-1 text-slate-400">
-                    Search the playlist or the full catalog before submitting a request.
+                    Search the playlist before submitting a request.
                   </p>
                   <div className="mt-4 flex flex-wrap gap-2">
                     <button className="rounded-full border border-cyan-400/40 bg-cyan-400/15 px-4 py-2 text-sm font-medium text-cyan-100">
                       Playlist
-                    </button>
-                    <button className="rounded-full border border-white/10 bg-slate-900/80 px-4 py-2 text-sm font-medium text-slate-200">
-                      Full catalog
                     </button>
                   </div>
                   <label htmlFor="search-song" className="mt-4 block text-sm font-medium text-slate-200">

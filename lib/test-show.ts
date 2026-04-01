@@ -18,7 +18,7 @@ export type TestShowSettingsRow = {
   allow_tips: boolean | null
   signup_buffer_minutes: number | null
   show_duration_minutes: number | null
-  song_source_mode: 'uploaded' | 'tidal_playlist' | 'tidal_catalog' | null
+  song_source_mode: 'uploaded' | 'tidal_playlist' | null
   tidal_playlist_url: string | null
 }
 
@@ -81,7 +81,7 @@ export async function updateTestShowSettings(
     eventId?: string | null
     showDurationMinutes?: number
     signupBufferMinutes?: number
-    songSourceMode?: 'uploaded' | 'tidal_playlist' | 'tidal_catalog'
+    songSourceMode?: 'uploaded' | 'tidal_playlist'
     tidalPlaylistUrl?: string | null
   }
 ): Promise<TestShowSettingsRow> {
