@@ -53,4 +53,4 @@ ALTER TABLE queue_items ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Public profiles are viewable by everyone" ON profiles FOR SELECT USING (true);
 CREATE POLICY "Users can update own profile" ON profiles FOR UPDATE USING (auth.uid() = id);
 CREATE POLICY "Anyone can view active events" ON events FOR SELECT USING (is_active = true);
-CREATE POLICY "Hosts can manage their events" ON events ALL USING (auth.uid() = host_id);
+CREATE POLICY "Hosts can manage their events" ON events FOR ALL USING (auth.uid() = host_id);
