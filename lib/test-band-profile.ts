@@ -80,14 +80,39 @@ export async function createTestBandProfile(supabase: SupabaseLike, profile: Tes
 }
 
 export async function upsertTestBandProfile(supabase: SupabaseLike, profile: TestBandProfileInput) {
+  const bandId = normalizeBandId(profile.band_id)
+  if (!bandId) {
+    throw new Error('band_id is required.')
+  }
+
   const payload = {
     ...profile,
-    band_id: normalizeBandId(profile.band_id),
+    band_id: bandId,
+  }
+
+  const { data: existing, error: lookupError } = await supabase
+    .from('test_band_profiles')
+    .select('id')
+    .eq('band_id', bandId)
+    .maybeSingle()
+
+  if (lookupError) throw new Error(lookupError.message)
+
+  if (existing?.id) {
+    const { data, error } = await supabase
+      .from('test_band_profiles')
+      .update(payload)
+      .eq('id', existing.id)
+      .select('*')
+      .maybeSingle()
+
+    if (error) throw new Error(error.message)
+    return (data ?? null) as TestBandProfileRow | null
   }
 
   const { data, error } = await supabase
     .from('test_band_profiles')
-    .upsert(payload, { onConflict: 'band_id' })
+    .insert(payload)
     .select('*')
     .maybeSingle()
 
