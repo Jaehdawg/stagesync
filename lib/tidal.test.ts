@@ -448,6 +448,93 @@ describe('tidal helpers', () => {
     }
   })
 
+  it('retries rate-limited track fetches and still returns the resolved song', async () => {
+    const originalClientId = process.env.TIDAL_CLIENT_ID
+    const originalClientSecret = process.env.TIDAL_CLIENT_SECRET
+    delete process.env.TIDAL_BROWSER_TOKEN
+    process.env.TIDAL_CLIENT_ID = 'client-id'
+    process.env.TIDAL_CLIENT_SECRET = 'client-secret'
+
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input)
+
+      if (url === 'https://auth.tidal.com/v1/oauth2/token') {
+        return {
+          ok: true,
+          json: async () => ({ access_token: 'tidal-bearer-token' }),
+        } as Response
+      }
+
+      if (url.includes('/playlists/abc123/relationships/items')) {
+        return {
+          ok: true,
+          json: async () => ({
+            totalNumberOfItems: 1,
+            data: [{ id: '136685782', type: 'tracks' }],
+          }),
+        } as Response
+      }
+
+      if (url.includes('/tracks/136685782?')) {
+        const attempts = fetchMock.mock.calls.filter(([calledUrl]) => String(calledUrl).includes('/tracks/136685782?')).length
+        if (attempts === 1) {
+          return {
+            ok: false,
+            status: 429,
+            headers: new Headers({ 'retry-after': '0' }),
+            json: async () => ({}),
+            text: async () => '',
+          } as Response
+        }
+
+        return {
+          ok: true,
+          json: async () => ({
+            data: {
+              id: '136685782',
+              type: 'tracks',
+              attributes: { title: 'Bad Decisions', duration: 'PT4M53S' },
+            },
+          }),
+        } as Response
+      }
+
+      if (url.includes('/tracks/136685782/relationships/artists')) {
+        return {
+          ok: true,
+          json: async () => ({ data: [{ id: '29037', type: 'artists' }] }),
+        } as Response
+      }
+
+      if (url.includes('/artists/29037?')) {
+        return {
+          ok: true,
+          json: async () => ({ data: { id: '29037', type: 'artists', attributes: { name: 'The Strokes' } } }),
+        } as Response
+      }
+
+      throw new Error(`Unexpected fetch: ${url}`)
+    })
+
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(fetchTidalPlaylistTracks('https://tidal.com/playlist/abc123', { limit: 1 })).resolves.toEqual([
+      { id: '136685782', title: 'Bad Decisions', artist: 'The Strokes', album: null, duration: 293 },
+    ])
+
+    if (originalClientId === undefined) {
+      delete process.env.TIDAL_CLIENT_ID
+    } else {
+      process.env.TIDAL_CLIENT_ID = originalClientId
+    }
+
+    if (originalClientSecret === undefined) {
+      delete process.env.TIDAL_CLIENT_SECRET
+    } else {
+      process.env.TIDAL_CLIENT_SECRET = originalClientSecret
+    }
+  })
+
   it('returns empty results when no token is configured', async () => {
     const result = await searchTidalTracks('Dreams')
     expect(result).toEqual([])

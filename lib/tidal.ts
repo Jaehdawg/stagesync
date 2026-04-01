@@ -325,9 +325,9 @@ export function extractTidalTracks(payload: unknown): TidalTrack[] {
 async function fetchTidalJson(
   paths: string[],
   token: string,
-  options: { query?: string; limit: number; params?: Record<string, string>; headers?: Record<string, string> }
-) {
-  const { query, limit, params, headers: extraHeaders } = options
+  options: { query?: string; limit: number; params?: Record<string, string>; headers?: Record<string, string>; retries?: number }
+): Promise<TidalJson | null> {
+  const { query, limit, params, headers: extraHeaders, retries = 2 } = options
 
   for (const path of paths) {
     const url = new URL(path.replace(/^\//, ''), getTidalBaseUrl())
@@ -361,6 +361,27 @@ async function fetchTidalJson(
     const response = await fetch(url, {
       headers,
     })
+
+    if (response.status === 429 && retries > 0) {
+      const retryAfterHeader = response.headers.get('retry-after')
+      const retryAfterSeconds = retryAfterHeader ? Number(retryAfterHeader) : NaN
+      const delayMs = Number.isFinite(retryAfterSeconds) && retryAfterSeconds > 0
+        ? retryAfterSeconds * 1000
+        : 500
+
+      await new Promise((resolve) => setTimeout(resolve, delayMs))
+      const retried = await fetchTidalJson([path], token, {
+        query,
+        limit,
+        params,
+        headers: extraHeaders,
+        retries: retries - 1,
+      })
+
+      if (retried) {
+        return retried
+      }
+    }
 
     if (response.ok) {
       return response.json().catch(() => null)
@@ -503,24 +524,27 @@ export async function fetchTidalPlaylistTracks(playlistUrl: string, options: { l
       break
     }
 
-    const pageTracks = await Promise.all(playlistItems.map(async (item) => {
+    const pageTracks: (TidalTrack | null)[] = []
+    for (const item of playlistItems) {
       const trackId = readText((item as TidalJson | undefined)?.id)
       if (!trackId) {
-        return null
+        pageTracks.push(null)
+        continue
       }
 
       const trackPayload = await fetchTidalJson([
         `/tracks/${trackId}`,
-      ], token, { limit: 1 })
+      ], token, { limit: 1, retries: 3 })
 
       const trackDetails = extractTidalTracks(trackPayload)[0]
       if (!trackDetails) {
-        return null
+        pageTracks.push(null)
+        continue
       }
 
       const artistPayload = await fetchTidalJson([
         `/tracks/${trackId}/relationships/artists`,
-      ], token, { limit: 10 })
+      ], token, { limit: 10, retries: 3 })
 
       const artistRecord = (artistPayload as TidalJson | null) ?? {}
       const artistRefs = Array.isArray(artistRecord.data) ? artistRecord.data : []
@@ -529,11 +553,11 @@ export async function fetchTidalPlaylistTracks(playlistUrl: string, options: { l
 
       const artist = artistId ? await fetchArtistName(artistId, token) : ''
 
-      return {
+      pageTracks.push({
         ...trackDetails,
         artist: artist || trackDetails.artist || 'Unknown artist',
-      }
-    }))
+      })
+    }
 
     tracks.push(...pageTracks.filter((track): track is TidalTrack => Boolean(track)))
 
