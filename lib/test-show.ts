@@ -1,101 +1,156 @@
-import type { SupabaseClient } from '@supabase/supabase-js'
+type SupabaseLike = {
+  from: (table: string) => any
+  rpc?: (fn: string, args?: Record<string, unknown>) => any
+}
 
 export type TestShowRow = {
   id: string
-  name: string
-  description: string | null
-  is_active: boolean | null
-  allow_signups: boolean | null
-  access_code: string | null
-  created_at: string | null
+  band_id?: string | null
+  band_name?: string | null
+  host_id?: string | null
+  name?: string | null
+  description?: string | null
+  is_active?: boolean | null
+  allow_signups?: boolean | null
+  created_at?: string | null
 }
 
 export type TestShowSettingsRow = {
   id: string
-  event_id: string
-  playlist_only: boolean | null
-  lyrics_enabled: boolean | null
-  allow_tips: boolean | null
-  signup_buffer_minutes: number | null
-  show_duration_minutes: number | null
-  song_source_mode: 'uploaded' | 'tidal_playlist' | null
-  tidal_playlist_url: string | null
+  band_id?: string | null
+  event_id?: string | null
+  show_duration_minutes?: number | null
+  signup_buffer_minutes?: number | null
+  playlist_only?: boolean | null
+  lyrics_enabled?: boolean | null
+  allow_tips?: boolean | null
+  song_source_mode?: 'uploaded' | 'tidal_playlist' | 'tidal_catalog' | null
+  tidal_playlist_url?: string | null
+  created_at?: string | null
 }
 
-export async function getLatestTestShow(supabase: SupabaseClient): Promise<TestShowRow | null> {
-  const { data, error } = await supabase.rpc('test_latest_show')
-
-  if (error) {
-    return null
-  }
-
-  return (data?.[0] as TestShowRow | undefined) ?? null
+function normalizeBandId(value: unknown) {
+  return typeof value === 'string' && value.trim() ? value.trim() : null
 }
 
-export async function createTestShow(
-  supabase: SupabaseClient,
-  input: { name?: string; description?: string }
-): Promise<TestShowRow> {
-  const { data, error } = await supabase.rpc('test_create_show', {
-    p_name: input.name ?? '',
-    p_description: input.description ?? '',
-  })
+async function listShowsByBandId(supabase: SupabaseLike, bandId: string) {
+  const { data, error } = await supabase
+    .from('test_shows')
+    .select('*')
+    .eq('band_id', bandId)
+    .order('created_at', { ascending: false })
 
-  if (error || !data) {
-    throw new Error(error?.message || 'Unable to create show')
-  }
-
-  return data as TestShowRow
+  if (error) throw new Error(error.message)
+  return (data ?? []) as TestShowRow[]
 }
 
-export async function updateTestShowState(
-  supabase: SupabaseClient,
-  input: { eventId?: string | null; action: 'start' | 'pause' | 'resume' | 'end' }
-): Promise<TestShowRow> {
-  const { data, error } = await supabase.rpc('test_update_show_state', {
-    p_event_id: input.eventId ?? null,
-    p_action: input.action,
-  })
+export async function getLatestTestShow(supabase: SupabaseLike, bandId?: string | null) {
+  const normalizedBandId = normalizeBandId(bandId)
+  const shows = normalizedBandId ? await listShowsByBandId(supabase, normalizedBandId) : await (async () => {
+    const { data, error } = await supabase.from('test_shows').select('*').order('created_at', { ascending: false })
+    if (error) throw new Error(error.message)
+    return (data ?? []) as TestShowRow[]
+  })()
 
-  if (error || !data) {
-    throw new Error(error?.message || 'Unable to update show')
-  }
-
-  return data as TestShowRow
+  return shows[0] ?? null
 }
 
-export async function getLatestTestShowSettings(supabase: SupabaseClient, eventId?: string | null) {
-  const query = supabase.from('show_settings').select('*')
-  const response = eventId ? await query.eq('event_id', eventId).maybeSingle() : await query.order('created_at', { ascending: false }).limit(1).maybeSingle()
+export async function getLatestTestShowSettings(supabase: SupabaseLike, bandId?: string | null) {
+  const normalizedBandId = normalizeBandId(bandId)
+  const query = supabase.from('test_show_settings').select('*').order('created_at', { ascending: false })
+  const { data, error } = normalizedBandId ? await query.eq('band_id', normalizedBandId).limit(1) : await query.limit(1)
+  if (error) throw new Error(error.message)
+  return (data ?? [null])[0] as TestShowSettingsRow | null
+}
 
-  if (response.error) {
-    return null
-  }
+export async function createTestShow(supabase: SupabaseLike, payload: Partial<TestShowRow> & { band_name?: string | null }) {
+  const { data, error } = await supabase
+    .from('test_shows')
+    .insert({
+      band_id: normalizeBandId(payload.band_id),
+      band_name: payload.band_name ?? null,
+      host_id: payload.host_id ?? null,
+      name: payload.name ?? null,
+      description: payload.description ?? null,
+      is_active: payload.is_active ?? false,
+      allow_signups: payload.allow_signups ?? true,
+    })
+    .select('*')
+    .maybeSingle()
 
-  return (response.data as TestShowSettingsRow | null) ?? null
+  if (error) throw new Error(error.message)
+  return (data ?? null) as TestShowRow | null
 }
 
 export async function updateTestShowSettings(
-  supabase: SupabaseClient,
-  input: {
-    eventId?: string | null
-    showDurationMinutes?: number
-    signupBufferMinutes?: number
-    songSourceMode?: 'uploaded' | 'tidal_playlist'
-    tidalPlaylistUrl?: string | null
+  supabase: SupabaseLike,
+  payload:
+    & Partial<TestShowSettingsRow>
+    & {
+      band_id?: string | null
+      event_id?: string | null
+      eventId?: string | null
+      showDurationMinutes?: number | null
+      signupBufferMinutes?: number | null
+      songSourceMode?: 'uploaded' | 'tidal_playlist' | 'tidal_catalog' | string | null
+      tidalPlaylistUrl?: string | null
+    }
+) {
+  const normalizedBandId = normalizeBandId(payload.band_id)
+  const normalizedEventId = normalizeBandId(payload.event_id ?? payload.eventId)
+  const showDurationMinutes = payload.show_duration_minutes ?? payload.showDurationMinutes ?? null
+  const signupBufferMinutes = payload.signup_buffer_minutes ?? payload.signupBufferMinutes ?? null
+  const songSourceMode = (payload.song_source_mode ?? payload.songSourceMode ?? 'uploaded') as TestShowSettingsRow['song_source_mode']
+  const tidalPlaylistUrl = payload.tidal_playlist_url ?? payload.tidalPlaylistUrl ?? null
+  const { data: existing, error: findError } = normalizedBandId
+    ? await supabase.from('test_show_settings').select('*').eq('band_id', normalizedBandId).maybeSingle()
+    : await supabase.from('test_show_settings').select('*').order('created_at', { ascending: false }).limit(1).maybeSingle()
+
+  if (findError) throw new Error(findError.message)
+
+  const next = {
+    ...existing,
+    ...payload,
+    band_id: normalizedBandId ?? (existing?.band_id ?? null),
+    event_id: normalizedEventId ?? (existing?.event_id ?? null),
+    show_duration_minutes: showDurationMinutes ?? existing?.show_duration_minutes ?? null,
+    signup_buffer_minutes: signupBufferMinutes ?? existing?.signup_buffer_minutes ?? null,
+    song_source_mode: songSourceMode ?? existing?.song_source_mode ?? null,
+    tidal_playlist_url: tidalPlaylistUrl ?? existing?.tidal_playlist_url ?? null,
   }
-): Promise<TestShowSettingsRow> {
-  const { data, error } = await supabase.rpc('test_update_show_settings', {
-    p_event_id: input.eventId ?? null,
-    p_show_duration_minutes: input.showDurationMinutes ?? 60,
-    p_signup_buffer_minutes: input.signupBufferMinutes ?? 1,
-    p_song_source_mode: input.songSourceMode ?? 'uploaded',
-    p_tidal_playlist_url: input.tidalPlaylistUrl ?? null,
+
+  const { data, error } = await supabase
+    .from('test_show_settings')
+    .upsert(next, { onConflict: 'band_id' })
+    .select('*')
+    .maybeSingle()
+
+  if (error) throw new Error(error.message)
+  return (data ?? null) as TestShowSettingsRow | null
+}
+
+export async function getTestShowSettingsByBandId(supabase: SupabaseLike, bandId?: string | null) {
+  return getLatestTestShowSettings(supabase, bandId)
+}
+
+export async function updateTestShowState(
+  supabase: SupabaseLike,
+  payload: { eventId?: string | null; event_id?: string | null; action: string }
+) {
+  const eventId = normalizeBandId(payload.event_id ?? payload.eventId)
+  if (!eventId) {
+    throw new Error('eventId is required.')
+  }
+
+  if (!supabase.rpc) {
+    throw new Error('Supabase RPC is unavailable.')
+  }
+
+  const { data, error } = await supabase.rpc('test_update_show_state', {
+    p_event_id: eventId,
+    p_action: payload.action,
   })
 
-  if (error || !data) {
-    throw new Error(error?.message || 'Unable to update show settings')
-  }
-
-  return data as TestShowSettingsRow
+  if (error) throw new Error(error.message)
+  return data
 }

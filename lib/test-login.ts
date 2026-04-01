@@ -5,6 +5,7 @@ export type TestLoginRole = 'band' | 'admin'
 export type TestLoginSession = {
   role: TestLoginRole
   username: string
+  activeBandId?: string | null
 }
 
 export type TestLoginSeed = {
@@ -68,6 +69,7 @@ export function verifyTestSession(cookieValue: string | undefined | null): TestL
     return {
       role: data.role,
       username: data.username,
+      activeBandId: data.activeBandId ?? null,
     }
   } catch {
     return null

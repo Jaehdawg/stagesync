@@ -5,7 +5,7 @@ import { BandAccessForm } from '@/components/band-access-form'
 import { BandDashboardView, type BandDashboardState } from '@/components/band-dashboard-view'
 import { getTestSession } from '@/lib/test-session'
 import { getLatestTestShow, getLatestTestShowSettings } from '@/lib/test-show'
-import { getLatestTestBandProfile } from '@/lib/test-band-profile'
+import { getTestBandProfileByBandId } from '@/lib/test-band-profile'
 import { getTestLogin } from '@/lib/test-login-list'
 import { headers } from 'next/headers'
 import { buildSingerSignupUrl, slugifyBandName } from '@/lib/public-links'
@@ -110,9 +110,11 @@ async function getBandState(
 }
 
 async function getBandTestState(supabase: Awaited<ReturnType<typeof createClient>>): Promise<BandDashboardState> {
-  const testBandProfile = await getLatestTestBandProfile(supabase)
-  const currentShow = await getLatestTestShow(supabase)
-  const currentSettings = await getLatestTestShowSettings(supabase, currentShow?.id)
+  const testSession = await getTestSession()
+  const activeBandId = testSession?.activeBandId ?? null
+  const testBandProfile = await getTestBandProfileByBandId(supabase, activeBandId)
+  const currentShow = await getLatestTestShow(supabase, activeBandId)
+  const currentSettings = await getLatestTestShowSettings(supabase, activeBandId)
   const state = await getBandState(supabase, testBandProfile ?? undefined)
 
   return {
@@ -134,7 +136,7 @@ async function getBandTestState(supabase: Awaited<ReturnType<typeof createClient
       : 'No show exists yet. Create one to begin.',
     showDurationMinutes: currentSettings?.show_duration_minutes ?? 60,
     signupBufferMinutes: currentSettings?.signup_buffer_minutes ?? 1,
-    songSourceMode: currentSettings?.song_source_mode ?? 'uploaded',
+    songSourceMode: currentSettings?.song_source_mode === 'tidal_playlist' ? 'tidal_playlist' : 'uploaded',
   }
 }
 

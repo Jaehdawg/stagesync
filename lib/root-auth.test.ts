@@ -9,6 +9,6 @@ describe('buildRootAuthRedirect', () => {
   })
 
   it('returns null without a code', () => {
-    expect(buildRootAuthRedirect({ role: 'singer' })).toBeNull()
+    expect(buildRootAuthRedirect({ role: 'singer', siteUrl: 'https://stagesync-six.vercel.app' })).toBeNull()
   })
 })

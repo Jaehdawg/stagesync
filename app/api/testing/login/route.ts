@@ -7,6 +7,7 @@ import {
   signTestSession,
   type TestLoginRole,
 } from '@/lib/test-login'
+import { listBandsForTestLogin } from '@/lib/band-tenancy'
 
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 7
 
@@ -48,7 +49,7 @@ export async function POST(request: NextRequest) {
 
   const lookup = await supabase
     .from('test_logins')
-    .select('username, role, password_hash')
+    .select('username, role, password_hash, active_band_id')
     .eq('username', username)
     .eq('role', role)
     .maybeSingle()
@@ -64,6 +65,7 @@ export async function POST(request: NextRequest) {
     username: seededLogin.username,
     role: seededLogin.role,
     password_hash: getTestLoginPasswordHash(seededLogin.username, seededLogin.password),
+    active_band_id: null,
   } : null)
 
   if (!loginRow) {
@@ -75,8 +77,28 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: 'Incorrect password.' }, { status: 401 })
   }
 
+  const accessibleBands = role === 'band'
+    ? await listBandsForTestLogin(supabase, { role, username })
+    : []
+  const rememberedBandId = typeof loginRow.active_band_id === 'string' && loginRow.active_band_id.trim()
+    ? loginRow.active_band_id.trim()
+    : null
+  const activeBandId = rememberedBandId && accessibleBands.some((band) => band.id === rememberedBandId)
+    ? rememberedBandId
+    : accessibleBands.length === 1
+      ? accessibleBands[0].id
+      : null
+
+  if (activeBandId && role === 'band') {
+    await supabase
+      .from('test_logins')
+      .update({ active_band_id: activeBandId })
+      .eq('username', username)
+      .eq('role', role)
+  }
+
   const response = NextResponse.json({ message: `${role} login successful.` })
-  response.cookies.set(getTestLoginCookieName(), signTestSession({ role, username }), {
+  response.cookies.set(getTestLoginCookieName(), signTestSession({ role, username, activeBandId }), {
     httpOnly: true,
     sameSite: 'lax',
     secure: process.env.NODE_ENV === 'production',

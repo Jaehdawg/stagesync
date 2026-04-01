@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import { waitFor } from '@testing-library/react'
-import { afterEach, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { SingerDashboardView } from '../components/singer-dashboard-view'
 import { buildDashboardState } from '../lib/dashboard'
 import { buildRootAuthRedirect } from '../lib/root-auth'
