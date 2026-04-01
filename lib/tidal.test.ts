@@ -1,5 +1,10 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { extractTidalTracks, fetchTidalPlaylistTracks, searchTidalTracks } from './tidal'
+
+afterEach(() => {
+  vi.unstubAllGlobals()
+  vi.restoreAllMocks()
+})
 
 describe('tidal helpers', () => {
   it('extracts track records from nested payloads', () => {
@@ -32,28 +37,51 @@ describe('tidal helpers', () => {
     ])
   })
 
-  it('fetches private playlist tracks through the browser token path when configured', async () => {
-    const originalToken = process.env.TIDAL_BROWSER_TOKEN
-    process.env.TIDAL_BROWSER_TOKEN = 'txNoH4kkV41MfH25'
+  it('fetches private playlist tracks through the Tidal API flow when configured', async () => {
+    const originalClientId = process.env.TIDAL_CLIENT_ID
+    const originalClientSecret = process.env.TIDAL_CLIENT_SECRET
+    process.env.TIDAL_CLIENT_ID = 'client-id'
+    process.env.TIDAL_CLIENT_SECRET = 'client-secret'
 
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        limit: 1,
-        offset: 0,
-        totalNumberOfItems: 1,
-        items: [
-          {
-            item: {
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input)
+
+      if (url === 'https://auth.tidal.com/v1/oauth2/token') {
+        expect(init).toMatchObject({
+          method: 'POST',
+          headers: expect.objectContaining({
+            authorization: expect.stringContaining('Basic '),
+            'content-type': 'application/x-www-form-urlencoded',
+          }),
+        })
+
+        return {
+          ok: true,
+          json: async () => ({ access_token: 'tidal-bearer-token' }),
+        } as Response
+      }
+
+      expect(url).toContain('https://openapi.tidal.com/v2/playlists/abc123/relationships/items')
+      expect(url).toContain('limit=200')
+      expect(init?.headers).toMatchObject({
+        accept: 'application/vnd.api+json',
+        authorization: 'Bearer tidal-bearer-token',
+      })
+
+      return {
+        ok: true,
+        json: async () => ({
+          data: [
+            {
               id: 64186726,
               title: 'Dreams',
               duration: 300,
               artist: { name: 'Fleetwood Mac' },
               album: { title: 'Rumours' },
             },
-          },
-        ],
-      }),
+          ],
+        }),
+      } as Response
     })
 
     vi.stubGlobal('fetch', fetchMock)
@@ -62,21 +90,18 @@ describe('tidal helpers', () => {
       { id: '64186726', title: 'Dreams', artist: 'Fleetwood Mac', album: 'Rumours', duration: 300 },
     ])
 
-    expect(fetchMock).toHaveBeenCalledOnce()
-    const [input, init] = fetchMock.mock.calls[0]
-    expect(String(input)).toContain('https://listen.tidal.com/v1/playlists/abc123/items')
-    expect(String(input)).toContain('offset=0')
-    expect(String(input)).toContain('deviceType=BROWSER')
-    expect(init?.headers).toMatchObject({
-      accept: 'application/json',
-      'x-tidal-token': 'txNoH4kkV41MfH25',
-      referer: 'https://tidal.com/playlist/abc123',
-    })
+    expect(fetchMock).toHaveBeenCalledTimes(2)
 
-    if (originalToken === undefined) {
-      delete process.env.TIDAL_BROWSER_TOKEN
+    if (originalClientId === undefined) {
+      delete process.env.TIDAL_CLIENT_ID
     } else {
-      process.env.TIDAL_BROWSER_TOKEN = originalToken
+      process.env.TIDAL_CLIENT_ID = originalClientId
+    }
+
+    if (originalClientSecret === undefined) {
+      delete process.env.TIDAL_CLIENT_SECRET
+    } else {
+      process.env.TIDAL_CLIENT_SECRET = originalClientSecret
     }
   })
 

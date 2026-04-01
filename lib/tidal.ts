@@ -13,11 +13,6 @@ function getTidalBaseUrl() {
   return base.endsWith('/') ? base : `${base}/`
 }
 
-function getTidalPlaylistBaseUrl() {
-  const base = process.env.TIDAL_PLAYLIST_API_BASE_URL?.trim() || 'https://listen.tidal.com/'
-  return base.endsWith('/') ? base : `${base}/`
-}
-
 async function getTidalAccessToken() {
   const clientId = process.env.TIDAL_CLIENT_ID?.trim()
   const clientSecret = process.env.TIDAL_CLIENT_SECRET?.trim()
@@ -304,12 +299,12 @@ export function extractTidalTracks(payload: unknown): TidalTrack[] {
 async function fetchTidalJson(
   paths: string[],
   token: string,
-  options: { query?: string; limit: number; params?: Record<string, string>; headers?: Record<string, string>; baseUrl?: string }
+  options: { query?: string; limit: number; params?: Record<string, string>; headers?: Record<string, string> }
 ) {
-  const { query, limit, params, headers: extraHeaders, baseUrl } = options
+  const { query, limit, params, headers: extraHeaders } = options
 
   for (const path of paths) {
-    const url = new URL(path, baseUrl ?? getTidalBaseUrl())
+    const url = new URL(path.replace(/^\//, ''), getTidalBaseUrl())
     url.searchParams.set('limit', String(limit))
     url.searchParams.set('countryCode', 'US')
 
@@ -437,10 +432,6 @@ function extractPlaylistId(url: string) {
   }
 }
 
-function getTidalBrowserToken() {
-  return process.env.TIDAL_BROWSER_TOKEN?.trim() || ''
-}
-
 export async function fetchTidalPlaylistTracks(playlistUrl: string, options: { limit?: number } = {}) {
   const playlistId = extractPlaylistId(playlistUrl)
   if (!playlistId) {
@@ -448,31 +439,6 @@ export async function fetchTidalPlaylistTracks(playlistUrl: string, options: { l
   }
 
   const limit = Math.min(Math.max(options.limit ?? 200, 1), 500)
-  const browserToken = getTidalBrowserToken()
-
-  if (browserToken) {
-    const payload = await fetchTidalJson([
-      `/v1/playlists/${playlistId}/items`,
-    ], '', {
-      limit,
-      params: {
-        offset: '0',
-        locale: 'en_US',
-        deviceType: 'BROWSER',
-      },
-      headers: {
-        accept: 'application/json',
-        'x-tidal-token': browserToken,
-        referer: `https://tidal.com/playlist/${playlistId}`,
-        'user-agent': 'Mozilla/5.0',
-      },
-      baseUrl: getTidalPlaylistBaseUrl(),
-    })
-
-    if (payload) {
-      return extractTidalTracks(payload)
-    }
-  }
 
   const token = await getTidalAccessToken()
   if (!token) {
