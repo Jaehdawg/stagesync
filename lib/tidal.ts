@@ -54,6 +54,31 @@ function readNestedString(value: unknown, key: string): string {
   return readString((value as Record<string, unknown>)[key])
 }
 
+function parseDurationSeconds(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value
+  }
+
+  if (typeof value === 'string') {
+    const trimmed = value.trim()
+    if (!trimmed) return null
+
+    const isoMatch = trimmed.match(/^PT(?:(\d+)M)?(?:(\d+(?:\.\d+)?)S)?$/i)
+    if (isoMatch) {
+      const minutes = Number(isoMatch[1] ?? 0)
+      const seconds = Number(isoMatch[2] ?? 0)
+      return minutes * 60 + seconds
+    }
+
+    const numeric = Number(trimmed)
+    if (Number.isFinite(numeric)) {
+      return numeric
+    }
+  }
+
+  return null
+}
+
 function getIdKey(resource: TidalJson) {
   const type = readString(resource.type)
   const id = readText(resource.id)
@@ -155,18 +180,18 @@ function normalizeArtistFromResource(resource: TidalJson): string {
   return ''
 }
 
-async function fetchArtistName(trackId: string, token: string) {
+async function fetchArtistName(artistId: string, token: string) {
   const payload = await fetchTidalJson([
-    `/tracks/${trackId}/relationships/artists`,
-  ], token, { limit: 10 })
+    `/artists/${artistId}`,
+  ], token, { limit: 1 })
 
   if (!payload) {
     return ''
   }
 
-  const included = collectIncludedResources(payload)
-  const names = extractArtistNames(payload, included)
-  return names.join(', ')
+  const record = payload as TidalJson
+  const data = (record.data as TidalJson | undefined) ?? {}
+  return readString((data.attributes as TidalJson | undefined)?.name ?? data.name)
 }
 
 function resolveArtistsFromRelationship(resource: TidalJson, included: Map<string, TidalJson>) {
@@ -198,7 +223,7 @@ function normalizeTrack(resource: TidalJson, included: Map<string, TidalJson>): 
   const attrs = (source.attributes as TidalJson | undefined) ?? {}
   const title = readString(attrs.title ?? source.title ?? source.name)
   const durationValue = source.duration ?? attrs.duration
-  const duration = typeof durationValue === 'number' && Number.isFinite(durationValue) ? durationValue : null
+  const duration = parseDurationSeconds(durationValue)
   let artist =
     readNestedString(source.artist, 'name') ||
     readString(source.artistName ?? source.artist ?? source.performer ?? source.artist_name)
@@ -279,8 +304,9 @@ export function extractTidalTracks(payload: unknown): TidalTrack[] {
   const tracks: TidalTrack[] = []
 
   for (const candidate of candidates) {
-    if (!Array.isArray(candidate)) continue
-    for (const item of candidate) {
+    if (!candidate) continue
+    const items = Array.isArray(candidate) ? candidate : [candidate]
+    for (const item of items) {
       if (!item || typeof item !== 'object') continue
       const resolvedItem = resolveTrackResource(item, included) ?? item
       const track = normalizeTrack(resolvedItem as TidalJson, included)
@@ -445,13 +471,47 @@ export async function fetchTidalPlaylistTracks(playlistUrl: string, options: { l
     return []
   }
 
-  const payload = await fetchTidalJson([
+  const playlistPayload = await fetchTidalJson([
     `/playlists/${playlistId}/relationships/items`,
   ], token, { limit })
 
-  if (!payload) {
+  const playlistRecord = (playlistPayload as TidalJson | null) ?? {}
+  const playlistItems = Array.isArray(playlistRecord.data) ? playlistRecord.data : []
+  if (!playlistItems.length) {
     return []
   }
 
-  return enrichTrackArtists(extractTidalTracks(payload), token)
+  const tracks = await Promise.all(playlistItems.map(async (item) => {
+    const trackId = readText((item as TidalJson | undefined)?.id)
+    if (!trackId) {
+      return null
+    }
+
+    const trackPayload = await fetchTidalJson([
+      `/tracks/${trackId}`,
+    ], token, { limit: 1 })
+
+    const trackDetails = extractTidalTracks(trackPayload)[0]
+    if (!trackDetails) {
+      return null
+    }
+
+    const artistPayload = await fetchTidalJson([
+      `/tracks/${trackId}/relationships/artists`,
+    ], token, { limit: 10 })
+
+    const artistRecord = (artistPayload as TidalJson | null) ?? {}
+    const artistRefs = Array.isArray(artistRecord.data) ? artistRecord.data : []
+    const firstArtist = artistRefs[0]
+    const artistId = readText((firstArtist as TidalJson | undefined)?.id)
+
+    const artist = artistId ? await fetchArtistName(artistId, token) : ''
+
+    return {
+      ...trackDetails,
+      artist: artist || trackDetails.artist || 'Unknown artist',
+    }
+  }))
+
+  return tracks.filter((track): track is TidalTrack => Boolean(track))
 }

@@ -37,7 +37,7 @@ describe('tidal helpers', () => {
     ])
   })
 
-  it('fetches private playlist tracks through the Tidal API flow when configured', async () => {
+  it('fetches playlist tracks and hydrates artist names through the Tidal API flow', async () => {
     const originalClientId = process.env.TIDAL_CLIENT_ID
     const originalClientSecret = process.env.TIDAL_CLIENT_SECRET
     process.env.TIDAL_CLIENT_ID = 'client-id'
@@ -61,36 +61,99 @@ describe('tidal helpers', () => {
         } as Response
       }
 
-      expect(url).toContain('https://openapi.tidal.com/v2/playlists/abc123/relationships/items')
-      expect(url).toContain('limit=200')
-      expect(init?.headers).toMatchObject({
-        accept: 'application/vnd.api+json',
-        authorization: 'Bearer tidal-bearer-token',
-      })
+      if (url.includes('/playlists/abc123/relationships/items')) {
+        expect(url).toContain('https://openapi.tidal.com/v2/playlists/abc123/relationships/items')
+        expect(url).toContain('limit=200')
+        expect(init?.headers).toMatchObject({
+          accept: 'application/vnd.api+json',
+          authorization: 'Bearer tidal-bearer-token',
+        })
 
-      return {
-        ok: true,
-        json: async () => ({
-          data: [
-            {
-              id: 64186726,
-              title: 'Dreams',
-              duration: 300,
-              artist: { name: 'Fleetwood Mac' },
-              album: { title: 'Rumours' },
+        return {
+          ok: true,
+          json: async () => ({
+            data: [
+              {
+                id: '64186726',
+                type: 'tracks',
+                meta: { itemId: 'abc-track-item' },
+              },
+            ],
+          }),
+        } as Response
+      }
+
+      if (url.includes('/tracks/64186726/relationships/artists')) {
+        expect(url).toContain('https://openapi.tidal.com/v2/tracks/64186726/relationships/artists')
+        expect(init?.headers).toMatchObject({
+          accept: 'application/vnd.api+json',
+          authorization: 'Bearer tidal-bearer-token',
+        })
+
+        return {
+          ok: true,
+          json: async () => ({
+            data: [{ id: '25055', type: 'artists' }],
+          }),
+        } as Response
+      }
+
+      if (url.includes('/tracks/64186726?')) {
+        expect(url).toContain('https://openapi.tidal.com/v2/tracks/64186726')
+        expect(init?.headers).toMatchObject({
+          accept: 'application/vnd.api+json',
+          authorization: 'Bearer tidal-bearer-token',
+        })
+
+        return {
+          ok: true,
+          json: async () => ({
+            data: {
+              id: '64186726',
+              type: 'tracks',
+              attributes: {
+                title: 'Dreams',
+                duration: 'PT5M',
+              },
+              relationships: {
+                artists: {
+                  data: [{ id: '25055', type: 'artists' }],
+                },
+              },
             },
-          ],
-        }),
-      } as Response
+          }),
+        } as Response
+      }
+
+      if (url.includes('/artists/25055?')) {
+        expect(url).toContain('https://openapi.tidal.com/v2/artists/25055')
+        expect(init?.headers).toMatchObject({
+          accept: 'application/vnd.api+json',
+          authorization: 'Bearer tidal-bearer-token',
+        })
+
+        return {
+          ok: true,
+          json: async () => ({
+            data: {
+              id: '25055',
+              type: 'artists',
+              attributes: { name: 'Counting Crows' },
+            },
+          }),
+        } as Response
+      }
+
+      throw new Error(`Unexpected fetch: ${url}`)
     })
 
     vi.stubGlobal('fetch', fetchMock)
 
     await expect(fetchTidalPlaylistTracks('https://tidal.com/playlist/abc123')).resolves.toEqual([
-      { id: '64186726', title: 'Dreams', artist: 'Fleetwood Mac', album: 'Rumours', duration: 300 },
+      { id: '64186726', title: 'Dreams', artist: 'Counting Crows', album: null, duration: 300 },
     ])
 
-    expect(fetchMock).toHaveBeenCalledTimes(2)
+    expect(fetchMock).toHaveBeenCalledTimes(5)
 
     if (originalClientId === undefined) {
       delete process.env.TIDAL_CLIENT_ID
