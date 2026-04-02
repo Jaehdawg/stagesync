@@ -27,7 +27,6 @@ export type BandProfileRow = {
   band_name: string
   website_url: string | null
   instagram_url: string | null
-  youtube_url: string | null
   tiktok_url: string | null
   apple_music_url: string | null
   spotify_url: string | null
@@ -120,7 +119,7 @@ export async function setActiveBandForTestLogin(supabase: SupabaseClient<any>, s
 export async function getBandProfileForBandId(supabase: SupabaseClient<any>, bandId: string) {
   const { data, error } = await supabase
     .from('band_profiles')
-    .select('id, band_name, website_url, instagram_url, youtube_url, tiktok_url, apple_music_url, spotify_url, facebook_url, twitch_url, x_url, created_at, band_id, logo_url, paypal_url, venmo_url, cashapp_url, custom_message')
+    .select('id, band_name, website_url, instagram_url, tiktok_url, apple_music_url, spotify_url, facebook_url, twitch_url, x_url, created_at, band_id, logo_url, paypal_url, venmo_url, cashapp_url, custom_message')
     .eq('band_id', bandId)
     .maybeSingle()
 
