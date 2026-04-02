@@ -107,7 +107,7 @@ export function SingerDashboardView(state: DashboardState) {
 
       <div className="mx-auto grid max-w-7xl gap-6 xl:grid-cols-[1.15fr_0.85fr]">
         <div className="space-y-6">
-          <Panel title="Band info">
+          <section className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-2xl shadow-black/10">
             <div className="space-y-4 text-slate-200">
               <div className="rounded-2xl border border-white/10 bg-slate-950/60 p-4">
                 <p className="text-sm uppercase tracking-[0.25em] text-cyan-300">Band profile</p>
@@ -134,7 +134,7 @@ export function SingerDashboardView(state: DashboardState) {
                 ]}
               />
             </div>
-          </Panel>
+          </section>
 
           <Panel title="Singer Sign-up">
             <div className="space-y-4">
