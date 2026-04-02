@@ -77,6 +77,53 @@ beforeEach(() => {
 })
 
 describe('admin users route', () => {
+
+  it('creates a new band member user with a member band role', async () => {
+    getTestSessionMock.mockResolvedValue({ role: 'admin', username: 'stagesync-admin' })
+    bandsSelectMaybeSingleMock.mockResolvedValue({ data: { id: 'band-1' }, error: null })
+    profilesSelectMaybeSingleMock.mockResolvedValue({ data: null, error: null })
+    profileUpsertMock.mockResolvedValue({ error: null })
+    createUserMock.mockResolvedValue({ data: { user: { id: 'user-2' } }, error: null })
+    bandRoleUpsertMock.mockResolvedValue({ error: null })
+
+    const { POST } = await loadRoute()
+    const formData = new FormData()
+    formData.set('action', 'create')
+    formData.set('createMode', 'new_user')
+    formData.set('firstName', 'Bea')
+    formData.set('lastName', 'Martinez')
+    formData.set('email', 'bea@example.com')
+    formData.set('password', 'Password1')
+    formData.set('username', 'bea')
+    formData.set('role', 'band')
+    formData.set('bandLookup', 'Finding North')
+    formData.set('bandRole', 'member')
+
+    const request = {
+      formData: async () => formData,
+      url: 'https://example.com/api/admin/users',
+    } as unknown as NextRequest
+
+    const response = await POST(request)
+
+    expect(response.status).toBe(307)
+    expect(createUserMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        email: 'bea@example.com',
+        password: 'Password1',
+        email_confirm: true,
+      })
+    )
+    expect(bandRoleUpsertMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        band_id: 'band-1',
+        profile_id: 'user-2',
+        band_role: 'member',
+        active: true,
+      }),
+      { onConflict: 'band_id,profile_id' }
+    )
+  })
   it('creates a new auth user, profile, and band role', async () => {
     getTestSessionMock.mockResolvedValue({ role: 'admin', username: 'stagesync-admin' })
     bandsSelectMaybeSingleMock.mockResolvedValue({ data: { id: 'band-1' }, error: null })
