@@ -1,8 +1,8 @@
 import { redirect } from 'next/navigation'
-import { createClient } from '@/utils/supabase/server'
-import { SingerDashboardView } from '@/components/singer-dashboard-view'
-import { slugifyBandName } from '@/lib/public-links'
-import { getShowState, getSignupCapacity } from '@/lib/show-state'
+import { createClient } from '../../utils/supabase/server'
+import { SingerDashboardView } from '../../components/singer-dashboard-view'
+import { slugifyBandName } from '../../lib/public-links'
+import { getShowState, getSignupCapacity } from '../../lib/show-state'
 
 type SearchParams = Record<string, string | string[] | undefined>
 
