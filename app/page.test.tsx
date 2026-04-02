@@ -5,6 +5,17 @@ import { SingerDashboardView } from '../components/singer-dashboard-view'
 import { buildDashboardState } from '../lib/dashboard'
 import { buildRootAuthRedirect } from '../lib/root-auth'
 
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+    refresh: vi.fn(),
+    back: vi.fn(),
+    forward: vi.fn(),
+    prefetch: vi.fn(),
+  }),
+}))
+
 const state = buildDashboardState({
   bandProfile: {
     band_name: 'Neon Echo',
@@ -41,12 +52,13 @@ describe('Singer dashboard', () => {
 
     render(<SingerDashboardView {...state} />)
 
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith('/api/songs/search?query='))
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining('/api/songs/search?bandId=')))
 
     expect(screen.getByRole('heading', { name: /neon echo/i })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: /singer sign-up/i })).toBeInTheDocument()
-    expect(screen.getAllByText(/band links/i).length).toBeGreaterThan(0)
-    expect(screen.getAllByText(/tip links/i).length).toBeGreaterThan(0)
+    expect(screen.getByRole('heading', { name: /band info/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /pick a song/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /live queue/i })).toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: /band management/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: /saas admin/i })).not.toBeInTheDocument()
   })

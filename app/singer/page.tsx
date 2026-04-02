@@ -71,7 +71,7 @@ export default async function SingerPage({
   const songIds = [...new Set(queueItems.map((item) => item.song_id).filter((id): id is string => Boolean(id)))]
   const performerIds = [...new Set(queueItems.map((item) => item.performer_id).filter((id): id is string => Boolean(id)))]
 
-  const [songsResult, profilesResult, currentSingerProfile] = await Promise.all([
+  const [songsResult, profilesResult, singerProfile] = await Promise.all([
     songIds.length
       ? supabase.from('songs').select('id, title, artist').in('id', songIds).eq('band_id', band.id)
       : Promise.resolve({ data: [] as { id: string; title: string; artist: string }[] }),
@@ -84,7 +84,7 @@ export default async function SingerPage({
   ])
 
   const songsById = new Map((songsResult.data ?? []).map((song) => [song.id, song]))
-  const profilesById = new Map(
+  const singerNamesById = new Map(
     (profilesResult.data ?? []).map((profile) => [
       profile.id,
       profile.display_name || [profile.first_name, profile.last_name].filter(Boolean).join(' ') || 'Guest singer',
@@ -101,7 +101,7 @@ export default async function SingerPage({
 
   const decoratedQueue = queueItems.map((item) => {
     const song = item.song_id ? songsById.get(item.song_id) : undefined
-    const singerName = item.performer_id ? profilesById.get(item.performer_id) : undefined
+    const singerName = item.performer_id ? singerNamesById.get(item.performer_id) : undefined
     return {
       id: item.id,
       position: item.position ?? 0,
@@ -117,16 +117,34 @@ export default async function SingerPage({
   const liveQueueItems = decoratedQueue.filter((item) => !['played', 'cancelled'].includes(item.status))
   const historyItems = decoratedQueue.filter((item) => ['played', 'cancelled'].includes(item.status))
   const currentSingerRequest = decoratedQueue.find((item) => item.performerId === user?.id && !['played', 'cancelled'].includes(item.status))
-  const currentSingerName = currentSingerProfile.data
-    ? currentSingerProfile.data.display_name || [currentSingerProfile.data.first_name, currentSingerProfile.data.last_name].filter(Boolean).join(' ') || null
+  const singerName = singerProfile.data
+    ? singerProfile.data.display_name || [singerProfile.data.first_name, singerProfile.data.last_name].filter(Boolean).join(' ') || null
     : null
-  const lyricsTrack = currentSingerRequest ?? liveQueueItems[0] ?? null
-  const songSourceMode = settingsResult.data?.song_source_mode === 'tidal_playlist' ? 'tidal_playlist' : 'uploaded'
+  const bandProfile = bandProfileResult.data ?? {
+    band_name: band.band_name,
+    website_url: null,
+    facebook_url: null,
+    instagram_url: null,
+    tiktok_url: null,
+    paypal_url: null,
+    venmo_url: null,
+    cashapp_url: null,
+    custom_message: null,
+  }
 
   return (
     <SingerDashboardView
-      bandName={band.band_name}
-      customMessage={bandProfileResult.data?.custom_message ?? null}
+      bandProfile={{
+        bandName: bandProfile.band_name ?? band.band_name,
+        websiteUrl: bandProfile.website_url,
+        facebookUrl: bandProfile.facebook_url,
+        instagramUrl: bandProfile.instagram_url,
+        tiktokUrl: bandProfile.tiktok_url,
+        paypalUrl: bandProfile.paypal_url,
+        venmoUrl: bandProfile.venmo_url,
+        cashappUrl: bandProfile.cashapp_url,
+        customMessage: bandProfile.custom_message,
+      }}
       signupEnabled={signupEnabled}
       signupStatusMessage={
         signupEnabled
@@ -135,17 +153,16 @@ export default async function SingerPage({
             ? 'Signups are paused by the band.'
             : 'This show has ended and singer signups are closed.'
       }
-      songSourceMode={songSourceMode}
+      songSourceMode={settingsResult.data?.song_source_mode === 'tidal_playlist' ? 'tidal_playlist' : 'uploaded'}
       tidalPlaylistUrl={settingsResult.data?.tidal_playlist_url ?? null}
-      singerName={currentSingerName}
+      singerName={singerName}
       bandId={band.id}
       showId={currentShow?.id ?? showId}
       currentRequest={currentSingerRequest ? { artist: currentSingerRequest.artist, title: currentSingerRequest.title } : null}
       liveQueueItems={liveQueueItems}
       historyItems={historyItems}
-      lyricsTrack={lyricsTrack ? { artist: lyricsTrack.artist, title: lyricsTrack.title } : null}
+      lyricsTrack={currentSingerRequest ? { artist: currentSingerRequest.artist, title: currentSingerRequest.title } : liveQueueItems[0] ? { artist: liveQueueItems[0].artist, title: liveQueueItems[0].title } : null}
       currentShowName={currentShow?.name ?? 'StageSync Show'}
-      showState={showState}
     />
   )
 }
