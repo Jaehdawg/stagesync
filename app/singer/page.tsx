@@ -44,7 +44,7 @@ export default async function SingerPage({
     supabase
       .from('band_profiles')
       .select('band_name, website_url, facebook_url, instagram_url, tiktok_url, paypal_url, venmo_url, cashapp_url, custom_message')
-      .eq('band_name', band.band_name)
+      .eq('band_id', band.id)
       .maybeSingle(),
     supabase
       .from('events')

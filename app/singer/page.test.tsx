@@ -159,7 +159,7 @@ describe('SingerPage', () => {
 
     render(element)
 
-    expect(bandProfileEqMock).toHaveBeenCalledWith('band_name', 'Finding North')
+    expect(bandProfileEqMock).toHaveBeenCalledWith('band_id', 'band-1')
     expect(singerDashboardViewMock.mock.calls[0]?.[0]).toMatchObject({
       bandProfile: expect.objectContaining({
         bandName: 'Finding North',

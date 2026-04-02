@@ -7,6 +7,30 @@ async function bandNameExists(supabase: ReturnType<typeof createServiceClient>, 
   return (data?.length ?? 0) > 0
 }
 
+async function resolveBandIdForBandName(supabase: ReturnType<typeof createServiceClient>, bandName: string) {
+  const { data: existingBand, error: lookupError } = await supabase.from('bands').select('id').ilike('band_name', bandName).maybeSingle()
+
+  if (lookupError) {
+    throw lookupError
+  }
+
+  if (existingBand?.id) {
+    return existingBand.id as string
+  }
+
+  const { data: createdBand, error: createError } = await supabase
+    .from('bands')
+    .insert({ band_name: bandName })
+    .select('id')
+    .maybeSingle()
+
+  if (createError) {
+    throw createError
+  }
+
+  return (createdBand?.id as string | undefined) ?? null
+}
+
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const formData = await request.formData()
@@ -27,9 +51,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         return NextResponse.json({ message: 'A band with that name already exists.' }, { status: 409 })
       }
 
+      const bandId = await resolveBandIdForBandName(supabase, bandName)
       const { error } = await supabase
         .from('band_profiles')
         .update({
+          band_id: bandId,
           band_name: bandName,
           logo_url: String(formData.get('logoUrl') ?? '').trim() || null,
           website_url: String(formData.get('websiteUrl') ?? '').trim() || null,
