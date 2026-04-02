@@ -2,14 +2,12 @@ import Link from 'next/link'
 import { createClient } from '@/utils/supabase/server'
 import { BandAccessForm } from '@/components/band-access-form'
 import { getAdminAccess } from '@/lib/admin-access'
-import { getTestSession } from '@/lib/test-session'
 
 export default async function AdminAnalyticsPage() {
-  const testSession = await getTestSession()
   const supabase = await createClient()
-  const liveAdminAccess = testSession?.role === 'admin' ? null : await getAdminAccess(supabase)
+  const liveAdminAccess = await getAdminAccess(supabase)
 
-  if (testSession?.role !== 'admin' && !liveAdminAccess) {
+  if (!liveAdminAccess) {
     return (
         <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100 sm:px-6 lg:px-8">
           <div className="mx-auto grid w-full max-w-5xl gap-6 lg:grid-cols-[1fr_0.9fr]">

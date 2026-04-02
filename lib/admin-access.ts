@@ -1,9 +1,8 @@
 import { createServerClient } from '@supabase/ssr'
 import type { NextRequest } from 'next/server'
-import { getTestSession } from './test-session'
 
 export type AdminAccess = {
-  source: 'test' | 'live'
+  source: 'live'
   username: string
   userId?: string
 }
@@ -24,10 +23,10 @@ function createRequestClient(request: NextRequest) {
         },
       },
     }
-  ) as any
+  )
 }
 
-async function getLiveAdminAccess(supabase: any): Promise<AdminAccess | null> {
+export async function getAdminAccess(supabase: any): Promise<AdminAccess | null> {
   const {
     data: { user },
   } = await supabase.auth.getUser()
@@ -49,26 +48,6 @@ async function getLiveAdminAccess(supabase: any): Promise<AdminAccess | null> {
   }
 }
 
-export async function getAdminAccess(supabase: any): Promise<AdminAccess | null> {
-  const testSession = await getTestSession()
-  if (testSession?.role === 'admin') {
-    return {
-      source: 'test',
-      username: testSession.username,
-    }
-  }
-
-  return getLiveAdminAccess(supabase)
-}
-
 export async function getRequestAdminAccess(request: NextRequest): Promise<AdminAccess | null> {
-  const testSession = await getTestSession()
-  if (testSession?.role === 'admin') {
-    return {
-      source: 'test',
-      username: testSession.username,
-    }
-  }
-
-  return getLiveAdminAccess(createRequestClient(request))
+  return getAdminAccess(createRequestClient(request))
 }

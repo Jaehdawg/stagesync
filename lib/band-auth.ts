@@ -1,6 +1,5 @@
 import { createServerClient } from '@supabase/ssr'
 import type { NextRequest } from 'next/server'
-import { getTestSession } from './test-session'
 
 function getSupabase(request: NextRequest) {
   return createServerClient(
@@ -22,11 +21,6 @@ function getSupabase(request: NextRequest) {
 }
 
 export async function isBandAdminRequest(request: NextRequest) {
-  const testSession = await getTestSession()
-  if (testSession?.role === 'band' || testSession?.role === 'admin') {
-    return true
-  }
-
   const supabase = getSupabase(request)
   const {
     data: { user },
