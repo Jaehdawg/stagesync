@@ -10,6 +10,7 @@ type SongLyricsPanelProps = {
 export function SongLyricsPanel({ artist, title }: SongLyricsPanelProps) {
   const safeArtist = String(artist ?? '').trim()
   const safeTitle = String(title ?? '').trim()
+  const [open, setOpen] = useState(false)
   const [lyrics, setLyrics] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -53,20 +54,54 @@ export function SongLyricsPanel({ artist, title }: SongLyricsPanelProps) {
     }
   }, [safeArtist, safeTitle])
 
+  const canShowLyrics = Boolean(safeArtist && safeTitle)
+
   return (
-    <section className="rounded-2xl border border-white/10 bg-white/5 p-5">
-      <h3 className="text-lg font-semibold text-white">Lyrics</h3>
-      {!safeArtist || !safeTitle ? (
-        <p className="mt-3 text-sm text-slate-400">Pick a song to see lyrics.</p>
-      ) : loading ? (
-        <p className="mt-3 text-sm text-slate-400">Loading lyrics…</p>
-      ) : error ? (
-        <p className="mt-3 text-sm text-rose-300">{error}</p>
-      ) : lyrics ? (
-        <pre className="mt-3 max-h-80 overflow-y-auto whitespace-pre-wrap text-sm leading-6 text-slate-200">{lyrics}</pre>
-      ) : (
-        <p className="mt-3 text-sm text-slate-400">Lyrics not found.</p>
-      )}
-    </section>
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        disabled={!canShowLyrics}
+        className="fixed bottom-5 right-5 z-40 rounded-full bg-yellow-400 px-5 py-3 text-sm font-semibold text-slate-950 shadow-2xl shadow-black/30 transition hover:bg-yellow-300 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        Lyrics
+      </button>
+
+      {open ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 px-4">
+          <div className="flex w-full max-w-3xl flex-col rounded-3xl border border-white/10 bg-slate-950 p-6 shadow-2xl shadow-black/60">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.28em] text-yellow-300">Lyrics</p>
+                <h3 className="mt-2 text-2xl font-semibold text-white">
+                  {safeTitle ? `${safeTitle} — ${safeArtist}` : 'Pick a song'}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-slate-200 hover:bg-white/10"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="mt-6 max-h-[70vh] overflow-y-auto pr-2">
+              {!canShowLyrics ? (
+                <p className="text-sm text-slate-400">Pick a song to see lyrics.</p>
+              ) : loading ? (
+                <p className="text-sm text-slate-400">Loading lyrics…</p>
+              ) : error ? (
+                <p className="text-sm text-rose-300">{error}</p>
+              ) : lyrics ? (
+                <pre className="whitespace-pre-wrap text-sm leading-7 text-slate-200">{lyrics}</pre>
+              ) : (
+                <p className="text-sm text-slate-400">Lyrics not found.</p>
+              )}
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </>
   )
 }

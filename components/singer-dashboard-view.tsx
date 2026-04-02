@@ -45,14 +45,11 @@ type DashboardState = {
   currentShowName?: string | null
 }
 
-function Panel({ title, children, eyebrow }: { title: string; children: ReactNode; eyebrow?: string }) {
+function Panel({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-2xl shadow-black/10">
-      <div className="mb-5">
-        {eyebrow ? <p className="text-xs font-semibold uppercase tracking-[0.28em] text-cyan-300">{eyebrow}</p> : null}
-        <h2 className="mt-1 text-2xl font-semibold text-white">{title}</h2>
-      </div>
-      {children}
+      <h2 className="text-2xl font-semibold text-white">{title}</h2>
+      <div className="mt-5">{children}</div>
     </section>
   )
 }
@@ -65,7 +62,13 @@ function LinkList({ label, links }: { label: string; links: Array<{ href?: strin
       <p className="text-xs uppercase tracking-[0.25em] text-slate-500">{label}</p>
       <div className="mt-2 flex flex-wrap gap-2">
         {active.map((link) => (
-          <a key={`${label}-${link.text}`} href={link.href!} target="_blank" rel="noreferrer" className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white transition hover:bg-white/10">
+          <a
+            key={`${label}-${link.text}`}
+            href={link.href!}
+            target="_blank"
+            rel="noreferrer"
+            className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white transition hover:bg-white/10"
+          >
             {link.text}
           </a>
         ))}
@@ -104,12 +107,9 @@ export function SingerDashboardView(state: DashboardState) {
 
       <div className="mx-auto grid max-w-7xl gap-6 xl:grid-cols-[1.15fr_0.85fr]">
         <div className="space-y-6">
-          <Panel title="Band info" eyebrow="StageSync">
+          <Panel title="Band info">
             <div className="space-y-4 text-slate-200">
-              <LinkList
-                label="Website"
-                links={[{ href: bandProfile.websiteUrl ?? null, text: 'Website' }]}
-              />
+              <LinkList label="Website" links={[{ href: bandProfile.websiteUrl ?? null, text: 'Website' }]} />
               <LinkList
                 label="Social"
                 links={[
@@ -129,7 +129,7 @@ export function SingerDashboardView(state: DashboardState) {
             </div>
           </Panel>
 
-          <Panel title="Singer Sign-up" eyebrow="StageSync">
+          <Panel title="Singer Sign-up">
             <div className="space-y-4">
               {state.singerName ? (
                 <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
@@ -160,7 +160,7 @@ export function SingerDashboardView(state: DashboardState) {
             </div>
           </Panel>
 
-          <Panel title="Live Queue" eyebrow="StageSync">
+          <Panel title="Live Queue">
             {liveQueueItems.length ? (
               <div className="space-y-3">
                 {liveQueueItems.map((item) => (
@@ -168,7 +168,9 @@ export function SingerDashboardView(state: DashboardState) {
                     <div className="flex items-center justify-between gap-3">
                       <div>
                         <p className="text-sm uppercase tracking-[0.25em] text-cyan-300">#{item.position}</p>
-                        <p className="mt-1 text-lg font-semibold text-white">{item.artist} — {item.title}</p>
+                        <p className="mt-1 text-lg font-semibold text-white">
+                          {item.artist} — {item.title}
+                        </p>
                       </div>
                       {item.singerName ? <p className="text-sm text-slate-400">{item.singerName}</p> : null}
                     </div>
@@ -178,33 +180,46 @@ export function SingerDashboardView(state: DashboardState) {
             ) : (
               <p className="text-slate-400">No songs in the live queue yet.</p>
             )}
-          </Panel>
 
-          <Panel title="History" eyebrow="StageSync">
-            {historyItems.length ? (
-              <div className="space-y-3">
-                {historyItems.map((item) => (
-                  <div key={item.id} className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
-                    <div className="flex items-center justify-between gap-3">
-                      <div>
-                        <p className="text-xs uppercase tracking-[0.25em] text-slate-400">{item.status}</p>
-                        <p className="mt-1 text-lg font-semibold text-white">{item.artist} — {item.title}</p>
+            <details className="mt-5 rounded-2xl border border-white/10 bg-slate-900/40 p-4">
+              <summary className="cursor-pointer list-none text-sm font-semibold text-white">
+                History
+                <span className="ml-2 text-xs font-normal text-slate-400">(played and cancelled songs)</span>
+              </summary>
+              <div className="mt-4 space-y-3">
+                {historyItems.length ? (
+                  historyItems.map((item) => (
+                    <div key={item.id} className="rounded-2xl border border-white/10 bg-slate-950/70 p-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <p className="text-xs uppercase tracking-[0.25em] text-slate-400">{item.status}</p>
+                          <p className="mt-1 text-lg font-semibold text-white">
+                            {item.artist} — {item.title}
+                          </p>
+                        </div>
+                        {item.singerName ? <p className="text-sm text-slate-500">{item.singerName}</p> : null}
                       </div>
-                      {item.singerName ? <p className="text-sm text-slate-500">{item.singerName}</p> : null}
                     </div>
-                  </div>
-                ))}
+                  ))
+                ) : (
+                  <p className="text-sm text-slate-400">Played and cancelled songs will appear here.</p>
+                )}
               </div>
-            ) : (
-              <p className="text-slate-400">Played and cancelled songs will appear here.</p>
-            )}
+            </details>
           </Panel>
         </div>
 
         <div className="space-y-6">
-          <SongLyricsPanel artist={currentTrack?.artist ?? null} title={currentTrack?.title ?? null} />
+          <div className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-2xl shadow-black/10">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">Now playing</p>
+            <p className="mt-2 text-lg font-semibold text-white">
+              {currentTrack ? `${currentTrack.artist} — ${currentTrack.title}` : 'Pick a song to load lyrics.'}
+            </p>
+          </div>
         </div>
       </div>
+
+      <SongLyricsPanel artist={currentTrack?.artist ?? null} title={currentTrack?.title ?? null} />
     </main>
   )
 }
