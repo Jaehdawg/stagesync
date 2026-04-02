@@ -76,6 +76,7 @@ export async function POST(request: NextRequest) {
       id: createdUser.user.id,
       username,
       display_name: displayName,
+      role: 'singer',
       updated_at: new Date().toISOString(),
     },
     { onConflict: 'id' }

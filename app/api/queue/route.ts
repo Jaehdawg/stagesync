@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
-import { createServiceClient } from '@/utils/supabase/service'
-import { getShowState } from '@/lib/show-state'
+import { createServiceClient } from '../../../utils/supabase/service'
+import { getShowState } from '../../../lib/show-state'
 
 function normalizeSongId(title: string, artist: string) {
   return `${title}-${artist}`
@@ -38,7 +38,8 @@ export async function POST(request: NextRequest) {
   }
 
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle()
-  if (profile?.role !== 'singer') {
+  const userRole = profile?.role ?? user.user_metadata?.role ?? 'singer'
+  if (userRole !== 'singer') {
     return NextResponse.json({ message: 'Only singers can add songs from this screen.' }, { status: 403 })
   }
 
