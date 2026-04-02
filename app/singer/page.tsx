@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '../../utils/supabase/server'
 import { SingerDashboardView } from '../../components/singer-dashboard-view'
 import { slugifyBandName } from '../../lib/public-links'
+import { getBandProfileForBandId } from '../../lib/band-tenancy'
 import { getShowState, getSignupCapacity } from '../../lib/show-state'
 
 type SearchParams = Record<string, string | string[] | undefined>
@@ -40,12 +41,8 @@ export default async function SingerPage({
     )
   }
 
-  const [bandProfileResult, showResult, settingsResult, queueResult] = await Promise.all([
-    supabase
-      .from('band_profiles')
-      .select('band_name, website_url, facebook_url, instagram_url, tiktok_url, paypal_url, venmo_url, cashapp_url, custom_message')
-      .eq('band_id', band.id)
-      .maybeSingle(),
+  const [bandProfile, showResult, settingsResult, queueResult] = await Promise.all([
+    getBandProfileForBandId(supabase, band.id),
     supabase
       .from('events')
       .select('id, band_id, name, is_active, allow_signups')
@@ -120,7 +117,7 @@ export default async function SingerPage({
   const singerName = singerProfile.data
     ? singerProfile.data.display_name || [singerProfile.data.first_name, singerProfile.data.last_name].filter(Boolean).join(' ') || null
     : null
-  const bandProfile = bandProfileResult.data ?? {
+  const effectiveBandProfile = bandProfile ?? {
     band_name: band.band_name,
     website_url: null,
     facebook_url: null,
@@ -135,15 +132,15 @@ export default async function SingerPage({
   return (
     <SingerDashboardView
       bandProfile={{
-        bandName: bandProfile.band_name ?? band.band_name,
-        websiteUrl: bandProfile.website_url,
-        facebookUrl: bandProfile.facebook_url,
-        instagramUrl: bandProfile.instagram_url,
-        tiktokUrl: bandProfile.tiktok_url,
-        paypalUrl: bandProfile.paypal_url,
-        venmoUrl: bandProfile.venmo_url,
-        cashappUrl: bandProfile.cashapp_url,
-        customMessage: bandProfile.custom_message,
+        bandName: effectiveBandProfile.band_name ?? band.band_name,
+        websiteUrl: effectiveBandProfile.website_url,
+        facebookUrl: effectiveBandProfile.facebook_url,
+        instagramUrl: effectiveBandProfile.instagram_url,
+        tiktokUrl: effectiveBandProfile.tiktok_url,
+        paypalUrl: effectiveBandProfile.paypal_url,
+        venmoUrl: effectiveBandProfile.venmo_url,
+        cashappUrl: effectiveBandProfile.cashapp_url,
+        customMessage: effectiveBandProfile.custom_message,
       }}
       signupEnabled={signupEnabled}
       signupStatusMessage={

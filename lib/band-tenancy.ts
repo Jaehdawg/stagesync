@@ -120,7 +120,7 @@ export async function setActiveBandForTestLogin(supabase: SupabaseClient<any>, s
 export async function getBandProfileForBandId(supabase: SupabaseClient<any>, bandId: string) {
   const { data, error } = await supabase
     .from('band_profiles')
-    .select('id, band_name, website_url, instagram_url, youtube_url, tiktok_url, apple_music_url, spotify_url, facebook_url, twitch_url, x_url, created_at, band_id')
+    .select('id, band_name, website_url, instagram_url, youtube_url, tiktok_url, apple_music_url, spotify_url, facebook_url, twitch_url, x_url, created_at, band_id, logo_url, paypal_url, venmo_url, cashapp_url, custom_message')
     .eq('band_id', bandId)
     .maybeSingle()
 
@@ -128,13 +128,30 @@ export async function getBandProfileForBandId(supabase: SupabaseClient<any>, ban
     throw new Error(error.message)
   }
 
-  if (!data) {
+  if (data) {
+    const profile = data as BandProfileRow & { band_id?: string | null; logo_url?: string | null; paypal_url?: string | null; venmo_url?: string | null; cashapp_url?: string | null; custom_message?: string | null }
+    return {
+      ...profile,
+      band_id: bandId,
+    }
+  }
+
+  const { data: testProfile, error: testError } = await supabase
+    .from('test_band_profiles')
+    .select('id, band_id, band_name, website_url, facebook_url, instagram_url, tiktok_url, paypal_url, venmo_url, cashapp_url, custom_message, created_at')
+    .eq('band_id', bandId)
+    .maybeSingle()
+
+  if (testError) {
+    throw new Error(testError.message)
+  }
+
+  if (!testProfile) {
     return null
   }
 
-  const profile = data as BandProfileRow & { band_id?: string | null }
   return {
-    ...profile,
+    ...testProfile,
     band_id: bandId,
   }
 }

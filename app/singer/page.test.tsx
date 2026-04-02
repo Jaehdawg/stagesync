@@ -31,6 +31,7 @@ const profileRows = [
 ]
 
 const bandProfileEqMock = vi.fn()
+const testBandProfileEqMock = vi.fn()
 const showEqMock = vi.fn()
 const settingsEqMock = vi.fn()
 const queueEqMock = vi.fn()
@@ -88,7 +89,11 @@ const createClientMock = vi.fn(() => ({
         }
       case 'band_profiles':
         return {
-          select: vi.fn(() => makeQuery(bandProfileRow, bandProfileRow, { eq: bandProfileEqMock })),
+          select: vi.fn(() => makeQuery(null, null, { eq: bandProfileEqMock })),
+        }
+      case 'test_band_profiles':
+        return {
+          select: vi.fn(() => makeQuery(bandProfileRow, bandProfileRow, { eq: testBandProfileEqMock })),
         }
       case 'events':
         return {
@@ -137,6 +142,7 @@ async function loadPage() {
 beforeEach(() => {
   authGetUserMock.mockReset()
   bandProfileEqMock.mockReset()
+  testBandProfileEqMock.mockReset()
   showEqMock.mockReset()
   settingsEqMock.mockReset()
   queueEqMock.mockReset()
@@ -160,6 +166,7 @@ describe('SingerPage', () => {
     render(element)
 
     expect(bandProfileEqMock).toHaveBeenCalledWith('band_id', 'band-1')
+    expect(testBandProfileEqMock).toHaveBeenCalledWith('band_id', 'band-1')
     expect(singerDashboardViewMock.mock.calls[0]?.[0]).toMatchObject({
       bandProfile: expect.objectContaining({
         bandName: 'Finding North',

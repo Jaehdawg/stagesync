@@ -7,6 +7,7 @@ import { getTestSession } from '@/lib/test-session'
 import { getLatestTestShow, getLatestTestShowSettings } from '@/lib/test-show'
 import { getTestBandProfileByBandId } from '@/lib/test-band-profile'
 import { getTestLogin } from '@/lib/test-login-list'
+import { getBandProfileForBandId } from '@/lib/band-tenancy'
 import { headers } from 'next/headers'
 import { buildSingerSignupUrl, slugifyBandName } from '@/lib/public-links'
 
@@ -27,18 +28,11 @@ async function getBandState(
 ) {
   type QueueRow = { id: string; position: number | null; status: string | null; song_id: string | null; performer_id: string | null }
 
-  const [{ data: bandProfile }, { data: events }, { data: queueItems }] = await Promise.all([
-    bandId
-      ? supabase
-          .from('band_profiles')
-          .select('band_name, website_url, facebook_url, instagram_url, tiktok_url, paypal_url, venmo_url, cashapp_url, custom_message')
-          .eq('band_id', bandId)
-          .maybeSingle()
-      : supabase
-          .from('band_profiles')
-          .select('band_name, website_url, facebook_url, instagram_url, tiktok_url, paypal_url, venmo_url, cashapp_url, custom_message')
-          .limit(1)
-          .maybeSingle(),
+  const bandProfile = bandId
+    ? await getBandProfileForBandId(supabase, bandId)
+    : (await supabase.from('band_profiles').select('band_name, website_url, facebook_url, instagram_url, tiktok_url, paypal_url, venmo_url, cashapp_url, custom_message').limit(1).maybeSingle()).data ?? null
+
+  const [eventsResult, queueItemsResult] = await Promise.all([
     bandId
       ? supabase.from('events').select('id, name, band_id, is_active, allow_signups').eq('band_id', bandId).order('created_at', { ascending: false }).limit(1)
       : supabase.from('events').select('id, name, band_id, is_active, allow_signups').order('created_at', { ascending: false }).limit(1),
@@ -56,7 +50,9 @@ async function getBandState(
           .limit(6),
   ])
 
-  const currentShow = events?.[0]
+  const events = eventsResult.data ?? []
+  const queueItems = queueItemsResult.data ?? []
+  const currentShow = events[0]
   const currentSettings = currentShow?.id
     ? await supabase
         .from('show_settings')
