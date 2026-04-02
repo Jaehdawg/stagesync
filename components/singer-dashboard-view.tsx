@@ -63,8 +63,7 @@ export function SingerDashboardView(state: DashboardState) {
 
       <div className="mx-auto grid max-w-7xl gap-6 xl:grid-cols-[1.2fr_0.8fr]">
         <div className="space-y-6">
-          <Panel title="Singer Sign-up" eyebrow="StageSync">
-            <div className="grid gap-6 lg:grid-cols-[1fr_0.9fr]">
+            <Panel title="Singer Sign-up" eyebrow="StageSync">
               <div className="space-y-4">
                 {state.singerName ? (
                   <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
@@ -86,9 +85,7 @@ export function SingerDashboardView(state: DashboardState) {
                     title={state.currentRequest.title}
                   />
                 ) : null}
-              </div>
 
-              <div className="space-y-4">
                 <TidalSearchPanel
                   disabled={!canPickSong}
                   statusMessage={state.signupStatusMessage}
@@ -98,8 +95,7 @@ export function SingerDashboardView(state: DashboardState) {
                   showId={state.showId}
                 />
               </div>
-            </div>
-          </Panel>
+            </Panel>
 
           <Panel title="Live Queue" eyebrow="StageSync">
             {liveQueueItems.length ? (
