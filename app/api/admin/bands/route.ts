@@ -55,11 +55,13 @@ async function upsertBandProfileRecord(
   supabase: ReturnType<typeof createServiceClient>,
   bandId: string,
   bandName: string,
+  profileId: string,
   fields: Record<string, string | null>
 ) {
   const { error } = await supabase.from('band_profiles').upsert(
     {
       band_id: bandId,
+      profile_id: profileId,
       band_name: bandName,
       website_url: fields.website_url,
       facebook_url: fields.facebook_url,
@@ -196,7 +198,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'Select a profile or create a new band admin.' }, { status: 400 })
     }
 
-    await upsertBandProfileRecord(supabase, band.id, band.band_name, profileFields)
+    await upsertBandProfileRecord(supabase, band.id, band.band_name, profileId, profileFields)
 
     const { error: roleError } = await supabase.from('band_roles').upsert(
       {

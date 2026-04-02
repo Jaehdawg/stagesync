@@ -98,6 +98,7 @@ describe('admin bands route', () => {
     expect(bandProfilesUpsertMock).toHaveBeenCalledWith(
       expect.objectContaining({
         band_id: 'band-1',
+        profile_id: 'profile-1',
         band_name: 'Finding North',
         custom_message: 'Welcome',
       }),
