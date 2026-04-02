@@ -51,6 +51,12 @@ async function resolveOrCreateBand(supabase: ReturnType<typeof createServiceClie
   return { band: createdBand ?? null, created: true }
 }
 
+function createFailureResponse(step: string, error: unknown, status = 500) {
+  console.error('[admin/bands]', step, error)
+  const message = error instanceof Error ? error.message : String(error)
+  return NextResponse.json({ message: `${step}: ${message}` }, { status })
+}
+
 async function rollbackBandCreation(supabase: ReturnType<typeof createServiceClient>, bandId: string | null, profileId: string | null) {
   if (!bandId) {
     if (profileId) {
@@ -182,7 +188,7 @@ export async function POST(request: NextRequest) {
 
       if (profileLookupError) {
         await rollbackBandCreation(supabase, createdBandId, null)
-        return NextResponse.json({ message: profileLookupError.message }, { status: 500 })
+        return createFailureResponse('profile lookup failed', profileLookupError)
       }
 
       profileId = foundProfile?.id ?? null
@@ -224,7 +230,7 @@ export async function POST(request: NextRequest) {
 
       if (createError || !createdUser.user) {
         await rollbackBandCreation(supabase, createdBandId, null)
-        return NextResponse.json({ message: createError?.message ?? 'Unable to create band admin user.' }, { status: 500 })
+        return createFailureResponse('auth user creation failed', createError ?? 'Unable to create band admin user.')
       }
 
       profileId = createdUser.user.id
@@ -246,7 +252,7 @@ export async function POST(request: NextRequest) {
 
       if (profileError) {
         await rollbackBandCreation(supabase, createdBandId, createdProfileId)
-        return NextResponse.json({ message: profileError.message }, { status: 500 })
+        return createFailureResponse('profile upsert failed', profileError)
       }
     }
 
@@ -270,14 +276,19 @@ export async function POST(request: NextRequest) {
 
     if (roleError) {
       await rollbackBandCreation(supabase, createdBandId, createdProfileId)
-      return NextResponse.json({ message: roleError.message }, { status: 500 })
+      return createFailureResponse('band role upsert failed', roleError)
     }
 
-    await upsertBandMembershipRecord(supabase, band.id, profileId, bandRole)
+    try {
+      await upsertBandMembershipRecord(supabase, band.id, profileId, bandRole)
+    } catch (membershipError) {
+      await rollbackBandCreation(supabase, createdBandId, createdProfileId)
+      return createFailureResponse('band membership upsert failed', membershipError)
+    }
 
     return NextResponse.redirect(new URL('/admin/bands', request.url))
   } catch (error) {
     await rollbackBandCreation(supabase, createdBandId, createdProfileId)
-    return NextResponse.json({ message: error instanceof Error ? error.message : 'Unable to create band.' }, { status: 500 })
+    return createFailureResponse('band creation failed', error)
   }
 }

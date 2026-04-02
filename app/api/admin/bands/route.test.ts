@@ -4,6 +4,7 @@ import { NextRequest } from 'next/server'
 const getTestSessionMock = vi.fn()
 const bandLookupMaybeSingleMock = vi.fn()
 const profileLookupMaybeSingleMock = vi.fn()
+const profileUpsertMock = vi.fn()
 const bandProfilesUpsertMock = vi.fn()
 const bandRolesUpsertMock = vi.fn()
 const bandMembershipsUpsertMock = vi.fn()
@@ -23,7 +24,7 @@ function makeBuilder(maybeSingle: () => Promise<any>) {
     ilike: vi.fn(() => chain),
     maybeSingle,
     insert: vi.fn(() => ({ select: vi.fn(() => ({ maybeSingle: bandsInsertSelectMaybeSingleMock })) })),
-    upsert: vi.fn(),
+    upsert: profileUpsertMock,
   }
   return chain
 }
@@ -86,6 +87,7 @@ beforeEach(() => {
   getTestSessionMock.mockReset()
   bandLookupMaybeSingleMock.mockReset()
   profileLookupMaybeSingleMock.mockReset()
+  profileUpsertMock.mockReset()
   bandProfilesUpsertMock.mockReset()
   bandRolesUpsertMock.mockReset()
   bandMembershipsUpsertMock.mockReset()
@@ -108,6 +110,7 @@ describe('admin bands route', () => {
     authCreateUserMock.mockResolvedValue({ data: { user: { id: 'user-1' } }, error: null })
     bandsInsertSelectMaybeSingleMock.mockResolvedValue({ data: { id: 'band-1', band_name: 'Finding North' }, error: null })
     profileLookupMaybeSingleMock.mockResolvedValue({ data: null, error: null })
+    profileUpsertMock.mockResolvedValue({ error: null })
     bandProfilesUpsertMock.mockResolvedValue({ error: null })
     bandRolesUpsertMock.mockResolvedValue({ error: { message: 'band role insert failed' } })
     bandMembershipsUpsertMock.mockResolvedValue({ error: null })
@@ -150,6 +153,7 @@ describe('admin bands route', () => {
     getTestSessionMock.mockResolvedValue({ role: 'admin', username: 'stagesync-admin' })
     bandLookupMaybeSingleMock.mockResolvedValue({ data: { id: 'band-1', band_name: 'Finding North' }, error: null })
     profileLookupMaybeSingleMock.mockResolvedValue({ data: { id: 'profile-1' }, error: null })
+    profileUpsertMock.mockResolvedValue({ error: null })
     bandProfilesUpsertMock.mockResolvedValue({ error: null })
     bandRolesUpsertMock.mockResolvedValue({ error: null })
     bandMembershipsUpsertMock.mockResolvedValue({ error: null })
