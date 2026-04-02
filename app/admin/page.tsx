@@ -1,13 +1,15 @@
 import Link from 'next/link'
 import { createClient } from '@/utils/supabase/server'
 import { BandAccessForm } from '@/components/band-access-form'
+import { getAdminAccess } from '@/lib/admin-access'
 import { getTestSession } from '@/lib/test-session'
 
 export default async function AdminPage() {
   const testSession = await getTestSession()
   const supabase = await createClient()
+  const liveAdminAccess = testSession?.role === 'admin' ? null : await getAdminAccess(supabase)
 
-  if (testSession?.role === 'admin') {
+  if (testSession?.role === 'admin' || liveAdminAccess) {
     return (
       <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100 sm:px-6 lg:px-8">
         <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
@@ -15,7 +17,7 @@ export default async function AdminPage() {
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">Platform control</p>
             <h1 className="mt-2 text-4xl font-semibold text-white">StageSync Admin</h1>
             <p className="mt-3 max-w-2xl text-slate-300">
-              Logged in as <span className="font-semibold">{testSession.username}</span>.
+              Logged in as <span className="font-semibold">{testSession?.username ?? liveAdminAccess?.username}</span>.
             </p>
             <form className="mt-4" action="/api/auth/logout" method="post">
               <button type="submit" className="rounded-full border border-white/10 px-4 py-2 text-sm font-medium text-white hover:border-cyan-400/50">
@@ -68,6 +70,7 @@ export default async function AdminPage() {
             description="Use your admin username and password to access system controls."
             submitLabel="Sign in"
             successMessage="Admin login successful."
+            endpoint="/api/auth/login"
           />
         </div>
       </main>
@@ -95,6 +98,7 @@ export default async function AdminPage() {
             description="Use your admin username and password to access system controls."
             submitLabel="Sign in"
             successMessage="Admin login successful."
+            endpoint="/api/auth/login"
           />
         </div>
       </main>

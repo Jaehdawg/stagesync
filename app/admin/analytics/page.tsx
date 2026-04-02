@@ -1,19 +1,16 @@
 import Link from 'next/link'
 import { createClient } from '@/utils/supabase/server'
-import { getTestSession } from '@/lib/test-session'
 import { BandAccessForm } from '@/components/band-access-form'
+import { getAdminAccess } from '@/lib/admin-access'
+import { getTestSession } from '@/lib/test-session'
 
 export default async function AdminAnalyticsPage() {
   const testSession = await getTestSession()
   const supabase = await createClient()
+  const liveAdminAccess = testSession?.role === 'admin' ? null : await getAdminAccess(supabase)
 
-  if (testSession?.role !== 'admin') {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    if (!user) {
-      return (
+  if (testSession?.role !== 'admin' && !liveAdminAccess) {
+    return (
         <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100 sm:px-6 lg:px-8">
           <div className="mx-auto grid w-full max-w-5xl gap-6 lg:grid-cols-[1fr_0.9fr]">
             <header className="rounded-3xl border border-white/10 bg-white/5 p-6">
@@ -27,11 +24,11 @@ export default async function AdminAnalyticsPage() {
               description="Use your admin username and password to access system controls."
               submitLabel="Sign in"
               successMessage="Admin login successful."
+              endpoint="/api/auth/login"
             />
           </div>
         </main>
       )
-    }
   }
 
   const [{ count: showCount }, { count: activeShowCount }, { count: singerCount }, { count: tracksPlayedCount }, { data: recentShows }] = await Promise.all([

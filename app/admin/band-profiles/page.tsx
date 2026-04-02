@@ -1,12 +1,16 @@
 import Link from 'next/link'
 import { createServiceClient } from '@/utils/supabase/service'
-import { getTestSession } from '@/lib/test-session'
 import { BandAccessForm } from '@/components/band-access-form'
+import { getAdminAccess } from '@/lib/admin-access'
+import { getTestSession } from '@/lib/test-session'
 import { AdminRowDialog } from '@/components/admin-row-dialog'
 
 export default async function AdminBandProfilesPage() {
   const testSession = await getTestSession()
-  if (testSession?.role !== 'admin') {
+  const supabase = createServiceClient()
+  const liveAdminAccess = testSession?.role === 'admin' ? null : await getAdminAccess(supabase)
+
+  if (testSession?.role !== 'admin' && !liveAdminAccess) {
     return (
       <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100 sm:px-6 lg:px-8">
         <div className="mx-auto grid w-full max-w-5xl gap-6 lg:grid-cols-[1fr_0.9fr]">
@@ -15,13 +19,12 @@ export default async function AdminBandProfilesPage() {
             <h1 className="mt-2 text-4xl font-semibold text-white">Band profiles</h1>
             <p className="mt-3 max-w-2xl text-slate-300">Admin access required.</p>
           </header>
-          <BandAccessForm role="admin" title="Admin login" description="Use your admin username and password to access system controls." submitLabel="Sign in" successMessage="Admin login successful." />
+          <BandAccessForm role="admin" title="Admin login" description="Use your admin username and password to access system controls." submitLabel="Sign in" successMessage="Admin login successful." endpoint="/api/auth/login" />
         </div>
       </main>
     )
   }
 
-  const supabase = createServiceClient()
   const { data: bandProfiles } = await supabase
     .from('band_profiles')
     .select('id, profile_id, band_name, logo_url, website_url, facebook_url, instagram_url, tiktok_url, paypal_url, venmo_url, cashapp_url, custom_message, updated_at')

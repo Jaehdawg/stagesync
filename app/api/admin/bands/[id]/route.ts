@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { createServiceClient } from '../../../../../utils/supabase/service'
-import { getTestSession } from '../../../../../lib/test-session'
+import { getRequestAdminAccess } from '../../../../../lib/admin-access'
 import { upsertBandRole, removeBandRole } from '../../../../../lib/band-roles'
 
 async function upsertBandProfileRecord(
@@ -51,9 +51,9 @@ async function deleteBandCascade(supabase: ReturnType<typeof createServiceClient
 }
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const testSession = await getTestSession()
-  if (!testSession || testSession.role !== 'admin') {
-    return NextResponse.json({ message: 'Admin test login required.' }, { status: 401 })
+  const adminAccess = await getRequestAdminAccess(request)
+  if (!adminAccess) {
+    return NextResponse.json({ message: 'Admin login required.' }, { status: 401 })
   }
 
   const supabase = createServiceClient()

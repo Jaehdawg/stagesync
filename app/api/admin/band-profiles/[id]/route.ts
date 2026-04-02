@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { createServiceClient } from '@/utils/supabase/service'
+import { getRequestAdminAccess } from '@/lib/admin-access'
 
 async function bandNameExists(supabase: ReturnType<typeof createServiceClient>, bandName: string, excludeId: string) {
   const { data, error } = await supabase.from('band_profiles').select('id').ilike('band_name', bandName).neq('id', excludeId).limit(1)
@@ -33,6 +34,11 @@ async function resolveBandIdForBandName(supabase: ReturnType<typeof createServic
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
+  const adminAccess = await getRequestAdminAccess(request)
+  if (!adminAccess) {
+    return NextResponse.json({ message: 'Admin login required.' }, { status: 401 })
+  }
+
   const formData = await request.formData()
   const action = String(formData.get('action') ?? '')
   const supabase = createServiceClient()

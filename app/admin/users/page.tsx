@@ -3,6 +3,7 @@ import { createClient } from '@/utils/supabase/server'
 import { createServiceClient } from '@/utils/supabase/service'
 import { BandAccessForm } from '@/components/band-access-form'
 import { AdminRowDialog } from '@/components/admin-row-dialog'
+import { getAdminAccess } from '@/lib/admin-access'
 import { getTestSession } from '@/lib/test-session'
 import { listTestLogins } from '@/lib/test-login-list'
 import { listBandRolesForProfileId } from '@/lib/band-roles'
@@ -30,8 +31,9 @@ export default async function AdminUsersPage({
 }) {
   const testSession = await getTestSession()
   const supabase = await createClient()
+  const liveAdminAccess = testSession?.role === 'admin' ? null : await getAdminAccess(supabase)
 
-  if (testSession?.role !== 'admin') {
+  if (testSession?.role !== 'admin' && !liveAdminAccess) {
     return (
       <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100 sm:px-6 lg:px-8">
         <div className="mx-auto grid w-full max-w-5xl gap-6 lg:grid-cols-[1fr_0.9fr]">
@@ -46,6 +48,7 @@ export default async function AdminUsersPage({
             description="Use your admin username and password to access system controls."
             submitLabel="Sign in"
             successMessage="Admin login successful."
+            endpoint="/api/auth/login"
           />
         </div>
       </main>

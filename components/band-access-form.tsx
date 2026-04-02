@@ -9,9 +9,17 @@ type BandAccessFormProps = {
   description: string
   submitLabel: string
   successMessage: string
+  endpoint?: string
 }
 
-export function BandAccessForm({ role, title, description, submitLabel, successMessage }: BandAccessFormProps) {
+export function BandAccessForm({
+  role,
+  title,
+  description,
+  submitLabel,
+  successMessage,
+  endpoint = '/api/testing/login',
+}: BandAccessFormProps) {
   const router = useRouter()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -25,7 +33,7 @@ export function BandAccessForm({ role, title, description, submitLabel, successM
     setError(null)
     setMessage(null)
 
-    const response = await fetch('/api/testing/login', {
+    const response = await fetch(endpoint, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ role, username, password }),
