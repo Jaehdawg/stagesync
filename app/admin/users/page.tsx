@@ -323,35 +323,6 @@ export default async function AdminUsersPage({
           </div>
         </section>
 
-        <section className="rounded-3xl border border-white/10 bg-white/5 p-6">
-          <h2 className="text-2xl font-semibold text-white">Create user</h2>
-          <form className="mt-6 grid gap-4 rounded-2xl border border-white/10 bg-slate-950/50 p-5 md:grid-cols-4" action="/api/testing/logins" method="post">
-            <input type="hidden" name="action" value="upsert" />
-            <div className="space-y-2">
-              <label htmlFor="create-username" className="text-sm font-medium text-slate-200">Username</label>
-              <input id="create-username" name="username" type="text" className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
-            </div>
-            <div className="space-y-2">
-              <label htmlFor="create-role" className="text-sm font-medium text-slate-200">Role</label>
-              <select id="create-role" name="role" className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white">
-                <option value="singer">singer</option>
-                <option value="band">band</option>
-                <option value="admin">admin</option>
-              </select>
-            </div>
-            <div className="space-y-2">
-              <label htmlFor="create-password" className="text-sm font-medium text-slate-200">Password</label>
-              <input id="create-password" name="password" type="password" className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
-            </div>
-            <div className="space-y-2">
-              <label htmlFor="create-band" className="text-sm font-medium text-slate-200">Band name</label>
-              <input id="create-band" name="bandName" type="text" placeholder="Neon Echo" className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
-            </div>
-            <div className="md:col-span-4">
-              <button type="submit" className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-medium text-white">Save user</button>
-            </div>
-          </form>
-        </section>
 
         <section className="grid gap-4 md:grid-cols-2">
           {bandLogins.map((login) => (
