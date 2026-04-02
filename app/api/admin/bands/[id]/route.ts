@@ -3,15 +3,51 @@ import { createServiceClient } from '../../../../../utils/supabase/service'
 import { getRequestAdminAccess } from '../../../../../lib/admin-access'
 import { upsertBandRole, removeBandRole } from '../../../../../lib/band-roles'
 
+async function resolveBandProfileOwner(supabase: ReturnType<typeof createServiceClient>, bandId: string) {
+  const { data: bandProfile, error: profileError } = await supabase.from('band_profiles').select('profile_id').eq('band_id', bandId).maybeSingle()
+  if (profileError) {
+    throw new Error(profileError.message)
+  }
+
+  if (bandProfile?.profile_id) {
+    return bandProfile.profile_id as string
+  }
+
+  const { data: bandRole, error: roleError } = await supabase
+    .from('band_roles')
+    .select('profile_id, band_role, active')
+    .eq('band_id', bandId)
+    .eq('band_role', 'admin')
+    .eq('active', true)
+    .maybeSingle()
+
+  if (roleError) {
+    throw new Error(roleError.message)
+  }
+
+  if (bandRole?.profile_id) {
+    return bandRole.profile_id as string
+  }
+
+  const { data: anyRole, error: anyRoleError } = await supabase.from('band_roles').select('profile_id').eq('band_id', bandId).maybeSingle()
+  if (anyRoleError) {
+    throw new Error(anyRoleError.message)
+  }
+
+  return anyRole?.profile_id ?? null
+}
+
 async function upsertBandProfileRecord(
   supabase: ReturnType<typeof createServiceClient>,
   bandId: string,
   bandName: string,
+  profileId: string,
   fields: Record<string, string | null>
 ) {
   const { error } = await supabase.from('band_profiles').upsert(
     {
       band_id: bandId,
+      profile_id: profileId,
       band_name: bandName,
       website_url: fields.website_url,
       facebook_url: fields.facebook_url,
@@ -78,7 +114,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         return NextResponse.json({ message: bandError.message }, { status: 500 })
       }
 
-      await upsertBandProfileRecord(supabase, bandId, bandName, {
+      const profileOwnerId = await resolveBandProfileOwner(supabase, bandId)
+      if (!profileOwnerId) {
+        return NextResponse.json({ message: 'Band profile owner is required.' }, { status: 500 })
+      }
+
+      await upsertBandProfileRecord(supabase, bandId, bandName, profileOwnerId, {
         logo_url: String(formData.get('logoUrl') ?? '').trim() || null,
         website_url: String(formData.get('websiteUrl') ?? '').trim() || null,
         facebook_url: String(formData.get('facebookUrl') ?? '').trim() || null,
