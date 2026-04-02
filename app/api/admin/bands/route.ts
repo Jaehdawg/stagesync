@@ -1,0 +1,220 @@
+import { NextResponse, type NextRequest } from 'next/server'
+import { createServiceClient } from '../../../../utils/supabase/service'
+import { getTestSession } from '../../../../lib/test-session'
+import { upsertBandRole } from '../../../../lib/band-roles'
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const PASSWORD_REGEX = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/
+
+function slugifyUsername(value: string) {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+}
+
+async function findAvailableUsername(base: string, supabase: ReturnType<typeof createServiceClient>) {
+  const root = base || 'band-admin'
+
+  for (let index = 0; index < 10; index += 1) {
+    const candidate = index === 0 ? root : `${root}-${index + 1}`
+    const { data } = await supabase.from('profiles').select('id').eq('username', candidate).maybeSingle()
+    if (!data) {
+      return candidate
+    }
+  }
+
+  return `${root}-${Date.now().toString(36)}`
+}
+
+async function resolveOrCreateBand(supabase: ReturnType<typeof createServiceClient>, bandName: string) {
+  const { data: existingBand, error: lookupError } = await supabase.from('bands').select('id, band_name').ilike('band_name', bandName).maybeSingle()
+  if (lookupError) {
+    throw lookupError
+  }
+
+  if (existingBand?.id) {
+    return existingBand
+  }
+
+  const { data: createdBand, error: createError } = await supabase
+    .from('bands')
+    .insert({ band_name: bandName })
+    .select('id, band_name')
+    .maybeSingle()
+
+  if (createError) {
+    throw createError
+  }
+
+  return createdBand ?? null
+}
+
+async function upsertBandProfileRecord(
+  supabase: ReturnType<typeof createServiceClient>,
+  bandId: string,
+  bandName: string,
+  fields: Record<string, string | null>
+) {
+  const { error } = await supabase.from('band_profiles').upsert(
+    {
+      band_id: bandId,
+      band_name: bandName,
+      website_url: fields.website_url,
+      facebook_url: fields.facebook_url,
+      instagram_url: fields.instagram_url,
+      tiktok_url: fields.tiktok_url,
+      paypal_url: fields.paypal_url,
+      venmo_url: fields.venmo_url,
+      cashapp_url: fields.cashapp_url,
+      custom_message: fields.custom_message,
+      logo_url: fields.logo_url,
+    },
+    { onConflict: 'band_id' }
+  )
+
+  if (error) {
+    throw error
+  }
+}
+
+export async function POST(request: NextRequest) {
+  const testSession = await getTestSession()
+  if (!testSession || testSession.role !== 'admin') {
+    return NextResponse.json({ message: 'Admin test login required.' }, { status: 401 })
+  }
+
+  const supabase = createServiceClient()
+  const formData = await request.formData()
+  const action = String(formData.get('action') ?? 'create')
+
+  try {
+    if (action !== 'create') {
+      return NextResponse.json({ message: 'Unknown action.' }, { status: 400 })
+    }
+
+    const bandName = String(formData.get('bandName') ?? '').trim()
+    if (!bandName) {
+      return NextResponse.json({ message: 'Band name is required.' }, { status: 400 })
+    }
+
+    const createMode = String(formData.get('createMode') ?? 'existing_profile')
+    const bandRole = String(formData.get('bandRole') ?? 'admin') === 'member' ? 'member' : 'admin'
+    const band = await resolveOrCreateBand(supabase, bandName)
+
+    if (!band?.id) {
+      return NextResponse.json({ message: 'Unable to resolve band.' }, { status: 500 })
+    }
+
+    const profileFields = {
+      logo_url: String(formData.get('logoUrl') ?? '').trim() || null,
+      website_url: String(formData.get('websiteUrl') ?? '').trim() || null,
+      facebook_url: String(formData.get('facebookUrl') ?? '').trim() || null,
+      instagram_url: String(formData.get('instagramUrl') ?? '').trim() || null,
+      tiktok_url: String(formData.get('tiktokUrl') ?? '').trim() || null,
+      paypal_url: String(formData.get('paypalUrl') ?? '').trim() || null,
+      venmo_url: String(formData.get('venmoUrl') ?? '').trim() || null,
+      cashapp_url: String(formData.get('cashappUrl') ?? '').trim() || null,
+      custom_message: String(formData.get('customMessage') ?? '').trim() || null,
+    }
+
+    let profileId = String(formData.get('profileId') ?? '').trim() || null
+    const profileLookup = String(formData.get('profileLookup') ?? '').trim().toLowerCase()
+
+    if (!profileId && profileLookup) {
+      const { data: foundProfile, error: profileLookupError } = await supabase
+        .from('profiles')
+        .select('id')
+        .ilike('username', profileLookup)
+        .maybeSingle()
+
+      if (profileLookupError) {
+        return NextResponse.json({ message: profileLookupError.message }, { status: 500 })
+      }
+
+      profileId = foundProfile?.id ?? null
+    }
+
+    if (createMode === 'new_user') {
+      const firstName = String(formData.get('firstName') ?? '').trim()
+      const lastName = String(formData.get('lastName') ?? '').trim()
+      const email = String(formData.get('email') ?? '').trim().toLowerCase()
+      const password = String(formData.get('password') ?? '')
+      const usernameBase = slugifyUsername(String(formData.get('username') ?? email.split('@')[0] ?? `${firstName}-${lastName}`))
+
+      if (!firstName || !lastName) {
+        return NextResponse.json({ message: 'First name and last name are required.' }, { status: 400 })
+      }
+
+      if (!EMAIL_REGEX.test(email)) {
+        return NextResponse.json({ message: 'Enter a valid email address.' }, { status: 400 })
+      }
+
+      if (!PASSWORD_REGEX.test(password)) {
+        return NextResponse.json({ message: 'Password must be at least 8 characters and include a letter and a number.' }, { status: 400 })
+      }
+
+      const username = await findAvailableUsername(usernameBase, supabase)
+      const { data: createdUser, error: createError } = await supabase.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+        user_metadata: {
+          first_name: firstName,
+          last_name: lastName,
+          role: 'band',
+        },
+      })
+
+      if (createError || !createdUser.user) {
+        return NextResponse.json({ message: createError?.message ?? 'Unable to create band admin user.' }, { status: 500 })
+      }
+
+      profileId = createdUser.user.id
+      const displayName = `${firstName} ${lastName}`.trim()
+      const { error: profileError } = await supabase.from('profiles').upsert(
+        {
+          id: createdUser.user.id,
+          email,
+          username,
+          display_name: displayName,
+          first_name: firstName,
+          last_name: lastName,
+          role: 'band',
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'id' }
+      )
+
+      if (profileError) {
+        return NextResponse.json({ message: profileError.message }, { status: 500 })
+      }
+    }
+
+    if (!profileId) {
+      return NextResponse.json({ message: 'Select a profile or create a new band admin.' }, { status: 400 })
+    }
+
+    await upsertBandProfileRecord(supabase, band.id, band.band_name, profileFields)
+
+    const { error: roleError } = await supabase.from('band_roles').upsert(
+      {
+        band_id: band.id,
+        profile_id: profileId,
+        band_role: bandRole,
+        active: true,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'band_id,profile_id' }
+    )
+
+    if (roleError) {
+      return NextResponse.json({ message: roleError.message }, { status: 500 })
+    }
+
+    return NextResponse.redirect(new URL('/admin/bands', request.url))
+  } catch (error) {
+    return NextResponse.json({ message: error instanceof Error ? error.message : 'Unable to create band.' }, { status: 500 })
+  }
+}
