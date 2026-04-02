@@ -24,7 +24,7 @@ export default async function SingerPage({
   const bandSlug = firstParam(params?.band)?.trim().toLowerCase() ?? ''
   const showId = firstParam(params?.show)?.trim() ?? ''
 
-  if (!bandSlug || !showId) {
+  if (!bandSlug) {
     redirect('/')
   }
 
@@ -36,6 +36,37 @@ export default async function SingerPage({
       <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-4xl rounded-3xl border border-white/10 bg-white/5 p-6 text-slate-200">
           We couldn’t find that band’s singer page.
+        </div>
+      </main>
+    )
+  }
+
+  if (!showId) {
+    const bandProfile = await getBandProfileForBandId(supabase, band.id)
+    const fallbackBandProfile = bandProfile ?? {
+      band_name: band.band_name,
+      website_url: null,
+      facebook_url: null,
+      instagram_url: null,
+      tiktok_url: null,
+      paypal_url: null,
+      venmo_url: null,
+      cashapp_url: null,
+      custom_message: null,
+    }
+
+    return (
+      <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-4xl rounded-3xl border border-white/10 bg-white/5 p-8 text-slate-200">
+          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">StageSync</p>
+          <h1 className="mt-3 text-3xl font-semibold text-white">No active show yet</h1>
+          <p className="mt-3 text-slate-300">
+            {fallbackBandProfile.band_name} doesn’t have an active show linked to this singer page yet.
+            Ask the band to start a show, then use the generated singer link again.
+          </p>
+          <a href="/band" className="mt-6 inline-flex rounded-full border border-white/10 px-4 py-2 text-sm font-medium text-white hover:border-cyan-400/50">
+            Back to band portal
+          </a>
         </div>
       </main>
     )
