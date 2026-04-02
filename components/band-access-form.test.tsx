@@ -32,7 +32,7 @@ describe('BandAccessForm', () => {
     fireEvent.click(screen.getByRole('button', { name: /sign in/i }))
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1))
-    expect(fetchMock).toHaveBeenCalledWith('/api/testing/login', expect.any(Object))
+    expect(fetchMock).toHaveBeenCalledWith('/api/auth/login', expect.any(Object))
     expect(screen.getByText(/band login successful/i)).toBeInTheDocument()
   })
 

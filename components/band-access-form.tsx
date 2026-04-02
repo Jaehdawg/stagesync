@@ -18,7 +18,7 @@ export function BandAccessForm({
   description,
   submitLabel,
   successMessage,
-  endpoint = '/api/testing/login',
+  endpoint = '/api/auth/login',
 }: BandAccessFormProps) {
   const router = useRouter()
   const [username, setUsername] = useState('')

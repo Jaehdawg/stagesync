@@ -8,6 +8,7 @@ import { getLatestTestShow, getLatestTestShowSettings } from '@/lib/test-show'
 import { getTestBandProfileByBandId } from '@/lib/test-band-profile'
 import { getTestLogin } from '@/lib/test-login-list'
 import { getBandProfileForBandId } from '@/lib/band-tenancy'
+import { listBandRolesForProfileId } from '@/lib/band-roles'
 import { headers } from 'next/headers'
 import { buildSingerSignupUrl, slugifyBandName } from '@/lib/public-links'
 
@@ -224,10 +225,13 @@ export default async function BandPage() {
   }
 
   const { data: profile } = user
-    ? await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle()
-    : { data: { role: 'band' } }
+    ? await supabase.from('profiles').select('role, active_band_id').eq('id', user.id).maybeSingle()
+    : { data: { role: 'band', active_band_id: null } }
 
   const userRole = user ? profile?.role : 'band'
+  const liveBandId = user && userRole === 'band'
+    ? profile?.active_band_id ?? (await listBandRolesForProfileId(supabase, user.id)).find((role) => role.active)?.band_id ?? null
+    : null
 
   if (userRole !== 'band') {
     return (
@@ -252,7 +256,7 @@ export default async function BandPage() {
     )
   }
 
-  const state = await getBandState(supabase, testSession?.activeBandId ?? null)
+  const state = await getBandState(supabase, testSession?.activeBandId ?? liveBandId)
   const singerSignupUrl = buildSingerSignupUrl(appUrl, slugifyBandName(state.brand.title), state.currentShowId)
 
   return (
