@@ -11,20 +11,21 @@ export type LiveBandAccessContext = {
 }
 
 export async function getLiveBandAccessContext(
-  supabase: SupabaseClient<any>,
+  authSupabase: SupabaseClient<any>,
+  serviceSupabase: SupabaseClient<any>,
   options?: { requireAdmin?: boolean }
 ): Promise<LiveBandAccessContext | null> {
   const { requireAdmin = false } = options ?? {}
 
   const {
     data: { user },
-  } = await supabase.auth.getUser()
+  } = await authSupabase.auth.getUser()
 
   if (!user) {
     return null
   }
 
-  const { data: profile } = await supabase
+  const { data: profile } = await serviceSupabase
     .from('profiles')
     .select('id, username, display_name, first_name, last_name, role, active_band_id')
     .eq('id', user.id)
@@ -34,13 +35,13 @@ export async function getLiveBandAccessContext(
     return null
   }
 
-  const roles = await listBandRolesForProfileId(supabase, user.id)
-  const bandId = profile.active_band_id ?? roles.find((role) => role.active)?.band_id ?? roles[0]?.band_id ?? null
+  const roles = await listBandRolesForProfileId(serviceSupabase, user.id)
+  const bandId = profile.active_band_id ?? roles.find((role) => role.active && role.band_role === 'admin')?.band_id ?? roles.find((role) => role.active)?.band_id ?? roles[0]?.band_id ?? null
   if (!bandId) {
     return null
   }
 
-  const currentRole = roles.find((role) => role.band_id === bandId && role.active) ?? roles.find((role) => role.band_id === bandId) ?? null
+  const currentRole = roles.find((role) => role.band_id === bandId && role.band_role === 'admin') ?? roles.find((role) => role.band_id === bandId) ?? null
   if (!currentRole) {
     return null
   }
@@ -49,7 +50,7 @@ export async function getLiveBandAccessContext(
     return null
   }
 
-  const { data: band } = await supabase.from('bands').select('id, band_name').eq('id', bandId).maybeSingle()
+  const { data: band } = await serviceSupabase.from('bands').select('id, band_name').eq('id', bandId).maybeSingle()
 
   return {
     userId: user.id,

@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
     return response
   }
 
-  const liveAccess = await getLiveBandAccessContext(serviceSupabase, { requireAdmin: true })
+  const liveAccess = await getLiveBandAccessContext(testSupabase, serviceSupabase, { requireAdmin: true })
   if (!liveAccess) {
     return NextResponse.json({ message: 'Band admin access required.' }, { status: 403 })
   }

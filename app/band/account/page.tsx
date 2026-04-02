@@ -81,7 +81,7 @@ export default async function BandAccountPage() {
       return <AccountForm username={current.username} />
     }
 
-    const liveAccess = await getLiveBandAccessContext(serviceSupabase, { requireAdmin: true })
+    const liveAccess = await getLiveBandAccessContext(supabase, serviceSupabase, { requireAdmin: true })
     if (liveAccess) {
       return <AccountForm username={liveAccess.username} />
     }
@@ -89,7 +89,7 @@ export default async function BandAccountPage() {
     return <AccessDenied message="Band admin access required." />
   }
 
-  const liveAccess = await getLiveBandAccessContext(serviceSupabase, { requireAdmin: true })
+  const liveAccess = await getLiveBandAccessContext(supabase, serviceSupabase, { requireAdmin: true })
   if (!liveAccess) {
     return <LoginCard title="Band account" description="Band login required." />
   }

@@ -103,7 +103,7 @@ export default async function BandMembersPage() {
       )
     }
 
-    const liveAccess = await getLiveBandAccessContext(serviceSupabase, { requireAdmin: true })
+    const liveAccess = await getLiveBandAccessContext(supabase, serviceSupabase, { requireAdmin: true })
     if (liveAccess) {
       const roles = await listBandRolesWithProfilesForBandId(serviceSupabase, liveAccess.bandId)
       const members = roles.filter((role) => role.profile_id !== liveAccess.userId)
@@ -164,7 +164,7 @@ export default async function BandMembersPage() {
     return <AccessDenied message="Band admin access required." />
   }
 
-  const liveAccess = await getLiveBandAccessContext(serviceSupabase, { requireAdmin: true })
+  const liveAccess = await getLiveBandAccessContext(supabase, serviceSupabase, { requireAdmin: true })
   if (!liveAccess) {
     return <LoginCard title="Band members" description="Band login required." />
   }

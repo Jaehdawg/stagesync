@@ -177,7 +177,7 @@ export default async function BandPage() {
       : null
 
     if (userRole === 'band' && liveBandId) {
-      const liveAccess = await getLiveBandAccessContext(serviceSupabase, { requireAdmin: false })
+      const liveAccess = await getLiveBandAccessContext(supabase, serviceSupabase, { requireAdmin: false })
       if (liveAccess) {
         const state = await getBandState(serviceSupabase, liveBandId)
         const singerSignupUrl = buildSingerSignupUrl(appUrl, slugifyBandName(state.brand.title))
