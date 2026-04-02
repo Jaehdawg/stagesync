@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server'
-import { createServiceClient } from '@/utils/supabase/service'
-import { getTestSession } from '@/lib/test-session'
-import { upsertBandRole, removeBandRole } from '@/lib/band-roles'
+import { createServiceClient } from '../../../../../utils/supabase/service'
+import { getTestSession } from '../../../../../lib/test-session'
+import { upsertBandRole, removeBandRole } from '../../../../../lib/band-roles'
 
 async function upsertBandProfileRecord(
   supabase: ReturnType<typeof createServiceClient>,
