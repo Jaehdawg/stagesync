@@ -27,7 +27,7 @@ async function upsertBandProfileRecord(
   )
 
   if (error) {
-    throw error
+    throw new Error(error.message)
   }
 }
 
@@ -46,7 +46,7 @@ async function deleteBandCascade(supabase: ReturnType<typeof createServiceClient
 
   const { error } = await supabase.from('bands').delete().eq('id', bandId)
   if (error) {
-    throw error
+    throw new Error(error.message)
   }
 }
 

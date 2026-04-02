@@ -6,11 +6,13 @@ const bandLookupMaybeSingleMock = vi.fn()
 const profileLookupMaybeSingleMock = vi.fn()
 const bandProfilesUpsertMock = vi.fn()
 const bandRolesUpsertMock = vi.fn()
+const bandMembershipsUpsertMock = vi.fn()
 const bandsInsertSelectMaybeSingleMock = vi.fn()
 const bandsDeleteEqMock = vi.fn()
 const profilesDeleteEqMock = vi.fn()
 const bandProfilesDeleteEqMock = vi.fn()
 const bandRolesDeleteEqMock = vi.fn()
+const bandMembershipsDeleteEqMock = vi.fn()
 const authCreateUserMock = vi.fn()
 const authDeleteUserMock = vi.fn()
 
@@ -58,6 +60,12 @@ const createServiceClientMock = vi.fn(() => ({
         delete: vi.fn(() => ({ eq: bandRolesDeleteEqMock })),
       }
     }
+    if (table === 'band_memberships') {
+      return {
+        upsert: bandMembershipsUpsertMock,
+        delete: vi.fn(() => ({ eq: bandMembershipsDeleteEqMock })),
+      }
+    }
     return {}
   },
 }))
@@ -80,11 +88,13 @@ beforeEach(() => {
   profileLookupMaybeSingleMock.mockReset()
   bandProfilesUpsertMock.mockReset()
   bandRolesUpsertMock.mockReset()
+  bandMembershipsUpsertMock.mockReset()
   bandsInsertSelectMaybeSingleMock.mockReset()
   bandsDeleteEqMock.mockReset()
   profilesDeleteEqMock.mockReset()
   bandProfilesDeleteEqMock.mockReset()
   bandRolesDeleteEqMock.mockReset()
+  bandMembershipsDeleteEqMock.mockReset()
   authCreateUserMock.mockReset()
   authDeleteUserMock.mockReset()
   createServiceClientMock.mockClear()
@@ -100,6 +110,7 @@ describe('admin bands route', () => {
     profileLookupMaybeSingleMock.mockResolvedValue({ data: null, error: null })
     bandProfilesUpsertMock.mockResolvedValue({ error: null })
     bandRolesUpsertMock.mockResolvedValue({ error: { message: 'band role insert failed' } })
+    bandMembershipsUpsertMock.mockResolvedValue({ error: null })
     bandsDeleteEqMock.mockResolvedValue({ error: null })
     bandProfilesDeleteEqMock.mockResolvedValue({ error: null })
     bandRolesDeleteEqMock.mockResolvedValue({ error: null })
@@ -131,6 +142,7 @@ describe('admin bands route', () => {
     expect(authDeleteUserMock).toHaveBeenCalledWith('user-1')
     expect(profilesDeleteEqMock).toHaveBeenCalledWith('id', 'user-1')
     expect(bandRolesDeleteEqMock).toHaveBeenCalledWith('band_id', 'band-1')
+    expect(bandMembershipsDeleteEqMock).toHaveBeenCalledWith('band_id', 'band-1')
     expect(bandProfilesDeleteEqMock).toHaveBeenCalledWith('band_id', 'band-1')
     expect(bandsDeleteEqMock).toHaveBeenCalledWith('id', 'band-1')
   })
@@ -140,6 +152,7 @@ describe('admin bands route', () => {
     profileLookupMaybeSingleMock.mockResolvedValue({ data: { id: 'profile-1' }, error: null })
     bandProfilesUpsertMock.mockResolvedValue({ error: null })
     bandRolesUpsertMock.mockResolvedValue({ error: null })
+    bandMembershipsUpsertMock.mockResolvedValue({ error: null })
 
     const { POST } = await loadRoute()
     const request = {
@@ -176,6 +189,16 @@ describe('admin bands route', () => {
         active: true,
       }),
       { onConflict: 'band_id,profile_id' }
+    )
+    expect(bandMembershipsUpsertMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        band_id: 'band-1',
+        member_type: 'profile',
+        member_key: 'profile-1',
+        band_access_level: 'admin',
+        active: true,
+      }),
+      { onConflict: 'band_id,member_type,member_key' }
     )
   })
 })

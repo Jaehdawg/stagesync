@@ -62,6 +62,7 @@ async function rollbackBandCreation(supabase: ReturnType<typeof createServiceCli
 
   await Promise.all([
     supabase.from('band_roles').delete().eq('band_id', bandId),
+    supabase.from('band_memberships').delete().eq('band_id', bandId),
     supabase.from('band_profiles').delete().eq('band_id', bandId),
     supabase.from('bands').delete().eq('id', bandId),
   ])
@@ -98,7 +99,29 @@ async function upsertBandProfileRecord(
   )
 
   if (error) {
-    throw error
+    throw new Error(error.message)
+  }
+}
+
+async function upsertBandMembershipRecord(
+  supabase: ReturnType<typeof createServiceClient>,
+  bandId: string,
+  profileId: string,
+  bandRole: 'admin' | 'member'
+) {
+  const { error } = await supabase.from('band_memberships').upsert(
+    {
+      band_id: bandId,
+      member_type: 'profile',
+      member_key: profileId,
+      band_access_level: bandRole,
+      active: true,
+    },
+    { onConflict: 'band_id,member_type,member_key' }
+  )
+
+  if (error) {
+    throw new Error(error.message)
   }
 }
 
@@ -249,6 +272,8 @@ export async function POST(request: NextRequest) {
       await rollbackBandCreation(supabase, createdBandId, createdProfileId)
       return NextResponse.json({ message: roleError.message }, { status: 500 })
     }
+
+    await upsertBandMembershipRecord(supabase, band.id, profileId, bandRole)
 
     return NextResponse.redirect(new URL('/admin/bands', request.url))
   } catch (error) {
