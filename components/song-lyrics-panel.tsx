@@ -8,8 +8,8 @@ type SongLyricsPanelProps = {
 }
 
 export function SongLyricsPanel({ artist, title }: SongLyricsPanelProps) {
-  const safeArtist = (artist ?? '').trim()
-  const safeTitle = (title ?? '').trim()
+  const safeArtist = String(artist ?? '').trim()
+  const safeTitle = String(title ?? '').trim()
   const [lyrics, setLyrics] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -29,7 +29,7 @@ export function SongLyricsPanel({ artist, title }: SongLyricsPanelProps) {
       setLoading(true)
       setError(null)
       try {
-        const url = `/api/lyrics?artist=${encodeURIComponent(safeArtist)}&title=${encodeURIComponent(safeTitle)}`
+        const url = `/api/lyrics?artist=${encodeURIComponent(String(safeArtist))}&title=${encodeURIComponent(String(safeTitle))}`
         const response = await fetch(url, { signal: controller.signal })
         const data = (await response.json().catch(() => ({}))) as { lyrics?: string; message?: string }
         if (cancelled) return
