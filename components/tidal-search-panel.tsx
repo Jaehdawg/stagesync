@@ -29,7 +29,7 @@ export function TidalSearchPanel({ disabled = false, statusMessage, sourceMode =
   const [selectedTrack, setSelectedTrack] = useState<TidalTrack | null>(null)
 
   const searchUrl = useMemo(
-    () => `/api/songs/search?bandId=${encodeURIComponent(bandId)}&query=${encodeURIComponent(query.trim())}`,
+    () => `/api/songs/search?bandId=${encodeURIComponent(bandId)}${query.trim() ? `&query=${encodeURIComponent(query.trim())}` : ''}`,
     [bandId, query]
   )
 
@@ -55,13 +55,6 @@ export function TidalSearchPanel({ disabled = false, statusMessage, sourceMode =
   useEffect(() => {
     let cancelled = false
     async function loadTracks() {
-      if (query.trim().length < 2) {
-        setTracks([])
-        setError(null)
-        setLoading(false)
-        return
-      }
-
       setLoading(true)
       setError(null)
 
@@ -73,9 +66,9 @@ export function TidalSearchPanel({ disabled = false, statusMessage, sourceMode =
           throw new Error(data.message ?? 'Unable to search songs.')
         }
         setTracks(data.songs ?? [])
-      } catch (error) {
+      } catch (fetchError) {
         if (cancelled) return
-        setError(error instanceof Error ? error.message : 'Unable to search songs.')
+        setError(fetchError instanceof Error ? fetchError.message : 'Unable to search songs.')
       } finally {
         if (!cancelled) setLoading(false)
       }
@@ -85,7 +78,7 @@ export function TidalSearchPanel({ disabled = false, statusMessage, sourceMode =
     return () => {
       cancelled = true
     }
-  }, [query, searchUrl])
+  }, [searchUrl])
 
   return (
     <section className="rounded-2xl border border-white/10 bg-white/5 p-5">
@@ -110,7 +103,7 @@ export function TidalSearchPanel({ disabled = false, statusMessage, sourceMode =
           <div key={track.id} className="flex w-full items-center justify-between gap-3 rounded-xl border border-white/10 bg-slate-900/60 p-4">
             <div className="min-w-0 flex-1">
               <p className="font-medium text-white">{track.artist}</p>
-              <p className="text-sm text-slate-400 break-words">{track.title}{track.album ? ` • ${track.album}` : ''}</p>
+              <p className="break-words text-sm text-slate-400">{track.title}{track.album ? ` • ${track.album}` : ''}</p>
             </div>
             <button
               type="button"
@@ -121,7 +114,7 @@ export function TidalSearchPanel({ disabled = false, statusMessage, sourceMode =
               Select
             </button>
           </div>
-        )) : query.trim().length >= 2 && !loading ? <p className="text-sm text-slate-400">No matches yet — keep typing.</p> : null}
+        )) : !loading ? <p className="text-sm text-slate-400">No matches yet.</p> : null}
       </div>
 
       {selectedTrack ? (
