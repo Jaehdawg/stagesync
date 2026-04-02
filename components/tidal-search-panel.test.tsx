@@ -1,11 +1,19 @@
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
 import { TidalSearchPanel } from './tidal-search-panel'
 
 const fetchMock = vi.fn()
+const refreshMock = vi.fn()
+
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({
+    refresh: refreshMock,
+  }),
+}))
 
 afterEach(() => {
   fetchMock.mockReset()
+  refreshMock.mockReset()
   vi.restoreAllMocks()
 })
 
@@ -26,13 +34,22 @@ describe('TidalSearchPanel', () => {
     await screen.findByText('Pick a Song')
   })
 
-  it('passes the band and show ids when queueing a song', async () => {
-    fetchMock.mockImplementation(async (input: RequestInfo | URL) => {
+  it('queues a song with the active band and show ids', async () => {
+    fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input)
       if (url.startsWith('/api/songs/search')) {
         return new Response(JSON.stringify({ songs: [{ id: '1', title: 'My Song', artist: 'The Band' }] }), { status: 200 })
       }
       if (url.startsWith('/api/queue')) {
+        expect(init?.method).toBe('POST')
+        expect(init?.headers).toEqual(expect.objectContaining({ 'Content-Type': 'application/json' }))
+        expect(JSON.parse(String(init?.body))).toEqual({
+          title: 'My Song',
+          artist: 'The Band',
+          bandId: 'band-1',
+          showId: 'show-1',
+          action: 'upsert',
+        })
         return new Response(JSON.stringify({ message: 'Song request added.' }), { status: 200 })
       }
       return new Response(JSON.stringify({ message: 'ok' }), { status: 200 })
@@ -41,7 +58,11 @@ describe('TidalSearchPanel', () => {
 
     render(<TidalSearchPanel sourceMode="uploaded" bandId="band-1" showId="show-1" />)
 
-    const input = screen.getByPlaceholderText('Search the band song list')
-    input.focus()
+    await screen.findByText('My Song')
+    fireEvent.click(screen.getByRole('button', { name: /queue song/i }))
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith('/api/queue', expect.any(Object)))
+    expect(screen.getByText(/song request added/i)).toBeInTheDocument()
+    expect(refreshMock).toHaveBeenCalled()
   })
 })
