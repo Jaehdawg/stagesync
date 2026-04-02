@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, type FormEvent } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '../utils/supabase/client'
 
 type SupabaseAuthClient = {
@@ -22,6 +23,7 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const PASSWORD_REGEX = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/
 
 export function SingerRegistrationForm({ supabaseClient, disabled = false, statusMessage }: SingerRegistrationFormProps) {
+  const router = useRouter()
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [email, setEmail] = useState('')
@@ -92,6 +94,7 @@ export function SingerRegistrationForm({ supabaseClient, disabled = false, statu
 
     setMessage(payload.message ?? 'You’re signed up and signed in to StageSync.')
     setLoading(false)
+    router.refresh()
   }
 
   return (
