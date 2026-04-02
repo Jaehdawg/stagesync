@@ -109,6 +109,13 @@ export function SingerDashboardView(state: DashboardState) {
         <div className="space-y-6">
           <Panel title="Band info">
             <div className="space-y-4 text-slate-200">
+              <div className="rounded-2xl border border-white/10 bg-slate-950/60 p-4">
+                <p className="text-sm uppercase tracking-[0.25em] text-cyan-300">Band profile</p>
+                <p className="mt-2 text-xl font-semibold text-white">{bandProfile.bandName}</p>
+                <p className="mt-2 text-sm leading-6 text-slate-300">
+                  {bandProfile.customMessage ?? 'Band links and tip links will appear here when the band profile is filled out.'}
+                </p>
+              </div>
               <LinkList label="Website" links={[{ href: bandProfile.websiteUrl ?? null, text: 'Website' }]} />
               <LinkList
                 label="Social"

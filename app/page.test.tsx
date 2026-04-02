@@ -57,6 +57,7 @@ describe('Singer dashboard', () => {
     expect(screen.getByRole('heading', { name: /neon echo/i })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: /singer sign-up/i })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: /band info/i })).toBeInTheDocument()
+    expect(screen.getByText(/band profile/i)).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: /pick a song/i })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: /live queue/i })).toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: /band management/i })).not.toBeInTheDocument()
