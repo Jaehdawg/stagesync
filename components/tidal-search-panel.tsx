@@ -1,13 +1,13 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 type TidalTrack = {
   id: string
   title: string
   artist: string
   album?: string | null
-  duration?: number | null
 }
 
 type TidalSearchPanelProps = {
@@ -20,6 +20,7 @@ type TidalSearchPanelProps = {
 }
 
 export function TidalSearchPanel({ disabled = false, statusMessage, sourceMode = 'uploaded', playlistUrl = null, bandId, showId }: TidalSearchPanelProps) {
+  const router = useRouter()
   const [query, setQuery] = useState('')
   const [tracks, setTracks] = useState<TidalTrack[]>([])
   const [loading, setLoading] = useState(false)
@@ -27,106 +28,86 @@ export function TidalSearchPanel({ disabled = false, statusMessage, sourceMode =
   const [message, setMessage] = useState<string | null>(null)
   const [selectedTrack, setSelectedTrack] = useState<TidalTrack | null>(null)
 
+  const searchUrl = useMemo(
+    () => `/api/songs/search?bandId=${encodeURIComponent(bandId)}&query=${encodeURIComponent(query.trim())}`,
+    [bandId, query]
+  )
+
   async function pickTrack(track: TidalTrack) {
     if (disabled) return
 
     const response = await fetch('/api/queue', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title: track.title, artist: track.artist, bandId, showId }),
+      body: JSON.stringify({ title: track.title, artist: track.artist, bandId, showId, action: 'upsert' }),
     })
 
     const payload = (await response.json().catch(() => ({}))) as { message?: string }
-
     if (!response.ok) {
-      setError(payload.message ?? 'Unable to request track.')
-      return
+      throw new Error(payload.message ?? 'Unable to add song request.')
     }
 
-    setMessage(payload.message ?? 'Song request added to the queue.')
+    setMessage(payload.message ?? 'Song request added.')
+    setSelectedTrack(null)
+    router.refresh()
   }
 
   useEffect(() => {
     let cancelled = false
-
-    async function loadSongs() {
-      setLoading(true)
-      setError(null)
-      setMessage(null)
-
-      const response = await fetch(`/api/songs/search?bandId=${encodeURIComponent(bandId)}&showId=${encodeURIComponent(showId)}&query=${encodeURIComponent(query.trim())}`)
-      const payload = (await response.json().catch(() => ({}))) as { tracks?: TidalTrack[]; message?: string }
-
-      if (cancelled) return
-
-      if (!response.ok) {
-        setError(payload.message ?? 'Unable to load songs.')
+    async function loadTracks() {
+      if (query.trim().length < 2) {
         setTracks([])
+        setError(null)
         setLoading(false)
         return
       }
 
-      const nextTracks = (payload.tracks ?? []).slice().sort((left, right) => {
-        const artistCompare = left.artist.localeCompare(right.artist, undefined, { sensitivity: 'base' })
-        if (artistCompare !== 0) return artistCompare
-        return left.title.localeCompare(right.title, undefined, { sensitivity: 'base' })
-      })
+      setLoading(true)
+      setError(null)
 
-      setTracks(nextTracks)
-      setMessage(
-        nextTracks.length
-          ? `Loaded ${nextTracks.length} song${nextTracks.length === 1 ? '' : 's'}.`
-          : 'No songs found.'
-      )
-      setLoading(false)
+      try {
+        const response = await fetch(searchUrl)
+        const data = (await response.json().catch(() => ({}))) as { songs?: TidalTrack[]; message?: string }
+        if (cancelled) return
+        if (!response.ok) {
+          throw new Error(data.message ?? 'Unable to search songs.')
+        }
+        setTracks(data.songs ?? [])
+      } catch (error) {
+        if (cancelled) return
+        setError(error instanceof Error ? error.message : 'Unable to search songs.')
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
     }
 
-    void loadSongs()
-
+    void loadTracks()
     return () => {
       cancelled = true
     }
-  }, [query, disabled, bandId, showId])
-
-  const title = 'Pick a Song'
+  }, [query, searchUrl])
 
   return (
     <section className="rounded-2xl border border-white/10 bg-white/5 p-5">
-      <h3 className="text-lg font-semibold text-white">{title}</h3>
+      <h3 className="text-lg font-semibold text-white">Pick a Song</h3>
       {sourceMode === 'tidal_playlist' && playlistUrl ? (
-        <p className="mt-2 text-sm text-cyan-200">
-          Playlist: <a href={playlistUrl} className="underline decoration-cyan-400/40 underline-offset-4">{playlistUrl}</a>
-        </p>
+        <p className="mt-2 text-sm text-cyan-200">Imported Tidal playlist available.</p>
       ) : null}
-
-      <div className="mt-4 space-y-4">
-        <div className="space-y-2">
-          <label htmlFor="song-library-query" className="text-sm font-medium text-slate-200">
-            Search song library
-          </label>
-          <input
-            id="song-library-query"
-            name="song-library-query"
-            type="search"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search by title or artist"
-            className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none"
-          />
-        </div>
-        {loading ? <p className="text-sm text-slate-400">Searching...</p> : null}
-      </div>
-
+      <input
+        type="search"
+        value={query}
+        onChange={(event) => setQuery(event.target.value)}
+        placeholder="Search the band song list"
+        className="mt-4 w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none"
+        disabled={disabled}
+      />
       {statusMessage ? <p className="mt-3 text-sm text-slate-300">{statusMessage}</p> : null}
       {message ? <p className="mt-3 text-sm text-emerald-300">{message}</p> : null}
       {error ? <p className="mt-3 text-sm text-rose-300">{error}</p> : null}
-
       <div className="mt-4 max-h-96 space-y-3 overflow-y-auto pr-1">
+        {loading ? <p className="text-sm text-slate-400">Searching…</p> : null}
         {tracks.length ? tracks.map((track) => (
-          <div
-            key={track.id}
-            className="flex w-full items-center justify-between gap-3 rounded-xl border border-white/10 bg-slate-900/60 p-4 text-left transition hover:border-cyan-400/40 hover:bg-slate-900/80"
-          >
+          <div key={track.id} className="flex w-full items-center justify-between gap-3 rounded-xl border border-white/10 bg-slate-900/60 p-4">
             <div className="min-w-0 flex-1">
               <p className="font-medium text-white">{track.artist}</p>
               <p className="text-sm text-slate-400 break-words">{track.title}{track.album ? ` • ${track.album}` : ''}</p>
@@ -140,7 +121,7 @@ export function TidalSearchPanel({ disabled = false, statusMessage, sourceMode =
               Select
             </button>
           </div>
-        )) : query.trim() ? <p className="text-sm text-slate-400">No matches yet — keep typing.</p> : null}
+        )) : query.trim().length >= 2 && !loading ? <p className="text-sm text-slate-400">No matches yet — keep typing.</p> : null}
       </div>
 
       {selectedTrack ? (
@@ -154,7 +135,6 @@ export function TidalSearchPanel({ disabled = false, statusMessage, sourceMode =
                 type="button"
                 onClick={() => {
                   void pickTrack(selectedTrack)
-                  setSelectedTrack(null)
                 }}
                 className="flex-1 rounded-full bg-emerald-400 px-5 py-3 font-semibold text-slate-950 transition hover:bg-emerald-300"
               >

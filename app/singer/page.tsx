@@ -1,9 +1,8 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/utils/supabase/server'
-import { buildDashboardState } from '@/lib/dashboard'
 import { SingerDashboardView } from '@/components/singer-dashboard-view'
-import { getShowState, canSingerSignUp, getSignupCapacity } from '@/lib/show-state'
 import { slugifyBandName } from '@/lib/public-links'
+import { getShowState, getSignupCapacity } from '@/lib/show-state'
 
 type SearchParams = Record<string, string | string[] | undefined>
 
@@ -31,22 +30,6 @@ export default async function SingerPage({
   const { data: bands } = await supabase.from('bands').select('id, band_name')
   const band = (bands ?? []).find((row) => slugifyBandName(row.band_name ?? '') === bandSlug) ?? null
 
-  const singerName = user
-    ? await (async () => {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('display_name, first_name, last_name, role')
-          .eq('id', user.id)
-          .maybeSingle()
-
-        if (!profile || profile.role !== 'singer') {
-          return null
-        }
-
-        return profile.display_name || [profile.first_name, profile.last_name].filter(Boolean).join(' ') || null
-      })()
-    : null
-
   if (!band) {
     return (
       <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100 sm:px-6 lg:px-8">
@@ -57,7 +40,7 @@ export default async function SingerPage({
     )
   }
 
-  const [{ data: bandProfile }, { data: currentShow }, { data: currentSettings }, { data: queueItems }] = await Promise.all([
+  const [bandProfileResult, showResult, settingsResult, queueResult] = await Promise.all([
     supabase
       .from('band_profiles')
       .select('band_name, website_url, facebook_url, instagram_url, tiktok_url, paypal_url, venmo_url, cashapp_url, custom_message')
@@ -76,73 +59,93 @@ export default async function SingerPage({
       .maybeSingle(),
     supabase
       .from('queue_items')
-      .select('id, position, status, song_id, performer_id')
+      .select('id, event_id, performer_id, song_id, status, position, created_at')
       .eq('band_id', band.id)
       .eq('event_id', showId)
       .order('position', { ascending: true })
-      .limit(100),
+      .order('created_at', { ascending: true })
+      .limit(200),
   ])
 
-  const songIds = [...new Set((queueItems ?? []).map((item) => item.song_id).filter((id): id is string => Boolean(id)))]
-  const performerIds = [...new Set((queueItems ?? []).map((item) => item.performer_id).filter((id): id is string => Boolean(id)))]
+  const queueItems = queueResult.data ?? []
+  const songIds = [...new Set(queueItems.map((item) => item.song_id).filter((id): id is string => Boolean(id)))]
+  const performerIds = [...new Set(queueItems.map((item) => item.performer_id).filter((id): id is string => Boolean(id)))]
 
-  const [{ data: songs }, { data: profiles }] = await Promise.all([
-    songIds.length ? supabase.from('songs').select('id, title, artist').in('id', songIds).eq('band_id', band.id) : Promise.resolve({ data: [] }),
+  const [songsResult, profilesResult, currentSingerProfile] = await Promise.all([
+    songIds.length
+      ? supabase.from('songs').select('id, title, artist').in('id', songIds).eq('band_id', band.id)
+      : Promise.resolve({ data: [] as { id: string; title: string; artist: string }[] }),
     performerIds.length
       ? supabase.from('profiles').select('id, display_name, first_name, last_name').in('id', performerIds)
-      : Promise.resolve({ data: [] }),
+      : Promise.resolve({ data: [] as { id: string; display_name?: string | null; first_name?: string | null; last_name?: string | null }[] }),
+    user
+      ? supabase.from('profiles').select('id, display_name, first_name, last_name, role').eq('id', user.id).maybeSingle()
+      : Promise.resolve({ data: null as { id: string; display_name?: string | null; first_name?: string | null; last_name?: string | null; role?: string | null } | null }),
   ])
 
-  const songsById = new Map((songs ?? []).map((song) => [song.id, song]))
-  const profilesById = new Map((profiles ?? []).map((profile) => [profile.id, profile]))
+  const songsById = new Map((songsResult.data ?? []).map((song) => [song.id, song]))
+  const profilesById = new Map(
+    (profilesResult.data ?? []).map((profile) => [
+      profile.id,
+      profile.display_name || [profile.first_name, profile.last_name].filter(Boolean).join(' ') || 'Guest singer',
+    ])
+  )
 
+  const currentShow = showResult.data ?? null
   const showState = getShowState(currentShow)
-  const signupEnabled = canSingerSignUp(currentShow)
+  const signupEnabled = showState === 'active' && Boolean(currentShow?.allow_signups)
   const signupCapacity = getSignupCapacity({
-    show_duration_minutes: currentSettings?.show_duration_minutes ?? 60,
-    buffer_minutes: currentSettings?.signup_buffer_minutes ?? 1,
+    show_duration_minutes: settingsResult.data?.show_duration_minutes ?? 60,
+    buffer_minutes: settingsResult.data?.signup_buffer_minutes ?? 1,
   })
 
-  const state = buildDashboardState({
-    bandProfile: bandProfile ?? {
-      band_name: band.band_name,
-      custom_message: 'Thanks for singing with us — tip the band and leave a note if you want.',
-    },
-    activeShowCount: currentShow ? 1 : 0,
-    songsInQueue: queueItems?.length ?? 0,
-    queuedSingers: queueItems?.length ?? 0,
-    queueItems: (queueItems ?? []).map((item, index) => {
-      const song = item.song_id ? songsById.get(item.song_id) : undefined
-      const performer = item.performer_id ? profilesById.get(item.performer_id) : undefined
+  const decoratedQueue = queueItems.map((item) => {
+    const song = item.song_id ? songsById.get(item.song_id) : undefined
+    const singerName = item.performer_id ? profilesById.get(item.performer_id) : undefined
+    return {
+      id: item.id,
+      position: item.position ?? 0,
+      artist: song?.artist ?? 'Unknown artist',
+      title: song?.title ?? 'Unknown song',
+      singerName,
+      status: item.status ?? 'queued',
+      createdAt: item.created_at ?? null,
+      performerId: item.performer_id,
+    }
+  })
 
-      return {
-        id: item.id,
-        position: item.position ?? index + 1,
-        status: item.status ?? 'Waiting',
-        name:
-          performer?.display_name ||
-          [performer?.first_name, performer?.last_name].filter(Boolean).join(' ') ||
-          'Guest singer',
-        song: song ? `${song.title} - ${song.artist}` : 'Requested song',
+  const liveQueueItems = decoratedQueue.filter((item) => !['played', 'cancelled'].includes(item.status))
+  const historyItems = decoratedQueue.filter((item) => ['played', 'cancelled'].includes(item.status))
+  const currentSingerRequest = decoratedQueue.find((item) => item.performerId === user?.id && !['played', 'cancelled'].includes(item.status))
+  const currentSingerName = currentSingerProfile.data
+    ? currentSingerProfile.data.display_name || [currentSingerProfile.data.first_name, currentSingerProfile.data.last_name].filter(Boolean).join(' ') || null
+    : null
+  const lyricsTrack = currentSingerRequest ?? liveQueueItems[0] ?? null
+  const songSourceMode = settingsResult.data?.song_source_mode === 'tidal_playlist' ? 'tidal_playlist' : 'uploaded'
+
+  return (
+    <SingerDashboardView
+      bandName={band.band_name}
+      customMessage={bandProfileResult.data?.custom_message ?? null}
+      signupEnabled={signupEnabled}
+      signupStatusMessage={
+        signupEnabled
+          ? `Signups are open. Singer Slots: ${signupCapacity}`
+          : showState === 'paused'
+            ? 'Signups are paused by the band.'
+            : 'This show has ended and singer signups are closed.'
       }
-    }),
-    signupEnabled,
-    signupStatusMessage:
-      showState === 'active'
-        ? `Signups are open. Singer Slots: ${signupCapacity}`
-        : showState === 'paused'
-          ? 'Signups are paused by the band.'
-          : 'This show has ended and singer signups are closed.',
-    currentShowId: currentShow?.id ?? showId,
-    currentShowName: currentShow?.name ?? 'StageSync Show',
-    showState,
-    showDurationMinutes: currentSettings?.show_duration_minutes ?? 60,
-    signupBufferMinutes: currentSettings?.signup_buffer_minutes ?? 1,
-    songSourceMode: currentSettings?.song_source_mode ?? 'uploaded',
-    singerName,
-    bandId: band.id,
-    showId: currentShow?.id ?? showId,
-  })
-
-  return <SingerDashboardView {...state} />
+      songSourceMode={songSourceMode}
+      tidalPlaylistUrl={settingsResult.data?.tidal_playlist_url ?? null}
+      singerName={currentSingerName}
+      bandId={band.id}
+      showId={currentShow?.id ?? showId}
+      currentRequest={currentSingerRequest ? { artist: currentSingerRequest.artist, title: currentSingerRequest.title } : null}
+      liveQueueItems={liveQueueItems}
+      historyItems={historyItems}
+      lyricsTrack={lyricsTrack ? { artist: lyricsTrack.artist, title: lyricsTrack.title } : null}
+      currentShowName={currentShow?.name ?? 'StageSync Show'}
+      showState={showState}
+    />
+  )
 }

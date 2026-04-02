@@ -6,23 +6,23 @@ export async function GET(request: NextRequest) {
   const bandId = request.nextUrl.searchParams.get('bandId')?.trim() || ''
 
   const supabase = createServiceClient()
-  const baseQuery = supabase
+  let builder = supabase
     .from('songs')
     .select('id, title, artist, duration_ms')
+    .eq('band_id', bandId)
     .is('archived_at', null)
-    .eq('band_id', bandId || '__missing__')
     .order('artist', { ascending: true })
     .order('title', { ascending: true })
 
-  const { data, error } = query
-    ? await baseQuery.or(`title.ilike.%${query}%,artist.ilike.%${query}%`).limit(20)
-    : await baseQuery.limit(200)
+  if (query) {
+    builder = builder.or(`title.ilike.%${query}%,artist.ilike.%${query}%`)
+  }
+
+  const { data, error } = await builder
 
   if (error) {
     return NextResponse.json({ message: error.message }, { status: 500 })
   }
 
-  return NextResponse.json({
-    tracks: (data ?? []).map((song) => ({ id: song.id, title: song.title, artist: song.artist, duration: song.duration_ms ?? null })),
-  })
+  return NextResponse.json({ songs: data ?? [] })
 }

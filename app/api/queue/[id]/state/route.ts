@@ -1,113 +1,45 @@
-import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
-import { getTestSession } from '@/lib/test-session'
 import { createServiceClient } from '@/utils/supabase/service'
-
-function getSupabase(request: NextRequest) {
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll()
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) => {
-            request.cookies.set(name, value)
-          })
-        },
-      },
-    }
-  )
-}
-
-async function isAuthorizedBandUser(request: NextRequest) {
-  const testSession = await getTestSession()
-  if (testSession?.role === 'band' || testSession?.role === 'admin') {
-    return true
-  }
-
-  const supabase = getSupabase(request)
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    return false
-  }
-
-  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle()
-  return profile?.role === 'band' || profile?.role === 'admin'
-}
+import { isBandAdminRequest } from '@/lib/band-auth'
 
 export async function POST(request: NextRequest, context: { params: Promise<{ id: string }> }) {
-  if (!(await isAuthorizedBandUser(request))) {
+  if (!(await isBandAdminRequest(request))) {
     return NextResponse.json({ message: 'Band access required.' }, { status: 401 })
   }
 
-  const serviceSupabase = createServiceClient()
   const { id } = await context.params
   const formData = await request.formData()
-  const action = String(formData.get('action') ?? '')
+  const action = String(formData.get('action') ?? '').trim().toLowerCase()
 
-  const { data: currentItem, error: itemError } = await serviceSupabase
+  const serviceSupabase = createServiceClient()
+  const { data: queueItem, error: findError } = await serviceSupabase
     .from('queue_items')
-    .select('id, event_id, position, status')
+    .select('id, band_id, event_id')
     .eq('id', id)
     .maybeSingle()
 
-  if (itemError || !currentItem) {
+  if (findError) {
+    return NextResponse.json({ message: findError.message }, { status: 500 })
+  }
+
+  if (!queueItem) {
     return NextResponse.json({ message: 'Queue item not found.' }, { status: 404 })
   }
 
-  if (action === 'played') {
-    const { error } = await serviceSupabase.from('queue_items').update({ status: 'played' }).eq('id', id)
-    if (error) {
-      return NextResponse.json({ message: error.message }, { status: 500 })
-    }
-    return NextResponse.redirect(new URL('/band', request.url))
+  const nextStatus = action === 'play' || action === 'played'
+    ? 'played'
+    : action === 'remove' || action === 'cancel' || action === 'cancelled'
+      ? 'cancelled'
+      : null
+
+  if (!nextStatus) {
+    return NextResponse.json({ message: 'Unknown queue action.' }, { status: 400 })
   }
 
-  if (action === 'remove') {
-    const { error } = await serviceSupabase.from('queue_items').update({ status: 'removed' }).eq('id', id)
-    if (error) {
-      return NextResponse.json({ message: error.message }, { status: 500 })
-    }
-    return NextResponse.redirect(new URL('/band', request.url))
+  const { error } = await serviceSupabase.from('queue_items').update({ status: nextStatus }).eq('id', id)
+  if (error) {
+    return NextResponse.json({ message: error.message }, { status: 500 })
   }
 
-  if (action !== 'up' && action !== 'down') {
-    return NextResponse.json({ message: 'Unknown action.' }, { status: 400 })
-  }
-
-  const { data: sibling } = await serviceSupabase
-    .from('queue_items')
-    .select('id, position')
-    .eq('event_id', currentItem.event_id)
-    .neq('id', currentItem.id)
-    .order('position', { ascending: action === 'down' })
-    .limit(1)
-    .maybeSingle()
-
-  if (!sibling) {
-    return NextResponse.redirect(new URL('/band', request.url))
-  }
-
-  const firstId = action === 'up' ? currentItem.id : sibling.id
-  const firstPosition = action === 'up' ? currentItem.position : sibling.position
-  const secondId = action === 'up' ? sibling.id : currentItem.id
-  const secondPosition = action === 'up' ? sibling.position : currentItem.position
-
-  const { error: firstError } = await serviceSupabase.from('queue_items').update({ position: secondPosition }).eq('id', firstId)
-  if (firstError) {
-    return NextResponse.json({ message: firstError.message }, { status: 500 })
-  }
-
-  const { error: secondError } = await serviceSupabase.from('queue_items').update({ position: firstPosition }).eq('id', secondId)
-  if (secondError) {
-    return NextResponse.json({ message: secondError.message }, { status: 500 })
-  }
-
-  return NextResponse.redirect(new URL('/band', request.url))
+  return NextResponse.json({ message: `Queue item marked ${nextStatus}.` })
 }
