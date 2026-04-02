@@ -62,6 +62,12 @@ async function resolveProfileId(supabase: ReturnType<typeof createServiceClient>
   return profileId
 }
 
+async function rollbackCreatedUser(supabase: ReturnType<typeof createServiceClient>, userId: string | null) {
+  if (!userId) return
+  await supabase.from('profiles').delete().eq('id', userId)
+  await supabase.auth.admin.deleteUser(userId)
+}
+
 export async function POST(request: NextRequest) {
   const adminAccess = await getRequestAdminAccess(request)
   if (!adminAccess) {
@@ -71,6 +77,8 @@ export async function POST(request: NextRequest) {
   const supabase = createServiceClient()
   const formData = await request.formData()
   const action = String(formData.get('action') ?? 'create')
+  let createdUserId: string | null = null
+  const createdNewUser = String(formData.get('createMode') ?? 'existing_profile') === 'new_user'
 
   try {
     if (action === 'delete') {
@@ -81,6 +89,9 @@ export async function POST(request: NextRequest) {
 
       const { error: profileError } = await supabase.from('profiles').delete().eq('id', profileId)
       if (profileError) {
+        if (createdNewUser) {
+          await rollbackCreatedUser(supabase, createdUserId)
+        }
         return NextResponse.json({ message: profileError.message }, { status: 500 })
       }
 
@@ -154,6 +165,7 @@ export async function POST(request: NextRequest) {
       }
 
       profileId = createdUser.user.id
+      createdUserId = createdUser.user.id
       const { error: profileError } = await supabase.from('profiles').upsert(
         {
           id: createdUser.user.id,
@@ -169,6 +181,9 @@ export async function POST(request: NextRequest) {
       )
 
       if (profileError) {
+        if (createdNewUser) {
+          await rollbackCreatedUser(supabase, createdUserId)
+        }
         return NextResponse.json({ message: profileError.message }, { status: 500 })
       }
     } else if (profileId) {
@@ -192,6 +207,9 @@ export async function POST(request: NextRequest) {
     }
 
     if (!profileId) {
+      if (createdNewUser) {
+        await rollbackCreatedUser(supabase, createdUserId)
+      }
       return NextResponse.json({ message: 'Select a profile or create a new user.' }, { status: 400 })
     }
 
@@ -200,12 +218,18 @@ export async function POST(request: NextRequest) {
       await upsertBandRole(supabase, bandId, profileId, bandRole, true)
       const { error: activeBandError } = await supabase.from('profiles').update({ active_band_id: bandId }).eq('id', profileId)
       if (activeBandError) {
+        if (createdNewUser) {
+          await rollbackCreatedUser(supabase, profileId)
+        }
         return NextResponse.json({ message: activeBandError.message }, { status: 500 })
       }
     }
 
     return NextResponse.redirect(new URL('/admin/users', request.url))
   } catch (error) {
+    if (createdNewUser) {
+      await rollbackCreatedUser(supabase, createdUserId)
+    }
     return NextResponse.json({ message: error instanceof Error ? error.message : 'Unable to update user.' }, { status: 500 })
   }
 }

@@ -35,7 +35,7 @@ async function resolveOrCreateBand(supabase: ReturnType<typeof createServiceClie
   }
 
   if (existingBand?.id) {
-    return existingBand
+    return { band: existingBand, created: false }
   }
 
   const { data: createdBand, error: createError } = await supabase
@@ -48,7 +48,28 @@ async function resolveOrCreateBand(supabase: ReturnType<typeof createServiceClie
     throw createError
   }
 
-  return createdBand ?? null
+  return { band: createdBand ?? null, created: true }
+}
+
+async function rollbackBandCreation(supabase: ReturnType<typeof createServiceClient>, bandId: string | null, profileId: string | null) {
+  if (!bandId) {
+    if (profileId) {
+      await supabase.from('profiles').delete().eq('id', profileId)
+      await supabase.auth.admin.deleteUser(profileId)
+    }
+    return
+  }
+
+  await Promise.all([
+    supabase.from('band_roles').delete().eq('band_id', bandId),
+    supabase.from('band_profiles').delete().eq('band_id', bandId),
+    supabase.from('bands').delete().eq('id', bandId),
+  ])
+
+  if (profileId) {
+    await supabase.from('profiles').delete().eq('id', profileId)
+    await supabase.auth.admin.deleteUser(profileId)
+  }
 }
 
 async function upsertBandProfileRecord(
@@ -91,6 +112,9 @@ export async function POST(request: NextRequest) {
   const formData = await request.formData()
   const action = String(formData.get('action') ?? 'create')
 
+  let createdBandId: string | null = null
+  let createdProfileId: string | null = null
+
   try {
     if (action !== 'create') {
       return NextResponse.json({ message: 'Unknown action.' }, { status: 400 })
@@ -103,7 +127,9 @@ export async function POST(request: NextRequest) {
 
     const createMode = String(formData.get('createMode') ?? 'existing_profile')
     const bandRole = String(formData.get('bandRole') ?? 'admin') === 'member' ? 'member' : 'admin'
-    const band = await resolveOrCreateBand(supabase, bandName)
+    const bandResult = await resolveOrCreateBand(supabase, bandName)
+    const band = bandResult.band
+    createdBandId = bandResult.created ? band?.id ?? null : null
 
     if (!band?.id) {
       return NextResponse.json({ message: 'Unable to resolve band.' }, { status: 500 })
@@ -132,6 +158,7 @@ export async function POST(request: NextRequest) {
         .maybeSingle()
 
       if (profileLookupError) {
+        await rollbackBandCreation(supabase, createdBandId, null)
         return NextResponse.json({ message: profileLookupError.message }, { status: 500 })
       }
 
@@ -146,14 +173,17 @@ export async function POST(request: NextRequest) {
       const usernameBase = slugifyUsername(String(formData.get('username') ?? email.split('@')[0] ?? `${firstName}-${lastName}`))
 
       if (!firstName || !lastName) {
+        await rollbackBandCreation(supabase, createdBandId, null)
         return NextResponse.json({ message: 'First name and last name are required.' }, { status: 400 })
       }
 
       if (!EMAIL_REGEX.test(email)) {
+        await rollbackBandCreation(supabase, createdBandId, null)
         return NextResponse.json({ message: 'Enter a valid email address.' }, { status: 400 })
       }
 
       if (!PASSWORD_REGEX.test(password)) {
+        await rollbackBandCreation(supabase, createdBandId, null)
         return NextResponse.json({ message: 'Password must be at least 8 characters and include a letter and a number.' }, { status: 400 })
       }
 
@@ -170,10 +200,12 @@ export async function POST(request: NextRequest) {
       })
 
       if (createError || !createdUser.user) {
+        await rollbackBandCreation(supabase, createdBandId, null)
         return NextResponse.json({ message: createError?.message ?? 'Unable to create band admin user.' }, { status: 500 })
       }
 
       profileId = createdUser.user.id
+      createdProfileId = createdUser.user.id
       const displayName = `${firstName} ${lastName}`.trim()
       const { error: profileError } = await supabase.from('profiles').upsert(
         {
@@ -190,11 +222,13 @@ export async function POST(request: NextRequest) {
       )
 
       if (profileError) {
+        await rollbackBandCreation(supabase, createdBandId, createdProfileId)
         return NextResponse.json({ message: profileError.message }, { status: 500 })
       }
     }
 
     if (!profileId) {
+      await rollbackBandCreation(supabase, createdBandId, createdProfileId)
       return NextResponse.json({ message: 'Select a profile or create a new band admin.' }, { status: 400 })
     }
 
@@ -212,11 +246,13 @@ export async function POST(request: NextRequest) {
     )
 
     if (roleError) {
+      await rollbackBandCreation(supabase, createdBandId, createdProfileId)
       return NextResponse.json({ message: roleError.message }, { status: 500 })
     }
 
     return NextResponse.redirect(new URL('/admin/bands', request.url))
   } catch (error) {
+    await rollbackBandCreation(supabase, createdBandId, createdProfileId)
     return NextResponse.json({ message: error instanceof Error ? error.message : 'Unable to create band.' }, { status: 500 })
   }
 }
