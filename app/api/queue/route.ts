@@ -2,7 +2,6 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { getShowState } from '@/lib/show-state'
 import { createServiceClient } from '@/utils/supabase/service'
-import { getTestSession } from '@/lib/test-session'
 
 function normalizeSongId(title: string, artist: string) {
   return `${title}-${artist}`
@@ -43,13 +42,27 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: 'Only singers can add songs from this screen.' }, { status: 403 })
   }
 
+  const body = (await request.json().catch(() => ({}))) as { title?: string; artist?: string; bandId?: string; showId?: string }
+  const title = body.title?.trim()
+  const artist = body.artist?.trim()
+  const bandId = body.bandId?.trim() || null
+  const showId = body.showId?.trim() || null
+
+  if (!title || !artist) {
+    return NextResponse.json({ message: 'Song title and artist are required.' }, { status: 400 })
+  }
+
+  if (!bandId || !showId) {
+    return NextResponse.json({ message: 'No active band selected.' }, { status: 400 })
+  }
+
   const serviceSupabase = createServiceClient()
 
   const { data: currentShow } = await serviceSupabase
-    .from('events')
+    .from('test_shows')
     .select('id, band_id, is_active, allow_signups')
-    .order('created_at', { ascending: false })
-    .limit(1)
+    .eq('id', showId)
+    .eq('band_id', bandId)
     .maybeSingle()
 
   const showState = getShowState(currentShow)
@@ -57,25 +70,18 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: 'The show is not currently accepting new songs.' }, { status: 409 })
   }
 
-  const body = (await request.json().catch(() => ({}))) as { title?: string; artist?: string }
-  const title = body.title?.trim()
-  const artist = body.artist?.trim()
-
-  if (!title || !artist) {
-    return NextResponse.json({ message: 'Song title and artist are required.' }, { status: 400 })
-  }
-
   const songId = normalizeSongId(title, artist)
-  const testSession = await getTestSession()
-  const bandId = testSession?.activeBandId ?? null
 
-  const { error: songError } = await serviceSupabase.from('songs').upsert({
-    id: songId,
-    title,
-    artist,
-    archived_at: null,
-    band_id: bandId,
-  }, { onConflict: 'band_id,id' })
+  const { error: songError } = await serviceSupabase.from('songs').upsert(
+    {
+      id: songId,
+      title,
+      artist,
+      archived_at: null,
+      band_id: bandId,
+    },
+    { onConflict: 'band_id,id' }
+  )
 
   if (songError) {
     return NextResponse.json({ message: songError.message }, { status: 500 })
@@ -83,7 +89,7 @@ export async function POST(request: NextRequest) {
 
   const { error: queueError } = await serviceSupabase.from('queue_items').insert({
     event_id: currentShow.id,
-    band_id: currentShow.band_id,
+    band_id: bandId,
     performer_id: user.id,
     song_id: songId,
     status: 'pending',

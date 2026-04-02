@@ -17,6 +17,9 @@ export default async function SingerPage({
   searchParams?: Promise<SearchParams>
 }) {
   const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
   const params = await searchParams
   const bandSlug = firstParam(params?.band)?.trim().toLowerCase() ?? ''
   const showId = firstParam(params?.show)?.trim() ?? ''
@@ -27,6 +30,22 @@ export default async function SingerPage({
 
   const { data: bands } = await supabase.from('bands').select('id, band_name')
   const band = (bands ?? []).find((row) => slugifyBandName(row.band_name ?? '') === bandSlug) ?? null
+
+  const singerName = user
+    ? await (async () => {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('display_name, first_name, last_name, role')
+          .eq('id', user.id)
+          .maybeSingle()
+
+        if (!profile || profile.role !== 'singer') {
+          return null
+        }
+
+        return profile.display_name || [profile.first_name, profile.last_name].filter(Boolean).join(' ') || null
+      })()
+    : null
 
   if (!band) {
     return (
@@ -110,7 +129,7 @@ export default async function SingerPage({
     signupEnabled,
     signupStatusMessage:
       showState === 'active'
-        ? `Signups are open. Estimated signup capacity: ${signupCapacity} songs for this set.`
+        ? `Signups are open. Singer Slots: ${signupCapacity}`
         : showState === 'paused'
           ? 'Signups are paused by the band.'
           : 'This show has ended and singer signups are closed.',
@@ -120,6 +139,9 @@ export default async function SingerPage({
     showDurationMinutes: currentSettings?.show_duration_minutes ?? 60,
     signupBufferMinutes: currentSettings?.signup_buffer_minutes ?? 1,
     songSourceMode: currentSettings?.song_source_mode ?? 'uploaded',
+    singerName,
+    bandId: band.id,
+    showId: currentShow?.id ?? showId,
   })
 
   return <SingerDashboardView {...state} />

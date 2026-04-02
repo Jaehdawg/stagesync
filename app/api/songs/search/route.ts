@@ -3,12 +3,14 @@ import { createServiceClient } from '@/utils/supabase/service'
 
 export async function GET(request: NextRequest) {
   const query = request.nextUrl.searchParams.get('query')?.trim() || ''
+  const bandId = request.nextUrl.searchParams.get('bandId')?.trim() || ''
 
   const supabase = createServiceClient()
   const baseQuery = supabase
     .from('songs')
     .select('id, title, artist, duration_ms')
     .is('archived_at', null)
+    .eq('band_id', bandId || '__missing__')
     .order('artist', { ascending: true })
     .order('title', { ascending: true })
 

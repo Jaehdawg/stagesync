@@ -16,9 +16,9 @@ describe('TidalSearchPanel', () => {
 
     vi.stubGlobal('fetch', fetchMock)
 
-    render(<TidalSearchPanel sourceMode="uploaded" />)
+    render(<TidalSearchPanel sourceMode="uploaded" bandId="band-1" showId="show-1" />)
 
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith('/api/songs/search?query='))
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith('/api/songs/search?bandId=band-1&showId=show-1&query='))
     expect(screen.getByText('Fleetwood Mac')).toBeInTheDocument()
     expect(screen.getByText('Yeah Yeah Yeahs')).toBeInTheDocument()
     expect(screen.getByText('Dreams')).toBeInTheDocument()
@@ -33,11 +33,11 @@ describe('TidalSearchPanel', () => {
 
     vi.stubGlobal('fetch', fetchMock)
 
-    render(<TidalSearchPanel sourceMode="tidal_playlist" playlistUrl="https://tidal.com/browse/playlist/abc123" />)
+    render(<TidalSearchPanel sourceMode="tidal_playlist" playlistUrl="https://tidal.com/browse/playlist/abc123" bandId="band-1" showId="show-1" />)
 
     fireEvent.change(screen.getByLabelText(/search song library/i), { target: { value: 'Dreams' } })
 
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith('/api/songs/search?query=Dreams'))
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith('/api/songs/search?bandId=band-1&showId=show-1&query=Dreams'))
     expect(screen.getByText(/loaded 1 song/i)).toBeInTheDocument()
     expect(screen.getByText('Fleetwood Mac')).toBeInTheDocument()
     expect(screen.getByText(/playlist:/i)).toBeInTheDocument()

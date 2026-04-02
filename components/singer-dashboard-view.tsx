@@ -18,6 +18,9 @@ type DashboardState = {
   signupStatusMessage: string
   songSourceMode?: 'uploaded' | 'tidal_playlist'
   tidalPlaylistUrl?: string | null
+  singerName?: string | null
+  bandId?: string | null
+  showId?: string | null
 }
 
 function Panel({
@@ -109,10 +112,17 @@ export function SingerDashboardView(state: DashboardState) {
           <div className="grid gap-8">
             <Panel title="Singer Sign-up" eyebrow="StageSync">
               <div className="grid gap-6 lg:grid-cols-[1fr_0.9fr]">
-                <SingerRegistrationForm
-                  disabled={!state.signupEnabled}
-                  statusMessage={state.signupStatusMessage}
-                />
+                {state.singerName ? (
+                  <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+                    <h3 className="text-lg font-semibold text-white">Singer details</h3>
+                    <p className="mt-3 text-2xl font-semibold text-white">{state.singerName}</p>
+                  </div>
+                ) : (
+                  <SingerRegistrationForm
+                    disabled={!state.signupEnabled}
+                    statusMessage={state.signupStatusMessage}
+                  />
+                )}
 
                 <div className="space-y-4">
                   <TidalSearchPanel
@@ -120,6 +130,8 @@ export function SingerDashboardView(state: DashboardState) {
                     statusMessage={state.signupStatusMessage}
                     sourceMode={songSourceMode}
                     playlistUrl={state.tidalPlaylistUrl ?? null}
+                    bandId={state.bandId ?? ''}
+                    showId={state.showId ?? ''}
                   />
                 </div>
               </div>
