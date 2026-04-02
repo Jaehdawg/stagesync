@@ -168,7 +168,7 @@ export default async function BandPage() {
     const state = await getBandTestState(serviceSupabase)
     const currentBandLogin = await getTestLogin(serviceSupabase, testSession.username)
     const isBandAdmin = currentBandLogin?.band_access_level !== 'member'
-    const singerSignupUrl = buildSingerSignupUrl(appUrl, slugifyBandName(state.brand.title), state.currentShowId)
+    const singerSignupUrl = buildSingerSignupUrl(appUrl, slugifyBandName(state.brand.title))
 
     return (
       <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100 sm:px-6 lg:px-8">
@@ -259,7 +259,7 @@ export default async function BandPage() {
   }
 
   const state = await getBandState(serviceSupabase, testSession?.activeBandId ?? liveBandId)
-  const singerSignupUrl = buildSingerSignupUrl(appUrl, slugifyBandName(state.brand.title), state.currentShowId)
+  const singerSignupUrl = buildSingerSignupUrl(appUrl, slugifyBandName(state.brand.title))
 
   return (
     <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100 sm:px-6 lg:px-8">

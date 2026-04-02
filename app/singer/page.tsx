@@ -22,7 +22,7 @@ export default async function SingerPage({
   } = await supabase.auth.getUser()
   const params = await searchParams
   const bandSlug = firstParam(params?.band)?.trim().toLowerCase() ?? ''
-  const showId = firstParam(params?.show)?.trim() ?? ''
+  const requestedShowId = firstParam(params?.show)?.trim() ?? ''
 
   if (!bandSlug) {
     redirect('/')
@@ -40,6 +40,17 @@ export default async function SingerPage({
       </main>
     )
   }
+
+  const activeShowResult = requestedShowId
+    ? null
+    : await supabase
+        .from('events')
+        .select('id, band_id, name, is_active, allow_signups')
+        .eq('band_id', band.id)
+        .eq('is_active', true)
+        .maybeSingle()
+
+  const showId = requestedShowId || activeShowResult?.data?.id || ''
 
   if (!showId) {
     const bandProfile = await getBandProfileForBandId(supabase, band.id)
