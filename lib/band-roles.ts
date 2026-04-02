@@ -60,6 +60,21 @@ export async function listBandRolesWithProfilesForBandId(supabase: SupabaseClien
   }))
 }
 
+export async function listBandRolesForProfileId(supabase: SupabaseClient<any>, profileId: string) {
+  const { data, error } = await supabase
+    .from('band_roles')
+    .select('id, band_id, profile_id, band_role, active, created_at, updated_at')
+    .eq('profile_id', profileId)
+    .order('band_role', { ascending: true })
+    .order('created_at', { ascending: true })
+
+  if (error) {
+    throw new Error(error.message)
+  }
+
+  return (data ?? []) as BandRole[]
+}
+
 export async function upsertBandRole(
   supabase: SupabaseClient<any>,
   bandId: string,
