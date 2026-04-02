@@ -8,13 +8,13 @@ type SongLyricsPanelProps = {
 }
 
 export function SongLyricsPanel({ artist, title }: SongLyricsPanelProps) {
-  const [lyrics, setLyrics] = useState<string>('')
+  const safeArtist = (artist ?? '').trim()
+  const safeTitle = (title ?? '').trim()
+  const [lyrics, setLyrics] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    const safeArtist = artist?.trim()
-    const safeTitle = title?.trim()
     if (!safeArtist || !safeTitle) {
       setLyrics('')
       setError(null)
@@ -29,18 +29,17 @@ export function SongLyricsPanel({ artist, title }: SongLyricsPanelProps) {
       setLoading(true)
       setError(null)
       try {
-        const response = await fetch(`/api/lyrics?artist=${encodeURIComponent(safeArtist)}&title=${encodeURIComponent(safeTitle)}`, {
-          signal: controller.signal,
-        })
+        const url = `/api/lyrics?artist=${encodeURIComponent(safeArtist)}&title=${encodeURIComponent(safeTitle)}`
+        const response = await fetch(url, { signal: controller.signal })
         const data = (await response.json().catch(() => ({}))) as { lyrics?: string; message?: string }
         if (cancelled) return
         if (!response.ok) {
           throw new Error(data.message ?? 'Unable to load lyrics.')
         }
         setLyrics(data.lyrics ?? '')
-      } catch (error) {
+      } catch (fetchError) {
         if (cancelled) return
-        setError(error instanceof Error ? error.message : 'Unable to load lyrics.')
+        setError(fetchError instanceof Error ? fetchError.message : 'Unable to load lyrics.')
       } finally {
         if (!cancelled) setLoading(false)
       }
@@ -52,12 +51,12 @@ export function SongLyricsPanel({ artist, title }: SongLyricsPanelProps) {
       cancelled = true
       controller.abort()
     }
-  }, [artist, title])
+  }, [safeArtist, safeTitle])
 
   return (
     <section className="rounded-2xl border border-white/10 bg-white/5 p-5">
       <h3 className="text-lg font-semibold text-white">Lyrics</h3>
-      {!artist || !title ? (
+      {!safeArtist || !safeTitle ? (
         <p className="mt-3 text-sm text-slate-400">Pick a song to see lyrics.</p>
       ) : loading ? (
         <p className="mt-3 text-sm text-slate-400">Loading lyrics…</p>
