@@ -46,7 +46,7 @@ const createServiceClientMock = vi.fn(() => {
 
   return {
     from: vi.fn((table: string) => {
-      if (table === 'test_shows') {
+      if (table === 'events') {
         return {
           select: () => ({
             eq: () => ({

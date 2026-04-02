@@ -90,11 +90,11 @@ const createClientMock = vi.fn(() => ({
         return {
           select: vi.fn(() => makeQuery(bandProfileRow, bandProfileRow, { eq: bandProfileEqMock })),
         }
-      case 'test_shows':
+      case 'events':
         return {
           select: vi.fn(() => makeQuery(showRow, showRow, { eq: showEqMock })),
         }
-      case 'test_show_settings':
+      case 'show_settings':
         return {
           select: vi.fn(() => makeQuery(settingsRow, settingsRow, { eq: settingsEqMock })),
         }

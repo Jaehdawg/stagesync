@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
 
   const serviceSupabase = createServiceClient()
   const { data: currentShow, error: showError } = await serviceSupabase
-    .from('test_shows')
+    .from('events')
     .select('id, band_id, is_active, allow_signups')
     .eq('id', showId)
     .eq('band_id', bandId)
