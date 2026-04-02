@@ -2,6 +2,13 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { vi } from 'vitest'
 import { SingerRegistrationForm } from './singer-registration-form'
 
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: vi.fn(),
+    refresh: vi.fn(),
+  }),
+}))
+
 describe('SingerRegistrationForm', () => {
   it('creates a singer account and signs the user in', async () => {
     const fetchMock = vi.fn().mockResolvedValue({

@@ -75,3 +75,23 @@ Deleting a band should:
 4. Move band profile editing into manage bands
 5. Add search + pagination to bands/users pages
 6. Add safe delete cascade behavior
+
+## Status
+
+### Completed
+- Singer flow work and queue auth / FK alignment have already been addressed.
+- Band admin/user management work has already been worked on.
+- Test coverage around singer/queue/search has already been added.
+- Prod wipe is done and the live admin account exists.
+
+### Remaining
+- Create the requested workboard cards through the Maton-backed gateway only:
+  - live band roles
+  - live admin band CRUD
+  - live user management
+  - band/profile backfills
+  - prod wipe + live admin creation
+- Keep the StageSync workboard context current as work progresses.
+
+### Blocker
+- Maton auth is not available in the active runtime right now (`MATON_API_KEY` is missing), so card creation is blocked until the gateway auth is available.

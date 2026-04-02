@@ -16,7 +16,7 @@ describe('test-login helpers', () => {
 
   it('signs and verifies sessions', () => {
     const cookie = signTestSession({ role: 'band', username: 'neon-echo-band' })
-    expect(verifyTestSession(cookie)).toEqual({ role: 'band', username: 'neon-echo-band' })
+    expect(verifyTestSession(cookie)).toEqual({ role: 'band', username: 'neon-echo-band', activeBandId: null })
   })
 
   it('returns the cookie name', () => {
