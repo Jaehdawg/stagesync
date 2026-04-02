@@ -1,4 +1,5 @@
 import { createClient } from '@/utils/supabase/server'
+import { createServiceClient } from '@/utils/supabase/service'
 import { buildDashboardState } from '@/lib/dashboard'
 import { canSingerSignUp, getShowState, getSignupCapacity } from '@/lib/show-state'
 import { BandAccessForm } from '@/components/band-access-form'
@@ -156,6 +157,7 @@ async function getBandTestState(supabase: Awaited<ReturnType<typeof createClient
 export default async function BandPage() {
   const testSession = await getTestSession()
   const supabase = await createClient()
+  const serviceSupabase = createServiceClient()
   const requestHeaders = await headers()
   const forwardedProto = requestHeaders.get('x-forwarded-proto') ?? 'https'
   const forwardedHost = requestHeaders.get('x-forwarded-host') ?? requestHeaders.get('host')
@@ -163,8 +165,8 @@ export default async function BandPage() {
   const appUrl = siteUrl ?? process.env.NEXT_PUBLIC_SITE_URL?.trim() ?? 'https://stagesync-six.vercel.app'
 
   if (testSession?.role === 'band') {
-    const state = await getBandTestState(supabase)
-    const currentBandLogin = await getTestLogin(supabase, testSession.username)
+    const state = await getBandTestState(serviceSupabase)
+    const currentBandLogin = await getTestLogin(serviceSupabase, testSession.username)
     const isBandAdmin = currentBandLogin?.band_access_level !== 'member'
     const singerSignupUrl = buildSingerSignupUrl(appUrl, slugifyBandName(state.brand.title), state.currentShowId)
 
@@ -225,12 +227,12 @@ export default async function BandPage() {
   }
 
   const { data: profile } = user
-    ? await supabase.from('profiles').select('role, active_band_id').eq('id', user.id).maybeSingle()
+    ? await serviceSupabase.from('profiles').select('role, active_band_id').eq('id', user.id).maybeSingle()
     : { data: { role: 'band', active_band_id: null } }
 
   const userRole = user ? profile?.role : 'band'
   const liveBandId = user && userRole === 'band'
-    ? profile?.active_band_id ?? (await listBandRolesForProfileId(supabase, user.id)).find((role) => role.active)?.band_id ?? null
+    ? profile?.active_band_id ?? (await listBandRolesForProfileId(serviceSupabase, user.id)).find((role) => role.active)?.band_id ?? null
     : null
 
   if (userRole !== 'band') {
@@ -256,7 +258,7 @@ export default async function BandPage() {
     )
   }
 
-  const state = await getBandState(supabase, testSession?.activeBandId ?? liveBandId)
+  const state = await getBandState(serviceSupabase, testSession?.activeBandId ?? liveBandId)
   const singerSignupUrl = buildSingerSignupUrl(appUrl, slugifyBandName(state.brand.title), state.currentShowId)
 
   return (
