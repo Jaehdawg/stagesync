@@ -107,8 +107,8 @@ export function BandDashboardView({
         <div className="grid gap-8">
           {canManageShow ? (
           <Panel title="Show controls" eyebrow="Operations">
-            {!currentShowId && testMode ? (
-              <form className="space-y-4" action="/api/testing/show" method="post">
+            {!currentShowId ? (
+              <form className="space-y-4" action={testMode ? '/api/testing/show' : '/api/shows'} method="post">
                 <input type="hidden" name="action" value="create" />
                 <div className="space-y-2">
                   <label htmlFor="show-name" className="text-sm font-medium text-slate-200">
@@ -138,7 +138,7 @@ export function BandDashboardView({
                   type="submit"
                   className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-medium text-white"
                 >
-                  Create show
+                  Start show
                 </button>
               </form>
             ) : (
@@ -282,80 +282,6 @@ export function BandDashboardView({
 
         {canManageShow ? (
         <div className="grid gap-8">
-          <Panel title="Band profile" eyebrow="Public info">
-            <div className="grid grid-cols-2 gap-2 text-sm">
-              {bandLinks.map((link) => (
-                <a
-                  key={link.label}
-                  href={link.href}
-                  className="rounded-xl border border-white/10 bg-slate-900/70 px-3 py-2 text-center text-slate-200 transition hover:border-cyan-400/50 hover:text-white"
-                >
-                  {link.label}
-                </a>
-              ))}
-            </div>
-
-            {testMode ? (
-              <form className="mt-6 space-y-4 rounded-2xl border border-white/10 bg-white/5 p-4" action="/api/testing/band-profile" method="post">
-                <h3 className="text-lg font-semibold text-white">Edit band profile</h3>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-2 sm:col-span-2">
-                    <label htmlFor="band-name" className="text-sm font-medium text-slate-200">
-                      Band name
-                    </label>
-                    <input
-                      id="band-name"
-                      name="bandName"
-                      type="text"
-                      defaultValue={brand.title}
-                      className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none"
-                    />
-                  </div>
-                  {[
-                    ['websiteUrl', 'Website', bandLinks.find((link) => link.label === 'Website')?.href],
-                    ['facebookUrl', 'Facebook', bandLinks.find((link) => link.label === 'Facebook')?.href],
-                    ['instagramUrl', 'Instagram', bandLinks.find((link) => link.label === 'Instagram')?.href],
-                    ['tiktokUrl', 'TikTok', bandLinks.find((link) => link.label === 'TikTok')?.href],
-                    ['paypalUrl', 'PayPal', paymentLinks.find((link) => link.label === 'PayPal')?.href],
-                    ['venmoUrl', 'Venmo', paymentLinks.find((link) => link.label === 'Venmo')?.href],
-                    ['cashappUrl', 'CashApp', paymentLinks.find((link) => link.label === 'CashApp')?.href],
-                  ].map(([name, label, defaultValue]) => (
-                    <div key={name} className="space-y-2">
-                      <label htmlFor={name} className="text-sm font-medium text-slate-200">
-                        {label}
-                      </label>
-                      <input
-                        id={name}
-                        name={name}
-                        type="url"
-                        defaultValue={defaultValue}
-                        className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none"
-                      />
-                    </div>
-                  ))}
-                  <div className="space-y-2 sm:col-span-2">
-                    <label htmlFor="custom-message" className="text-sm font-medium text-slate-200">
-                      Custom message
-                    </label>
-                    <textarea
-                      id="custom-message"
-                      name="customMessage"
-                      defaultValue={customMessage}
-                      rows={3}
-                      className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none"
-                    />
-                  </div>
-                </div>
-                <button
-                  type="submit"
-                  className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-medium text-white"
-                >
-                  Save band profile
-                </button>
-              </form>
-            ) : null}
-          </Panel>
-
           <Panel title="Singer signup link" eyebrow="Shareable public flow">
             {singerSignupUrl ? (
               <div className="space-y-4">
@@ -384,16 +310,6 @@ export function BandDashboardView({
             )}
           </Panel>
 
-          <Panel title="Payment links" eyebrow="Tips">
-            <ul className="space-y-2 text-slate-300">
-              {paymentLinks.map((link) => (
-                <li key={link.label}>
-                  {link.label} — {link.href}
-                </li>
-              ))}
-            </ul>
-            <p className="mt-3 text-sm text-slate-400">{customMessage}</p>
-          </Panel>
         </div>
         ) : null}
       </div>
