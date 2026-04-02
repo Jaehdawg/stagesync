@@ -9,6 +9,7 @@ import { getLatestTestShow, getLatestTestShowSettings } from '@/lib/test-show'
 import { getTestBandProfileByBandId } from '@/lib/test-band-profile'
 import { getTestLogin } from '@/lib/test-login-list'
 import { getBandProfileForBandId } from '@/lib/band-tenancy'
+import { getLiveBandAccessContext } from '@/lib/band-access'
 import { listBandRolesForProfileId } from '@/lib/band-roles'
 import { headers } from 'next/headers'
 import { buildSingerSignupUrl, slugifyBandName } from '@/lib/public-links'
@@ -164,6 +165,54 @@ export default async function BandPage() {
   const siteUrl = requestHeaders.get('origin') ?? (forwardedHost ? `${forwardedProto}://${forwardedHost}` : undefined)
   const appUrl = siteUrl ?? process.env.NEXT_PUBLIC_SITE_URL?.trim() ?? 'https://stagesync-six.vercel.app'
 
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (user) {
+    const { data: profile } = await serviceSupabase.from('profiles').select('role, active_band_id').eq('id', user.id).maybeSingle()
+    const userRole = profile?.role ?? 'band'
+    const liveBandId = userRole === 'band'
+      ? profile?.active_band_id ?? (await listBandRolesForProfileId(serviceSupabase, user.id)).find((role) => role.active)?.band_id ?? null
+      : null
+
+    if (userRole === 'band' && liveBandId) {
+      const liveAccess = await getLiveBandAccessContext(serviceSupabase, { requireAdmin: false })
+      if (liveAccess) {
+        const state = await getBandState(serviceSupabase, liveBandId)
+        const singerSignupUrl = buildSingerSignupUrl(appUrl, slugifyBandName(state.brand.title))
+
+        return (
+          <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100 sm:px-6 lg:px-8">
+            <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
+              <header className="rounded-3xl border border-white/10 bg-white/5 p-6">
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">Band control</p>
+                <h1 className="mt-2 text-4xl font-semibold text-white">StageSync Band Dashboard</h1>
+                <p className="mt-3 max-w-2xl text-slate-300">
+                  Logged in as <span className="font-semibold">{liveAccess.username}</span>.
+                </p>
+                {liveAccess.bandRole === 'admin' ? (
+                  <div className="mt-4 flex flex-wrap gap-3">
+                    <a href="/band/account" className="rounded-full border border-white/10 px-4 py-2 text-sm font-medium text-white hover:border-cyan-400/50">Account</a>
+                    <a href="/band/members" className="rounded-full border border-white/10 px-4 py-2 text-sm font-medium text-white hover:border-cyan-400/50">Members</a>
+                    <a href="/band/songs" className="rounded-full border border-white/10 px-4 py-2 text-sm font-medium text-white hover:border-cyan-400/50">Song library</a>
+                  </div>
+                ) : null}
+                <form className="mt-4" action="/api/auth/logout" method="post">
+                  <button type="submit" className="rounded-full border border-white/10 px-4 py-2 text-sm font-medium text-white hover:border-cyan-400/50">
+                    Log out
+                  </button>
+                </form>
+              </header>
+
+              <BandDashboardView {...state} bandAccessLevel={liveAccess.bandRole} singerSignupUrl={singerSignupUrl} />
+            </div>
+          </main>
+        )
+      }
+    }
+  }
+
   if (testSession?.role === 'band') {
     const state = await getBandTestState(serviceSupabase)
     const currentBandLogin = await getTestLogin(serviceSupabase, testSession.username)
@@ -199,9 +248,6 @@ export default async function BandPage() {
     )
   }
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
 
   if (!user) {
     return (
