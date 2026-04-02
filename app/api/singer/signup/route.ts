@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { createServiceClient } from '@/utils/supabase/service'
+import { createOrReuseAuthUser } from '@/lib/auth-admin'
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const PASSWORD_REGEX = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/
@@ -56,10 +57,9 @@ export async function POST(request: NextRequest) {
   const usernameBase = slugifyUsername(email.split('@')[0] || `${firstName}-${lastName}`)
   const username = await findAvailableUsername(usernameBase, supabase)
 
-  const { data: createdUser, error: createError } = await supabase.auth.admin.createUser({
+  const { user: createdUser } = await createOrReuseAuthUser(supabase, {
     email,
     password,
-    email_confirm: true,
     user_metadata: {
       first_name: firstName,
       last_name: lastName,
@@ -67,13 +67,9 @@ export async function POST(request: NextRequest) {
     },
   })
 
-  if (createError || !createdUser.user) {
-    return NextResponse.json({ message: createError?.message ?? 'Unable to create singer account.' }, { status: 500 })
-  }
-
   const { error: profileError } = await supabase.from('profiles').upsert(
     {
-      id: createdUser.user.id,
+      id: createdUser.id,
       username,
       display_name: displayName,
       role: 'singer',

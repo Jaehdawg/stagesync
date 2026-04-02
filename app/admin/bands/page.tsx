@@ -321,28 +321,6 @@ export default async function AdminBandsPage({
           </div>
         </section>
 
-        <section className="rounded-3xl border border-white/10 bg-white/5 p-6">
-          <h2 className="text-2xl font-semibold text-white">Create band</h2>
-          <form className="mt-6 grid gap-4 rounded-2xl border border-white/10 bg-slate-950/50 p-5 md:grid-cols-4" action="/api/testing/logins" method="post">
-            <input type="hidden" name="action" value="upsert" />
-            <input type="hidden" name="role" value="band" />
-            <div className="space-y-2">
-              <label htmlFor="create-band-username" className="text-sm font-medium text-slate-200">Username</label>
-              <input id="create-band-username" name="username" type="text" className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
-            </div>
-            <div className="space-y-2">
-              <label htmlFor="create-band-password" className="text-sm font-medium text-slate-200">Password</label>
-              <input id="create-band-password" name="password" type="password" className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
-            </div>
-            <div className="space-y-2">
-              <label htmlFor="create-band-name" className="text-sm font-medium text-slate-200">Band name</label>
-              <input id="create-band-name" name="bandName" type="text" placeholder="Neon Echo" className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
-            </div>
-            <div className="flex items-end">
-              <button type="submit" className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-medium text-white">Create band</button>
-            </div>
-          </form>
-        </section>
 
         <section className="grid gap-4 md:grid-cols-2">
           {bandLogins.map((login) => (
