@@ -82,5 +82,12 @@ export async function POST(request: NextRequest, context: RouteContext) {
     return NextResponse.redirect(new URL(`/band?error=${encodeURIComponent(error.message)}`, request.url))
   }
 
+  if (action === 'end') {
+    const { error: queueError } = await supabase.from('queue_items').delete().eq('event_id', id)
+    if (queueError) {
+      return NextResponse.redirect(new URL(`/band?error=${encodeURIComponent(queueError.message)}`, request.url))
+    }
+  }
+
   return NextResponse.redirect(referer)
 }

@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { buildQrCodeImageUrl } from '../lib/public-links'
+import { QueueActionButtons } from './queue-action-buttons'
 
 export type BandDashboardState = {
   brand: {
@@ -274,28 +275,10 @@ export function BandDashboardView({
                       </span>
                     </div>
                     <div className="mt-4 flex flex-wrap gap-2 text-xs font-medium text-slate-200">
-                      {['played', 'remove', 'up', 'down'].map((action) => (
-                        <form
-                          key={action}
-                          action={`/api/queue/${item.id ?? ''}/state`}
-                          method="post"
-                        >
-                          <input type="hidden" name="action" value={action} />
-                          <button
-                            type="submit"
-                            disabled={!item.id}
-                            className="rounded-full border border-white/10 px-3 py-1 disabled:cursor-not-allowed disabled:opacity-50"
-                          >
-                            {action === 'played'
-                              ? 'Played'
-                              : action === 'remove'
-                                ? 'Remove'
-                                : action === 'up'
-                                  ? 'Move up'
-                                  : 'Move down'}
-                          </button>
-                        </form>
-                      ))}
+                      <QueueActionButtons queueItemId={item.id} action="played" label="Played" />
+                      <QueueActionButtons queueItemId={item.id} action="remove" label="Remove" />
+                      <QueueActionButtons queueItemId={item.id} action="up" label="Move up" />
+                      <QueueActionButtons queueItemId={item.id} action="down" label="Move down" />
                     </div>
                   </div>
                 ))}

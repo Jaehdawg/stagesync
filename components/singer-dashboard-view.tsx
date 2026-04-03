@@ -3,6 +3,7 @@ import { SingerRegistrationForm } from './singer-registration-form'
 import { TidalSearchPanel } from './tidal-search-panel'
 import { SingerCurrentRequestCard } from './singer-current-request-card'
 import { SongLyricsPanel } from './song-lyrics-panel'
+import { AutoRefresh } from './auto-refresh'
 
 type QueueEntry = {
   id: string
@@ -233,6 +234,7 @@ export function SingerDashboardView(state: DashboardState) {
       </div>
 
       <SongLyricsPanel artist={currentTrack?.artist ?? null} title={currentTrack?.title ?? null} openByDefault={Boolean(currentTrack)} />
+      <AutoRefresh enabled intervalMs={5000} />
     </main>
   )
 }

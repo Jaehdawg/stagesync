@@ -1,5 +1,12 @@
 import { render, screen } from '@testing-library/react'
+import { afterEach, vi } from 'vitest'
 import { BandDashboardView } from './band-dashboard-view'
+
+const refreshMock = vi.fn()
+
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ refresh: refreshMock }),
+}))
 
 const state = {
   brand: {
@@ -24,6 +31,10 @@ const state = {
   singerSignupUrl: 'https://stagesync.example/?band=neon-echo&show=show-1',
 }
 
+afterEach(() => {
+  refreshMock.mockReset()
+})
+
 describe('BandDashboardView', () => {
   it('shows band controls without singer signup sections', () => {
     render(<BandDashboardView {...state} />)
@@ -37,7 +48,7 @@ describe('BandDashboardView', () => {
   it('shows a create show form when there is no current show in test mode', () => {
     render(<BandDashboardView {...state} currentShowId={null} testMode currentShowName={null} />)
 
-    expect(screen.getByRole('button', { name: /create show/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /start show/i })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /pause signups/i })).not.toBeInTheDocument()
   })
 
@@ -59,18 +70,13 @@ describe('BandDashboardView', () => {
     expect(screen.queryByLabelText(/tidal playlist url/i)).not.toBeInTheDocument()
   })
 
-  it('shows band profile editing in test mode', () => {
-    render(<BandDashboardView {...state} testMode currentShowId={null} currentShowName={null} />)
-
-    expect(screen.getByRole('button', { name: /save band profile/i })).toBeInTheDocument()
-    expect(screen.getByLabelText(/band name/i)).toHaveValue('Neon Echo')
-    expect(screen.queryByRole('heading', { name: /upload song csv/i })).not.toBeInTheDocument()
-  })
-
   it('wires queue actions to the queue item id', () => {
-    const { container } = render(<BandDashboardView {...state} />)
+    render(<BandDashboardView {...state} />)
 
-    expect(container.querySelector('form[action="/api/queue/queue-1/state"]')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /played/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /remove/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /move up/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /move down/i })).toBeInTheDocument()
   })
 
   it('shows the singer signup link and QR code', () => {

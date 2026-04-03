@@ -64,6 +64,9 @@ export async function POST(request: NextRequest) {
       })
     } else if (action === 'start' || action === 'pause' || action === 'resume' || action === 'end') {
       await updateTestShowState(supabase, { event_id: eventId, action })
+      if (action === 'end') {
+        await supabase.from('queue_items').delete().eq('event_id', eventId)
+      }
     } else {
       return NextResponse.json({ message: 'Unknown action.' }, { status: 400 })
     }

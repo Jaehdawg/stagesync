@@ -60,6 +60,8 @@ describe('TidalSearchPanel', () => {
 
     await screen.findByText('My Song')
     fireEvent.click(screen.getByRole('button', { name: /queue song/i }))
+    await screen.findByRole('heading', { name: /are you ready rock/i })
+    fireEvent.click(screen.getByRole('button', { name: '👍' }))
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledWith('/api/queue', expect.any(Object)))
     expect(screen.getByText(/song request added/i)).toBeInTheDocument()

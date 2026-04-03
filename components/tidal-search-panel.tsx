@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 type TidalTrack = {
   id: string
@@ -19,6 +20,7 @@ type TidalSearchPanelProps = {
 }
 
 export function TidalSearchPanel({ disabled = false, statusMessage, sourceMode = 'uploaded', playlistUrl = null, bandId, showId }: TidalSearchPanelProps) {
+  const router = useRouter()
   const [query, setQuery] = useState('')
   const [tracks, setTracks] = useState<TidalTrack[]>([])
   const [loading, setLoading] = useState(false)
@@ -51,7 +53,7 @@ export function TidalSearchPanel({ disabled = false, statusMessage, sourceMode =
       }
 
       setMessage(payload.message ?? `Queued ${track.title}.`)
-      window.location.reload()
+      router.refresh()
     } catch (fetchError) {
       setError(fetchError instanceof Error ? fetchError.message : 'Unable to add song request.')
     } finally {
