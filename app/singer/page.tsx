@@ -6,6 +6,7 @@ import { slugifyBandName } from '../../lib/public-links'
 import { getBandProfileForBandId } from '../../lib/band-tenancy'
 import { getShowState, getSignupCapacity } from '../../lib/show-state'
 import { singerCopy } from '@/content/en/singer'
+import { sharedCopy } from '@/content/en/shared'
 
 type SearchParams = Record<string, string | string[] | undefined>
 
@@ -128,7 +129,7 @@ export default async function SingerPage({
   const singerNamesById = new Map(
     (profilesResult.data ?? []).map((profile) => [
       profile.id,
-      profile.display_name || [profile.first_name, profile.last_name].filter(Boolean).join(' ') || 'Guest singer',
+      profile.display_name || [profile.first_name, profile.last_name].filter(Boolean).join(' ') || sharedCopy.guestSinger,
     ])
   )
 
@@ -146,10 +147,10 @@ export default async function SingerPage({
     return {
       id: item.id,
       position: item.position ?? 0,
-      artist: song?.artist ?? 'Unknown artist',
-      title: song?.title ?? 'Unknown song',
+      artist: song?.artist ?? sharedCopy.unknownArtist,
+      title: song?.title ?? sharedCopy.unknownSong,
       singerName,
-      status: item.status ?? 'queued',
+      status: item.status ?? sharedCopy.queuedStatus,
       createdAt: item.created_at ?? null,
       performerId: item.performer_id,
     }

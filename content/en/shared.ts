@@ -9,4 +9,10 @@ export const sharedCopy = {
   search: 'Search',
   loading: 'Loading…',
   errorGeneric: 'Something went wrong.',
+  loggedInAs: 'Logged in as',
+  guestSinger: 'Guest singer',
+  unknownArtist: 'Unknown artist',
+  unknownSong: 'Unknown song',
+  queuedStatus: 'queued',
+  noActiveBandSelected: 'No active band selected.',
 } as const

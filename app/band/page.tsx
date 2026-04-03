@@ -16,6 +16,7 @@ import { headers } from 'next/headers'
 import { buildSingerSignupUrl, slugifyBandName } from '@/lib/public-links'
 import { authCopy } from '@/content/en/auth'
 import { bandCopy } from '@/content/en/band'
+import { sharedCopy } from '@/content/en/shared'
 
 async function getBandState(
   supabase: Awaited<ReturnType<typeof createClient>>,
@@ -101,7 +102,7 @@ async function getBandState(
       name:
         performer?.display_name ||
         [performer?.first_name, performer?.last_name].filter(Boolean).join(' ') ||
-        'Guest singer',
+        sharedCopy.guestSinger,
       song: song ? `${song.title} - ${song.artist}` : 'Requested song',
     }
   })
@@ -194,7 +195,7 @@ export default async function BandPage() {
                 <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">{bandCopy.dashboard.eyebrow}</p>
                 <h1 className="mt-2 text-4xl font-semibold text-white">{bandCopy.dashboard.title}</h1>
                 <p className="mt-3 max-w-2xl text-slate-300">
-                  Logged in as <span className="font-semibold">{liveAccess.username}</span>.
+                  {sharedCopy.loggedInAs} <span className="font-semibold">{liveAccess.username}</span>.
                 </p>
                 {liveAccess.bandRole === 'admin' ? (
                   <div className="mt-4 flex flex-wrap gap-3">
@@ -232,7 +233,7 @@ export default async function BandPage() {
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">{bandCopy.dashboard.eyebrow}</p>
             <h1 className="mt-2 text-4xl font-semibold text-white">{bandCopy.dashboard.title}</h1>
             <p className="mt-3 max-w-2xl text-slate-300">
-              Logged in as <span className="font-semibold">{testSession.username}</span>.
+              {sharedCopy.loggedInAs} <span className="font-semibold">{testSession.username}</span>.
             </p>
             {isBandAdmin ? (
               <div className="mt-4 flex flex-wrap gap-3">
@@ -306,6 +307,16 @@ export default async function BandPage() {
             submitLabel={authCopy.bandLogin.submitLabel}
             successMessage={authCopy.bandLogin.successMessage}
           />
+        </div>
+      </main>
+    )
+  }
+
+  if (!liveBandId && !testSession?.activeBandId) {
+    return (
+      <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-5xl rounded-3xl border border-white/10 bg-white/5 p-6 text-slate-200">
+          {sharedCopy.noActiveBandSelected}
         </div>
       </main>
     )
