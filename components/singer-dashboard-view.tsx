@@ -7,6 +7,7 @@ import { TidalSearchPanel } from './tidal-search-panel'
 import { SingerCurrentRequestCard } from './singer-current-request-card'
 import { SongLyricsPanel } from './song-lyrics-panel'
 import { AutoRefresh } from './auto-refresh'
+import { singerDashboardViewCopy } from '@/content/en/components/singer-dashboard-view'
 
 type QueueEntry = {
   id: string
@@ -86,6 +87,42 @@ function LinkList({ label, links }: { label: string; links: Array<{ href?: strin
   )
 }
 
+function syncSingerDashboardState(
+  state: DashboardState,
+  currentRequest: Track | null,
+  setCurrentRequest: (value: Track | null) => void,
+  setLyricsTrack: (value: Track | null) => void,
+  setLiveQueueItems: (value: QueueEntry[]) => void,
+  setHistoryItems: (value: QueueEntry[]) => void,
+) {
+  if (state.currentRequest) {
+    setCurrentRequest(state.currentRequest)
+    if (state.lyricsTrack) {
+      setLyricsTrack(state.lyricsTrack)
+    }
+  } else if (currentRequest) {
+    const serverHasFinishedRequest = state.historyItems?.some(
+      (item) => item.artist === currentRequest.artist && item.title === currentRequest.title,
+    )
+    if (serverHasFinishedRequest) {
+      setCurrentRequest(null)
+      setLyricsTrack(null)
+    }
+  }
+
+  const serverHasPendingQueue = Boolean(state.liveQueueItems?.length)
+  const shouldSyncLiveQueue =
+    serverHasPendingQueue ||
+    (currentRequest ? state.historyItems?.some((item) => item.artist === currentRequest.artist && item.title === currentRequest.title) : false)
+  if (shouldSyncLiveQueue) {
+    setLiveQueueItems(state.liveQueueItems ?? [])
+  }
+
+  if (state.historyItems?.length) {
+    setHistoryItems(state.historyItems)
+  }
+}
+
 export function SingerDashboardView(state: DashboardState) {
   const [currentRequest, setCurrentRequest] = useState<Track | null>(state.currentRequest ?? null)
   const [authMode, setAuthMode] = useState<'signup' | 'login'>('signup')
@@ -94,31 +131,8 @@ export function SingerDashboardView(state: DashboardState) {
   const [lyricsTrack, setLyricsTrack] = useState<Track | null>(state.lyricsTrack ?? null)
 
   useEffect(() => {
-    if (state.currentRequest) {
-      setCurrentRequest(state.currentRequest)
-      if (state.lyricsTrack) {
-        setLyricsTrack(state.lyricsTrack)
-      }
-    } else if (currentRequest) {
-      const serverHasFinishedRequest = state.historyItems?.some(
-        (item) => item.artist === currentRequest.artist && item.title === currentRequest.title
-      )
-      if (serverHasFinishedRequest) {
-        setCurrentRequest(null)
-        setLyricsTrack(null)
-      }
-    }
-
-    const serverHasPendingQueue = Boolean(state.liveQueueItems?.length)
-    const shouldSyncLiveQueue = serverHasPendingQueue || (currentRequest ? state.historyItems?.some((item) => item.artist === currentRequest.artist && item.title === currentRequest.title) : false)
-    if (shouldSyncLiveQueue) {
-      setLiveQueueItems(state.liveQueueItems ?? [])
-    }
-
-    if (state.historyItems?.length) {
-      setHistoryItems(state.historyItems)
-    }
-  }, [state.currentRequest, state.liveQueueItems, state.historyItems, state.lyricsTrack, currentRequest])
+    syncSingerDashboardState(state, currentRequest, setCurrentRequest, setLyricsTrack, setLiveQueueItems, setHistoryItems)
+  }, [state, currentRequest])
 
   const bandProfile = state.bandProfile ?? {
     bandName: state.brand?.title ?? 'StageSync',
@@ -137,7 +151,7 @@ export function SingerDashboardView(state: DashboardState) {
   return (
     <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100 sm:px-6 lg:px-8">
       <section className="mx-auto mb-6 max-w-7xl rounded-[2rem] border border-white/10 bg-gradient-to-br from-cyan-500/15 via-slate-900 to-fuchsia-500/10 p-8 shadow-2xl shadow-cyan-950/10">
-        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">StageSync Singer Page</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">{singerDashboardViewCopy.title}</p>
         <h1 className="mt-3 text-4xl font-semibold tracking-tight text-white sm:text-5xl">{bandProfile.bandName}</h1>
         <p className="mt-4 max-w-3xl text-lg leading-8 text-slate-300">
           {bandProfile.customMessage ?? 'Pick a song, sing your heart out, and keep the queue moving.'}
@@ -150,7 +164,7 @@ export function SingerDashboardView(state: DashboardState) {
           <section className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-2xl shadow-black/10">
             <div className="space-y-4 text-slate-200">
               <div className="rounded-2xl border border-white/10 bg-slate-950/60 p-4">
-                <p className="text-sm uppercase tracking-[0.25em] text-cyan-300">Band profile</p>
+                <p className="text-sm uppercase tracking-[0.25em] text-cyan-300">{singerDashboardViewCopy.bandProfile}</p>
                 <p className="mt-2 text-xl font-semibold text-white">{bandProfile.bandName}</p>
                 <p className="mt-2 text-sm leading-6 text-slate-300">
                   {bandProfile.customMessage ?? 'Band links and tip links will appear here when the band profile is filled out.'}
@@ -183,13 +197,13 @@ export function SingerDashboardView(state: DashboardState) {
           </section>
 
           <div className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-2xl shadow-black/10">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">Now Playing</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">{singerDashboardViewCopy.nowPlaying}</p>
             <p className="mt-3 text-2xl font-semibold text-white">
-              {currentTrack ? `${currentTrack.artist} — ${currentTrack.title}` : 'Pick a song to load lyrics.'}
+              {currentTrack ? `${currentTrack.artist} — ${currentTrack.title}` : '{singerDashboardViewCopy.pickASong}'}
             </p>
           </div>
 
-          <Panel title="Singer Sign-up">
+          <Panel title={singerDashboardViewCopy.singerSignUp}>
             <div className="space-y-4">
               {!state.singerName ? (
                 <div className="flex flex-wrap gap-3">
@@ -198,21 +212,21 @@ export function SingerDashboardView(state: DashboardState) {
                     onClick={() => setAuthMode('signup')}
                     className={authMode === 'signup' ? 'rounded-full bg-cyan-400 px-4 py-2 text-sm font-semibold text-slate-950' : 'rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white'}
                   >
-                    Sign-up
+                    {singerDashboardViewCopy.signUp}
                   </button>
                   <button
                     type="button"
                     onClick={() => setAuthMode('login')}
                     className={authMode === 'login' ? 'rounded-full bg-cyan-400 px-4 py-2 text-sm font-semibold text-slate-950' : 'rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white'}
                   >
-                    Login
+                    {singerDashboardViewCopy.login}
                   </button>
                 </div>
               ) : null}
 
               {state.singerName ? (
                 <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-                  <h3 className="text-lg font-semibold text-white">Singer details</h3>
+                  <h3 className="text-lg font-semibold text-white">{singerDashboardViewCopy.singerDetails}</h3>
                   <p className="mt-3 text-2xl font-semibold text-white">{state.singerName}</p>
                 </div>
               ) : authMode === 'signup' ? (

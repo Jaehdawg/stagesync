@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { buildQrCodeImageUrl } from '../lib/public-links'
 import { QueueActionButtons } from './queue-action-buttons'
+import { bandDashboardViewCopy } from '@/content/en/components/band-dashboard-view'
 
 export type BandDashboardState = {
   brand: {
@@ -109,13 +110,13 @@ export function BandDashboardView({
       <div className={canManageShow ? 'grid gap-8 xl:grid-cols-[1.15fr_0.85fr]' : 'grid gap-8'}>
         <div className="grid gap-8">
           {canManageShow ? (
-          <Panel title="Show controls" eyebrow="Operations">
+          <Panel title={bandDashboardViewCopy.operations.showControls} eyebrow={bandDashboardViewCopy.operations.operationsEyebrow}>
             {!currentShowId ? (
               <form className="space-y-4" action={testMode ? '/api/testing/show' : '/api/shows'} method="post">
                 <input type="hidden" name="action" value="create" />
                 <div className="space-y-2">
                   <label htmlFor="show-name" className="text-sm font-medium text-slate-200">
-                    Show name
+                    {bandDashboardViewCopy.operations.showNameLabel}
                   </label>
                   <input
                     id="show-name"
@@ -127,7 +128,7 @@ export function BandDashboardView({
                 </div>
                 <div className="space-y-2">
                   <label htmlFor="show-description" className="text-sm font-medium text-slate-200">
-                    Description
+                    {bandDashboardViewCopy.operations.descriptionLabel}
                   </label>
                   <input
                     id="show-description"
@@ -140,8 +141,8 @@ export function BandDashboardView({
                 <button
                   type="submit"
                   className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-medium text-white"
-                >
-                  Start show
+>
+                  {bandDashboardViewCopy.operations.startShow}
                 </button>
               </form>
             ) : (
@@ -173,7 +174,7 @@ export function BandDashboardView({
                   >
                     <input type="hidden" name="action" value="settings" />
                     <input type="hidden" name="eventId" value={currentShowId} />
-                    <h3 className="text-lg font-semibold text-white">Show settings</h3>
+                    <h3 className="text-lg font-semibold text-white">{bandDashboardViewCopy.operations.showSettings}</h3>
                     <div className="grid gap-4 sm:grid-cols-2">
                       <div className="space-y-2 sm:col-span-2">
                         <label htmlFor="show-name" className="text-sm font-medium text-slate-200">
@@ -201,7 +202,7 @@ export function BandDashboardView({
                       </div>
                       <div className="space-y-2">
                         <label htmlFor="show-duration" className="text-sm font-medium text-slate-200">
-                          Show duration (minutes)
+{bandDashboardViewCopy.operations.showDurationLabel}
                         </label>
                         <input
                           id="show-duration"
@@ -214,7 +215,7 @@ export function BandDashboardView({
                       </div>
                       <div className="space-y-2">
                         <label htmlFor="signup-buffer" className="text-sm font-medium text-slate-200">
-                          Buffer between songs (minutes)
+{bandDashboardViewCopy.operations.bufferLabel}
                         </label>
                         <input
                           id="signup-buffer"
@@ -227,7 +228,7 @@ export function BandDashboardView({
                       </div>
                       <div className="space-y-2 sm:col-span-2">
                         <label htmlFor="song-source-mode" className="text-sm font-medium text-slate-200">
-                          Song source
+{bandDashboardViewCopy.operations.songSourceLabel}
                         </label>
                         <select
                           id="song-source-mode"
@@ -235,8 +236,8 @@ export function BandDashboardView({
                           defaultValue={songSourceMode}
                           className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white focus:border-cyan-400 focus:outline-none"
                         >
-                          <option value="uploaded">Uploaded song list</option>
-                          <option value="tidal_playlist">Tidal playlist</option>
+                          <option value="uploaded">{bandDashboardViewCopy.operations.uploadedSongList}</option>
+                          <option value="tidal_playlist">{bandDashboardViewCopy.operations.tidalPlaylist}</option>
                         </select>
                       </div>
                     </div>
@@ -244,13 +245,13 @@ export function BandDashboardView({
                       type="submit"
                       className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-medium text-white"
                     >
-                      Save settings
+                      {bandDashboardViewCopy.operations.saveSettings}
                     </button>
                   </form>
                 ) : null}
                 <div className="mt-4 flex flex-wrap gap-3">
                   <a href="/band/songs" className="rounded-full border border-white/10 px-4 py-2 text-sm font-medium text-white hover:border-cyan-400/50">
-                    Open song library
+                    {bandDashboardViewCopy.operations.openSongLibrary}
                   </a>
                 </div>
                 <p className="mt-4 text-slate-400">{signupStatusMessage}</p>
