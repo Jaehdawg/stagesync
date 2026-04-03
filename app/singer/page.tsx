@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '../../utils/supabase/server'
+import { createServiceClient } from '../../utils/supabase/service'
 import { SingerDashboardView } from '../../components/singer-dashboard-view'
 import { slugifyBandName } from '../../lib/public-links'
 import { getBandProfileForBandId } from '../../lib/band-tenancy'
@@ -17,6 +18,7 @@ export default async function SingerPage({
   searchParams?: Promise<SearchParams>
 }) {
   const supabase = await createClient()
+  const serviceSupabase = createServiceClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()
@@ -28,7 +30,7 @@ export default async function SingerPage({
     redirect('/')
   }
 
-  const { data: bands } = await supabase.from('bands').select('id, band_name')
+  const { data: bands } = await serviceSupabase.from('bands').select('id, band_name')
   const band = (bands ?? []).find((row) => slugifyBandName(row.band_name ?? '') === bandSlug) ?? null
 
   if (!band) {
@@ -43,7 +45,7 @@ export default async function SingerPage({
 
   const activeShowResult = requestedShowId
     ? null
-    : await supabase
+    : await serviceSupabase
         .from('events')
         .select('id, band_id, name, is_active, allow_signups')
         .eq('band_id', band.id)
@@ -53,7 +55,7 @@ export default async function SingerPage({
   const showId = requestedShowId || activeShowResult?.data?.id || ''
 
   if (!showId) {
-    const bandProfile = await getBandProfileForBandId(supabase, band.id)
+    const bandProfile = await getBandProfileForBandId(serviceSupabase, band.id)
     const fallbackBandProfile = bandProfile ?? {
       band_name: band.band_name,
       website_url: null,
@@ -84,19 +86,19 @@ export default async function SingerPage({
   }
 
   const [bandProfile, showResult, settingsResult, queueResult] = await Promise.all([
-    getBandProfileForBandId(supabase, band.id),
-    supabase
+    getBandProfileForBandId(serviceSupabase, band.id),
+    serviceSupabase
       .from('events')
       .select('id, band_id, name, is_active, allow_signups')
       .eq('id', showId)
       .eq('band_id', band.id)
       .maybeSingle(),
-    supabase
+    serviceSupabase
       .from('show_settings')
       .select('show_duration_minutes, signup_buffer_minutes, song_source_mode, tidal_playlist_url')
       .eq('event_id', showId)
       .maybeSingle(),
-    supabase
+    serviceSupabase
       .from('queue_items')
       .select('id, event_id, performer_id, song_id, status, position, created_at')
       .eq('band_id', band.id)
@@ -112,13 +114,13 @@ export default async function SingerPage({
 
   const [songsResult, profilesResult, singerProfile] = await Promise.all([
     songIds.length
-      ? supabase.from('songs').select('id, title, artist').in('id', songIds).eq('band_id', band.id)
+      ? serviceSupabase.from('songs').select('id, title, artist').in('id', songIds).eq('band_id', band.id)
       : Promise.resolve({ data: [] as { id: string; title: string; artist: string }[] }),
     performerIds.length
-      ? supabase.from('profiles').select('id, display_name, first_name, last_name').in('id', performerIds)
+      ? serviceSupabase.from('profiles').select('id, display_name, first_name, last_name').in('id', performerIds)
       : Promise.resolve({ data: [] as { id: string; display_name?: string | null; first_name?: string | null; last_name?: string | null }[] }),
     user
-      ? supabase.from('profiles').select('id, display_name, first_name, last_name, role').eq('id', user.id).maybeSingle()
+      ? serviceSupabase.from('profiles').select('id, display_name, first_name, last_name, role').eq('id', user.id).maybeSingle()
       : Promise.resolve({ data: null as { id: string; display_name?: string | null; first_name?: string | null; last_name?: string | null; role?: string | null } | null }),
   ])
 
@@ -200,7 +202,7 @@ export default async function SingerPage({
       currentRequest={currentSingerRequest ? { artist: currentSingerRequest.artist, title: currentSingerRequest.title } : null}
       liveQueueItems={liveQueueItems}
       historyItems={historyItems}
-      lyricsTrack={currentSingerRequest ? { artist: currentSingerRequest.artist, title: currentSingerRequest.title } : liveQueueItems[0] ? { artist: liveQueueItems[0].artist, title: liveQueueItems[0].title } : null}
+      lyricsTrack={liveQueueItems[0] ? { artist: liveQueueItems[0].artist, title: liveQueueItems[0].title } : currentSingerRequest ? { artist: currentSingerRequest.artist, title: currentSingerRequest.title } : null}
       currentShowName={currentShow?.name ?? 'StageSync Show'}
     />
   )

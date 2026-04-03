@@ -77,11 +77,12 @@ function makeQuery<T>(data: T, maybeSingleData?: unknown, spies?: {
   return chain
 }
 
-const createClientMock = vi.fn(() => ({
-  auth: {
-    getUser: authGetUserMock,
-  },
-  from(table: string) {
+function buildSupabaseClient() {
+  return {
+    auth: {
+      getUser: authGetUserMock,
+    },
+    from(table: string) {
     switch (table) {
       case 'bands':
         return {
@@ -118,11 +119,19 @@ const createClientMock = vi.fn(() => ({
       default:
         throw new Error(`Unexpected table: ${table}`)
     }
-  },
-}))
+    },
+  }
+}
+
+const createClientMock = vi.fn(() => buildSupabaseClient())
+const createServiceClientMock = vi.fn(() => buildSupabaseClient())
 
 vi.mock('../../utils/supabase/server', () => ({
   createClient: createClientMock,
+}))
+
+vi.mock('../../utils/supabase/service', () => ({
+  createServiceClient: createServiceClientMock,
 }))
 
 vi.mock('../../components/singer-dashboard-view', () => ({
@@ -151,6 +160,7 @@ beforeEach(() => {
   profilesInMock.mockReset()
   singerDashboardViewMock.mockReset()
   createClientMock.mockClear()
+  createServiceClientMock.mockClear()
 })
 
 describe('SingerPage', () => {

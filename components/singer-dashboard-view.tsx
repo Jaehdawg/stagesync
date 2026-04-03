@@ -119,7 +119,7 @@ export function SingerDashboardView(state: DashboardState) {
     customMessage: state.customMessage ?? null,
   }
   const songSourceMode = state.songSourceMode === 'tidal_playlist' ? 'tidal_playlist' : 'uploaded'
-  const currentTrack = currentRequest ?? lyricsTrack ?? liveQueueItems[0] ?? null
+  const currentTrack = liveQueueItems[0] ?? currentRequest ?? lyricsTrack ?? null
 
   return (
     <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100 sm:px-6 lg:px-8">
@@ -169,6 +169,13 @@ export function SingerDashboardView(state: DashboardState) {
             </div>
           </section>
 
+          <div className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-2xl shadow-black/10">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">Now Playing</p>
+            <p className="mt-3 text-2xl font-semibold text-white">
+              {currentTrack ? `${currentTrack.artist} — ${currentTrack.title}` : 'Pick a song to load lyrics.'}
+            </p>
+          </div>
+
           <Panel title="Singer Sign-up">
             <div className="space-y-4">
               {state.singerName ? (
@@ -184,18 +191,18 @@ export function SingerDashboardView(state: DashboardState) {
                 <SingerCurrentRequestCard
                   bandId={state.bandId ?? ''}
                   showId={state.showId ?? ''}
-                  artist={currentTrack.artist}
-                  title={currentTrack.title}
+                  artist={currentRequest.artist}
+                  title={currentRequest.title}
                   onCancelled={() => {
                     setCurrentRequest(null)
                     setLyricsTrack(null)
-                    setLiveQueueItems((items) => items.filter((item) => item.artist !== currentTrack.artist || item.title !== currentTrack.title))
+                    setLiveQueueItems((items) => items.filter((item) => item.artist !== currentRequest.artist || item.title !== currentRequest.title))
                     setHistoryItems((items) => [
                       {
                         id: `cancelled-${Date.now()}`,
                         position: 0,
-                        artist: currentTrack.artist,
-                        title: currentTrack.title,
+                        artist: currentRequest.artist,
+                        title: currentRequest.title,
                         singerName: state.singerName ?? null,
                         status: 'cancelled',
                       },
@@ -216,6 +223,7 @@ export function SingerDashboardView(state: DashboardState) {
                     setCurrentRequest(queued)
                     setLyricsTrack(queued)
                     setLiveQueueItems((items) => [
+                      ...items,
                       {
                         id: `queued-${Date.now()}`,
                         position: items.length + 1,
@@ -224,7 +232,6 @@ export function SingerDashboardView(state: DashboardState) {
                         singerName: state.singerName ?? null,
                         status: 'queued',
                       },
-                      ...items,
                     ])
                   }}
                 />
@@ -282,16 +289,10 @@ export function SingerDashboardView(state: DashboardState) {
         </div>
 
         <div className="space-y-6">
-          <div className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-2xl shadow-black/10">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">Now playing</p>
-            <p className="mt-2 text-lg font-semibold text-white">
-              {currentTrack ? `${currentTrack.artist} — ${currentTrack.title}` : 'Pick a song to load lyrics.'}
-            </p>
-          </div>
+          <SongLyricsPanel artist={currentTrack?.artist ?? null} title={currentTrack?.title ?? null} openByDefault={Boolean(currentTrack)} />
         </div>
       </div>
 
-      <SongLyricsPanel artist={currentTrack?.artist ?? null} title={currentTrack?.title ?? null} openByDefault={Boolean(currentTrack)} />
       <AutoRefresh enabled intervalMs={5000} />
     </main>
   )
