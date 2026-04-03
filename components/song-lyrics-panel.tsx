@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { songLyricsPanelCopy } from '@/content/en/components/song-lyrics-panel'
 
 type SongLyricsPanelProps = {
   artist?: string | null
@@ -36,12 +37,12 @@ export function SongLyricsPanel({ artist, title, openByDefault = false }: SongLy
         const data = (await response.json().catch(() => ({}))) as { lyrics?: string; message?: string }
         if (cancelled) return
         if (!response.ok) {
-          throw new Error(data.message ?? 'Unable to load lyrics.')
+          throw new Error(data.message ?? songLyricsPanelCopy.unableToLoad)
         }
         setLyrics(data.lyrics ?? '')
       } catch (fetchError) {
         if (cancelled) return
-        setError(fetchError instanceof Error ? fetchError.message : 'Unable to load lyrics.')
+        setError(fetchError instanceof Error ? fetchError.message : songLyricsPanelCopy.unableToLoad)
       } finally {
         if (!cancelled) setLoading(false)
       }
@@ -73,9 +74,9 @@ export function SongLyricsPanel({ artist, title, openByDefault = false }: SongLy
           <div className="flex w-full max-w-3xl flex-col rounded-3xl border border-white/10 bg-slate-950 p-6 shadow-2xl shadow-black/60">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.28em] text-yellow-300">Lyrics</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.28em] text-yellow-300">{songLyricsPanelCopy.eyebrow}</p>
                 <h3 className="mt-2 text-2xl font-semibold text-white">
-                  {safeTitle ? `${safeTitle} — ${safeArtist}` : 'Pick a song'}
+                  {safeTitle ? `${safeTitle} — ${safeArtist}` : songLyricsPanelCopy.pickASong}
                 </h3>
               </div>
               <button
@@ -89,15 +90,15 @@ export function SongLyricsPanel({ artist, title, openByDefault = false }: SongLy
 
             <div className="mt-6 max-h-[70vh] overflow-y-auto pr-2">
               {!canShowLyrics ? (
-                <p className="text-sm text-slate-400">Pick a song to see lyrics.</p>
+                <p className="text-sm text-slate-400">{songLyricsPanelCopy.prompt}</p>
               ) : loading ? (
-                <p className="text-sm text-slate-400">Loading lyrics…</p>
+                <p className="text-sm text-slate-400">{songLyricsPanelCopy.loading}</p>
               ) : error ? (
                 <p className="text-sm text-rose-300">{error}</p>
               ) : lyrics ? (
                 <pre className="whitespace-pre-wrap text-sm leading-7 text-slate-200">{lyrics}</pre>
               ) : (
-                <p className="text-sm text-slate-400">Lyrics not found.</p>
+                <p className="text-sm text-slate-400">{songLyricsPanelCopy.notFound}</p>
               )}
             </div>
           </div>
