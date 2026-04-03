@@ -39,7 +39,7 @@ export default async function AdminUsersPage({
           <header className="rounded-3xl border border-white/10 bg-white/5 p-6">
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">{adminCopy.platformControl}</p>
             <h1 className="mt-2 text-4xl font-semibold text-white">{adminCopy.usersPage.title}</h1>
-            <p className="mt-3 max-w-2xl text-slate-300">Admin access required.</p>
+            <p className="mt-3 max-w-2xl text-slate-300">{adminCopy.login.pageDescription}</p>
           </header>
           <BandAccessForm
             role="admin"
@@ -104,12 +104,12 @@ export default async function AdminUsersPage({
               <p className="mt-3 max-w-2xl text-slate-300">{adminCopy.usersPage.description}</p>
             </div>
             <Link href="/admin" className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-white hover:border-cyan-400/50">
-              Back to admin
+              {adminCopy.backToAdmin}
             </Link>
           </div>
           <form className="mt-4" action="/api/auth/logout" method="post">
             <button type="submit" className="rounded-full border border-white/10 px-4 py-2 text-sm font-medium text-white hover:border-cyan-400/50">
-              Log out
+              {adminCopy.logoutLabel}
             </button>
           </form>
         </header>
@@ -128,10 +128,10 @@ export default async function AdminUsersPage({
                 className="rounded-xl border border-white/10 bg-slate-950/70 px-4 py-2 text-sm text-white placeholder:text-slate-500"
               />
               <select name="role" defaultValue={role} className="rounded-xl border border-white/10 bg-slate-950/70 px-4 py-2 text-sm text-white">
-                <option value="all">All users</option>
-                <option value="singer">Singers</option>
-                <option value="band">Band members</option>
-                <option value="admin">Admins</option>
+                <option value="all">{adminCopy.usersPage.allUsers}</option>
+                <option value="singer">{adminCopy.usersPage.singers}</option>
+                <option value="band">{adminCopy.usersPage.bandMembers}</option>
+                <option value="admin">{adminCopy.usersPage.admins}</option>
               </select>
               <button type="submit" className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white">{adminCopy.usersPage.searchButton}</button>
             </form>
@@ -140,14 +140,14 @@ export default async function AdminUsersPage({
           <form className="mt-6 grid gap-4 rounded-2xl border border-white/10 bg-slate-950/50 p-5 md:grid-cols-2" action="/api/admin/users" method="post">
             <input type="hidden" name="action" value="create" />
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-200">Create mode</label>
+              <label className="text-sm font-medium text-slate-200">{adminCopy.usersPage.createModeLabel}</label>
               <select name="createMode" className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white">
-                <option value="new_user">Create new auth user</option>
-                <option value="existing_profile">Use existing profile</option>
+                <option value="new_user">{adminCopy.usersPage.createModeNewUser}</option>
+                <option value="existing_profile">{adminCopy.usersPage.createModeExistingProfile}</option>
               </select>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-200">Role</label>
+              <label className="text-sm font-medium text-slate-200">{adminCopy.usersPage.roleLabel}</label>
               <select name="role" defaultValue="singer" className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white">
                 <option value="singer">singer</option>
                 <option value="band">band</option>
@@ -155,46 +155,46 @@ export default async function AdminUsersPage({
               </select>
             </div>
             <div className="space-y-2 md:col-span-2">
-              <label className="text-sm font-medium text-slate-200">Profile username or existing profile</label>
-              <input name="profileLookup" list="live-profile-list" placeholder="search username" className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white placeholder:text-slate-500" />
+              <label className="text-sm font-medium text-slate-200">{adminCopy.usersPage.profileLookupLabel}</label>
+              <input name="profileLookup" list="live-profile-list" placeholder={adminCopy.usersPage.searchPlaceholder} className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white placeholder:text-slate-500" />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-200">Username</label>
+              <label className="text-sm font-medium text-slate-200">{adminCopy.usersPage.usernameLabel}</label>
               <input name="username" type="text" className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-200">Display name</label>
+              <label className="text-sm font-medium text-slate-200">{adminCopy.usersPage.displayNameLabel}</label>
               <input name="displayName" type="text" className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-200">First name</label>
+              <label className="text-sm font-medium text-slate-200">{adminCopy.usersPage.firstNameLabel}</label>
               <input name="firstName" type="text" className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-200">Last name</label>
+              <label className="text-sm font-medium text-slate-200">{adminCopy.usersPage.lastNameLabel}</label>
               <input name="lastName" type="text" className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-200">Email</label>
+              <label className="text-sm font-medium text-slate-200">{adminCopy.usersPage.emailLabel}</label>
               <input name="email" type="email" className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-200">Password</label>
+              <label className="text-sm font-medium text-slate-200">{adminCopy.usersPage.passwordLabel}</label>
               <input name="password" type="password" className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-200">Band</label>
-              <input name="bandLookup" list="live-band-list" placeholder="search band" className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white placeholder:text-slate-500" />
+              <label className="text-sm font-medium text-slate-200">{adminCopy.usersPage.bandLabel}</label>
+              <input name="bandLookup" list="live-band-list" placeholder={adminCopy.bandsPage.searchPlaceholder} className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white placeholder:text-slate-500" />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-200">Band role</label>
+              <label className="text-sm font-medium text-slate-200">{adminCopy.usersPage.bandRoleLabel}</label>
               <select name="bandRole" className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white">
-                <option value="member">member</option>
-                <option value="admin">admin</option>
+                <option value="member">{adminCopy.usersPage.bandRoleMember}</option>
+                <option value="admin">{adminCopy.usersPage.bandRoleAdmin}</option>
               </select>
             </div>
             <div className="md:col-span-2">
-              <button type="submit" className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-medium text-white">Save user</button>
+              <button type="submit" className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-medium text-white">{adminCopy.usersPage.saveUser}</button>
             </div>
             <datalist id="live-band-list">
               {bandOptions.map((band) => (
@@ -285,7 +285,7 @@ export default async function AdminUsersPage({
                         </form>
 
                         <div className="mt-4 space-y-3 rounded-2xl border border-white/10 bg-slate-950/50 p-5">
-                          <h4 className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-300">Band memberships</h4>
+                      <h4 className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-300">{adminCopy.usersPage.bandMemberships}</h4>
                           <div className="space-y-2">
                             {userRoles.length ? userRoles.map((roleRow) => (
                               <div key={roleRow.id} className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-200">
@@ -297,7 +297,7 @@ export default async function AdminUsersPage({
                                   <button type="submit" className="rounded-full border border-white/10 px-3 py-1 text-xs text-slate-200">Remove</button>
                                 </form>
                               </div>
-                            )) : <p className="text-sm text-slate-400">No band memberships yet.</p>}
+                            )) : <p className="text-sm text-slate-400">{adminCopy.usersPage.noBandMemberships}</p>}
                           </div>
                         </div>
                       </AdminRowDialog>

@@ -30,7 +30,7 @@ export default async function AdminBandsPage({
           <header className="rounded-3xl border border-white/10 bg-white/5 p-6">
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">{adminCopy.platformControl}</p>
             <h1 className="mt-2 text-4xl font-semibold text-white">{adminCopy.bandsPage.title}</h1>
-            <p className="mt-3 max-w-2xl text-slate-300">Admin access required.</p>
+            <p className="mt-3 max-w-2xl text-slate-300">{adminCopy.login.pageDescription}</p>
           </header>
           <BandAccessForm
             role="admin"
@@ -93,12 +93,12 @@ export default async function AdminBandsPage({
                 <p className="mt-3 max-w-2xl text-slate-300">{adminCopy.bandsPage.description}</p>
               </div>
               <Link href="/admin" className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-white hover:border-cyan-400/50">
-                Back to admin
+                {adminCopy.backToAdmin}
               </Link>
             </div>
             <form className="mt-4" action="/api/auth/logout" method="post">
               <button type="submit" className="rounded-full border border-white/10 px-4 py-2 text-sm font-medium text-white hover:border-cyan-400/50">
-                Log out
+                {adminCopy.logoutLabel}
               </button>
             </form>
           </header>
@@ -106,8 +106,8 @@ export default async function AdminBandsPage({
         <section className="rounded-3xl border border-white/10 bg-white/5 p-6">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <h2 className="text-2xl font-semibold text-white">Live bands</h2>
-              <p className="mt-2 text-sm text-slate-300">Search bands, edit profile details, and manage band admins/members.</p>
+              <h2 className="text-2xl font-semibold text-white">{adminCopy.bandsPage.liveTitle}</h2>
+              <p className="mt-2 text-sm text-slate-300">{adminCopy.bandsPage.liveDescription}</p>
             </div>
             <form method="get" className="flex flex-wrap items-center gap-3">
               <input
@@ -123,7 +123,7 @@ export default async function AdminBandsPage({
           <form className="mt-6 grid gap-4 rounded-2xl border border-white/10 bg-slate-950/50 p-5 md:grid-cols-2" action="/api/admin/bands" method="post">
             <input type="hidden" name="action" value="create" />
             <div className="space-y-2 md:col-span-2">
-              <label className="text-sm font-medium text-slate-200">Band name</label>
+              <label className="text-sm font-medium text-slate-200">{adminCopy.bandsPage.bandNameLabel ?? 'Band name'}</label>
               <input name="bandName" type="text" className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
             </div>
             <div className="space-y-2">
@@ -153,51 +153,51 @@ export default async function AdminBandsPage({
               <input name="lastName" type="text" className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-200">Email</label>
+              <label className="text-sm font-medium text-slate-200">{adminCopy.bandsPage.emailLabel}</label>
               <input name="email" type="email" className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-200">Password</label>
+              <label className="text-sm font-medium text-slate-200">{adminCopy.bandsPage.passwordLabel}</label>
               <input name="password" type="password" className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
             </div>
             <div className="space-y-2 md:col-span-2">
-              <label className="text-sm font-medium text-slate-200">Username</label>
+              <label className="text-sm font-medium text-slate-200">{adminCopy.bandsPage.usernameLabel}</label>
               <input name="username" type="text" className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
             </div>
             <div className="space-y-2 md:col-span-2">
-              <label className="text-sm font-medium text-slate-200">Custom message</label>
+              <label className="text-sm font-medium text-slate-200">{adminCopy.bandsPage.customMessageLabel}</label>
               <textarea name="customMessage" rows={3} className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-200">Website</label>
+              <label className="text-sm font-medium text-slate-200">{adminCopy.bandsPage.websiteLabel}</label>
               <input name="websiteUrl" type="url" className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-200">Facebook</label>
+              <label className="text-sm font-medium text-slate-200">{adminCopy.bandsPage.facebookLabel}</label>
               <input name="facebookUrl" type="url" className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-200">Instagram</label>
+              <label className="text-sm font-medium text-slate-200">{adminCopy.bandsPage.instagramLabel}</label>
               <input name="instagramUrl" type="url" className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-200">TikTok</label>
+              <label className="text-sm font-medium text-slate-200">{adminCopy.bandsPage.tiktokLabel}</label>
               <input name="tiktokUrl" type="url" className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-200">PayPal</label>
+              <label className="text-sm font-medium text-slate-200">{adminCopy.bandsPage.paypalLabel}</label>
               <input name="paypalUrl" type="url" className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-200">Venmo</label>
+              <label className="text-sm font-medium text-slate-200">{adminCopy.bandsPage.venmoLabel}</label>
               <input name="venmoUrl" type="url" className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
             </div>
             <div className="space-y-2 md:col-span-2">
-              <label className="text-sm font-medium text-slate-200">Cash App</label>
+              <label className="text-sm font-medium text-slate-200">{adminCopy.bandsPage.cashappLabel}</label>
               <input name="cashappUrl" type="url" className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
             </div>
             <div className="md:col-span-2">
-              <button type="submit" className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-medium text-white">Create band</button>
+              <button type="submit" className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-medium text-white">{adminCopy.bandsPage.createButton}</button>
             </div>
             <datalist id="live-profile-list">
               {liveProfiles.map((profile) => (
@@ -218,64 +218,64 @@ export default async function AdminBandsPage({
                   <div className="flex flex-wrap items-start justify-between gap-4">
                     <div>
                       <h3 className="text-xl font-semibold text-white">{band.band_name}</h3>
-                      <p className="text-sm text-slate-400">Band ID: {band.id}</p>
-                      <p className="mt-2 text-sm text-slate-300">{bandProfile?.custom_message ?? 'No custom band message yet.'}</p>
+                      <p className="text-sm text-slate-400">{adminCopy.bandsPage.bandIdLabel}: {band.id}</p>
+                      <p className="mt-2 text-sm text-slate-300">{bandProfile?.custom_message ?? adminCopy.bandsPage.noCustomMessage}</p>
                     </div>
                     <div className="flex gap-2">
-                      <AdminRowDialog triggerLabel="Edit band" title={`Edit ${band.band_name}`}>
+                      <AdminRowDialog triggerLabel={adminCopy.bandsPage.edit} title={`Edit ${band.band_name}`}>
                         <form className="grid gap-4 rounded-2xl border border-white/10 bg-slate-950/50 p-5" action={`/api/admin/bands/${band.id}`} method="post">
                           <input type="hidden" name="action" value="update" />
                           <div className="space-y-2 md:col-span-2">
-                            <label className="text-sm font-medium text-slate-200">Band name</label>
+                            <label className="text-sm font-medium text-slate-200">{adminCopy.bandsPage.bandNameLabel ?? 'Band name'}</label>
                             <input name="bandName" defaultValue={band.band_name} className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
                           </div>
                           <div className="space-y-2 md:col-span-2">
-                            <label className="text-sm font-medium text-slate-200">Custom message</label>
+                            <label className="text-sm font-medium text-slate-200">{adminCopy.bandsPage.customMessageLabel}</label>
                             <textarea name="customMessage" defaultValue={bandProfile?.custom_message ?? ''} rows={3} className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
                           </div>
                           <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-200">Website</label>
+                            <label className="text-sm font-medium text-slate-200">{adminCopy.bandsPage.websiteLabel}</label>
                             <input name="websiteUrl" defaultValue={bandProfile?.website_url ?? ''} className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
                           </div>
                           <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-200">Facebook</label>
+                            <label className="text-sm font-medium text-slate-200">{adminCopy.bandsPage.facebookLabel}</label>
                             <input name="facebookUrl" defaultValue={bandProfile?.facebook_url ?? ''} className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
                           </div>
                           <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-200">Instagram</label>
+                            <label className="text-sm font-medium text-slate-200">{adminCopy.bandsPage.instagramLabel}</label>
                             <input name="instagramUrl" defaultValue={bandProfile?.instagram_url ?? ''} className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
                           </div>
                           <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-200">TikTok</label>
+                            <label className="text-sm font-medium text-slate-200">{adminCopy.bandsPage.tiktokLabel}</label>
                             <input name="tiktokUrl" defaultValue={bandProfile?.tiktok_url ?? ''} className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
                           </div>
                           <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-200">PayPal</label>
+                            <label className="text-sm font-medium text-slate-200">{adminCopy.bandsPage.paypalLabel}</label>
                             <input name="paypalUrl" defaultValue={bandProfile?.paypal_url ?? ''} className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
                           </div>
                           <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-200">Venmo</label>
+                            <label className="text-sm font-medium text-slate-200">{adminCopy.bandsPage.venmoLabel}</label>
                             <input name="venmoUrl" defaultValue={bandProfile?.venmo_url ?? ''} className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
                           </div>
                           <div className="space-y-2 md:col-span-2">
-                            <label className="text-sm font-medium text-slate-200">Cash App</label>
+                            <label className="text-sm font-medium text-slate-200">{adminCopy.bandsPage.cashappLabel}</label>
                             <input name="cashappUrl" defaultValue={bandProfile?.cashapp_url ?? ''} className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
                           </div>
                           <div className="md:col-span-2">
-                            <button type="submit" className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-medium text-white">Save changes</button>
+                            <button type="submit" className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-medium text-white">{adminCopy.bandsPage.saveChanges}</button>
                           </div>
                         </form>
                       </AdminRowDialog>
                       <form action={`/api/admin/bands/${band.id}`} method="post">
                         <input type="hidden" name="action" value="delete" />
-                        <button type="submit" className="rounded-full border border-white/10 px-3 py-1 text-xs text-slate-200">Delete</button>
+                        <button type="submit" className="rounded-full border border-white/10 px-3 py-1 text-xs text-slate-200">{adminCopy.bandsPage.delete}</button>
                       </form>
                     </div>
                   </div>
 
                   <div className="mt-5 grid gap-4 md:grid-cols-[1fr_1fr]">
                     <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                      <h4 className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-300">Members & admins</h4>
+                      <h4 className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-300">{adminCopy.bandsPage.membersTitle}</h4>
                       <div className="mt-3 space-y-2">
                         {bandRoles.length ? bandRoles.map((role) => (
                           <div key={role.id} className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-slate-950/60 px-3 py-2 text-sm text-slate-200">
@@ -289,20 +289,20 @@ export default async function AdminBandsPage({
                               <button type="submit" className="rounded-full border border-white/10 px-3 py-1 text-xs text-slate-200">Remove</button>
                             </form>
                           </div>
-                        )) : <p className="text-sm text-slate-400">No band members yet.</p>}
+                            )) : <p className="text-sm text-slate-400">{adminCopy.bandsPage.bandMembersEmpty}</p>}
                       </div>
                     </div>
 
                     <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                      <h4 className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-300">Add band member/admin</h4>
+                      <h4 className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-300">{adminCopy.bandsPage.addMemberTitle}</h4>
                       <form action={`/api/admin/bands/${band.id}`} method="post" className="mt-3 grid gap-3">
                         <input type="hidden" name="action" value="add-role" />
-                        <input name="profileLookup" list="live-profile-list" placeholder="Search existing profile username" className="rounded-xl border border-white/10 bg-slate-950/70 px-4 py-3 text-white placeholder:text-slate-500" />
+                        <input name="profileLookup" list="live-profile-list" placeholder={adminCopy.bandsPage.profileSearchPlaceholder} className="rounded-xl border border-white/10 bg-slate-950/70 px-4 py-3 text-white placeholder:text-slate-500" />
                         <select name="bandRole" className="rounded-xl border border-white/10 bg-slate-950/70 px-4 py-3 text-white">
                           <option value="member">{adminCopy.bandsPage.bandRoleMember}</option>
                           <option value="admin">{adminCopy.bandsPage.bandRoleAdmin}</option>
                         </select>
-                        <button type="submit" className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-medium text-white">Attach to band</button>
+                        <button type="submit" className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-medium text-white">{adminCopy.bandsPage.attachToBand}</button>
                       </form>
                     </div>
                   </div>
@@ -354,7 +354,7 @@ export default async function AdminBandsPage({
                   <form action="/api/testing/logins" method="post">
                     <input type="hidden" name="action" value="delete" />
                     <input type="hidden" name="username" value={login.username} />
-                    <button type="submit" className="rounded-full border border-white/10 px-3 py-1 text-xs text-slate-200">Delete</button>
+                    <button type="submit" className="rounded-full border border-white/10 px-3 py-1 text-xs text-slate-200">{adminCopy.bandsPage.delete}</button>
                   </form>
                 </div>
               </div>

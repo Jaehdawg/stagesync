@@ -12,6 +12,7 @@ export const adminCopy = {
     switchTitle: 'Switch to an admin account',
     switchMessage: 'You\'re currently signed in as a singer. Use an admin username and password to access the admin dashboard.',
   },
+  backToAdmin: 'Back to admin',
   logoutLabel: 'Log out',
   cards: {
     bands: { title: 'Manage bands', description: 'CRUD bands and members.' },
@@ -32,6 +33,7 @@ export const adminCopy = {
     bandRoleLabel: 'Band role',
     bandRoleAdmin: 'admin',
     bandRoleMember: 'member',
+    bandNameLabel: 'Band name',
     existingProfileLabel: 'Existing profile username',
     firstNameLabel: 'First name',
     lastNameLabel: 'Last name',
@@ -62,6 +64,7 @@ export const adminCopy = {
     remove: 'Remove',
     attachToBand: 'Attach to band',
     bandMembersEmpty: 'No band members yet.',
+    noCustomMessage: 'No custom band message yet.',
     currentAdmin: 'Current admin',
     member: 'member',
   },
