@@ -93,10 +93,18 @@ export function SingerDashboardView(state: DashboardState) {
   const [lyricsTrack, setLyricsTrack] = useState<Track | null>(state.lyricsTrack ?? null)
 
   useEffect(() => {
-    setCurrentRequest(state.currentRequest ?? null)
-    setLiveQueueItems(state.liveQueueItems ?? [])
-    setHistoryItems(state.historyItems ?? [])
-    setLyricsTrack(state.lyricsTrack ?? null)
+    if (state.currentRequest) {
+      setCurrentRequest(state.currentRequest)
+    }
+    if (state.liveQueueItems?.length) {
+      setLiveQueueItems(state.liveQueueItems)
+    }
+    if (state.historyItems?.length) {
+      setHistoryItems(state.historyItems)
+    }
+    if (state.lyricsTrack) {
+      setLyricsTrack(state.lyricsTrack)
+    }
   }, [state.currentRequest, state.liveQueueItems, state.historyItems, state.lyricsTrack])
 
   const bandProfile = state.bandProfile ?? {
