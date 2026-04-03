@@ -95,17 +95,26 @@ export function SingerDashboardView(state: DashboardState) {
   useEffect(() => {
     if (state.currentRequest) {
       setCurrentRequest(state.currentRequest)
+      if (state.lyricsTrack) {
+        setLyricsTrack(state.lyricsTrack)
+      }
+    } else if (currentRequest) {
+      const serverHasFinishedRequest = state.historyItems?.some(
+        (item) => item.artist === currentRequest.artist && item.title === currentRequest.title
+      )
+      if (serverHasFinishedRequest) {
+        setCurrentRequest(null)
+        setLyricsTrack(null)
+      }
     }
+
     if (state.liveQueueItems?.length) {
       setLiveQueueItems(state.liveQueueItems)
     }
     if (state.historyItems?.length) {
       setHistoryItems(state.historyItems)
     }
-    if (state.lyricsTrack) {
-      setLyricsTrack(state.lyricsTrack)
-    }
-  }, [state.currentRequest, state.liveQueueItems, state.historyItems, state.lyricsTrack])
+  }, [state.currentRequest, state.liveQueueItems, state.historyItems, state.lyricsTrack, currentRequest])
 
   const bandProfile = state.bandProfile ?? {
     bandName: state.brand?.title ?? 'StageSync',
