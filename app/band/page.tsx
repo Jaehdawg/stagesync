@@ -11,6 +11,7 @@ import { getTestLogin } from '@/lib/test-login-list'
 import { getBandProfileForBandId } from '@/lib/band-tenancy'
 import { getLiveBandAccessContext } from '@/lib/band-access'
 import { listBandRolesForProfileId } from '@/lib/band-roles'
+import { AutoRefresh } from '@/components/auto-refresh'
 import { headers } from 'next/headers'
 import { buildSingerSignupUrl, slugifyBandName } from '@/lib/public-links'
 
@@ -48,12 +49,12 @@ async function getBandState(
           .select('id, position, status, song_id, performer_id')
           .eq('band_id', bandId)
           .order('position', { ascending: true })
-          .limit(6)
+          .limit(200)
       : supabase
           .from('queue_items')
           .select('id, position, status, song_id, performer_id')
           .order('position', { ascending: true })
-          .limit(6),
+          .limit(200),
   ])
 
   const activeEvents = activeEventsResult.data ?? []
@@ -92,27 +93,29 @@ async function getBandState(
     show_duration_minutes: showDurationMinutes,
     buffer_minutes: signupBufferMinutes,
   })
+  const decoratedQueueItems = ((queueItems ?? []) as QueueRow[]).map((item, index) => {
+    const song = item.song_id ? songsById.get(item.song_id) : undefined
+    const performer = item.performer_id ? profilesById.get(item.performer_id) : undefined
+
+    return {
+      id: item.id,
+      position: item.position ?? index + 1,
+      status: item.status ?? 'Waiting',
+      name:
+        performer?.display_name ||
+        [performer?.first_name, performer?.last_name].filter(Boolean).join(' ') ||
+        'Guest singer',
+      song: song ? `${song.title} - ${song.artist}` : 'Requested song',
+    }
+  })
+  const liveQueueCount = decoratedQueueItems.filter((item) => !['played', 'cancelled'].includes(item.status)).length
 
   return buildDashboardState({
     bandProfile: bandProfileOverride ?? bandProfile,
     activeShowCount: events?.length ?? 0,
-    songsInQueue: queueItems?.length ?? 0,
-    queuedSingers: queueItems?.length ?? 0,
-    queueItems: ((queueItems ?? []) as QueueRow[]).map((item, index) => {
-      const song = item.song_id ? songsById.get(item.song_id) : undefined
-      const performer = item.performer_id ? profilesById.get(item.performer_id) : undefined
-
-      return {
-        id: item.id,
-        position: item.position ?? index + 1,
-        status: item.status ?? 'Waiting',
-        name:
-          performer?.display_name ||
-          [performer?.first_name, performer?.last_name].filter(Boolean).join(' ') ||
-          'Guest singer',
-        song: song ? `${song.title} - ${song.artist}` : 'Requested song',
-      }
-    }),
+    songsInQueue: liveQueueCount,
+    queuedSingers: liveQueueCount,
+    queueItems: decoratedQueueItems,
     signupEnabled,
     signupStatusMessage:
       showState === 'active'
@@ -211,6 +214,7 @@ export default async function BandPage() {
               </header>
 
               <BandDashboardView {...state} bandAccessLevel={liveAccess.bandRole} singerSignupUrl={singerSignupUrl} />
+              <AutoRefresh enabled intervalMs={5000} />
             </div>
           </main>
         )
@@ -248,6 +252,7 @@ export default async function BandPage() {
           </header>
 
           <BandDashboardView {...state} testMode bandAccessLevel={isBandAdmin ? 'admin' : 'member'} singerSignupUrl={singerSignupUrl} />
+          <AutoRefresh enabled intervalMs={5000} />
         </div>
       </main>
     )

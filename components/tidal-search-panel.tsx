@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { useRouter } from 'next/navigation'
 
 type TidalTrack = {
   id: string
@@ -20,13 +19,13 @@ type TidalSearchPanelProps = {
 }
 
 export function TidalSearchPanel({ disabled = false, statusMessage, sourceMode = 'uploaded', playlistUrl = null, bandId, showId }: TidalSearchPanelProps) {
-  const router = useRouter()
   const [query, setQuery] = useState('')
   const [tracks, setTracks] = useState<TidalTrack[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
   const [queueingId, setQueueingId] = useState<string | null>(null)
+  const [pendingTrack, setPendingTrack] = useState<TidalTrack | null>(null)
 
   const searchUrl = useMemo(
     () => `/api/songs/search?bandId=${encodeURIComponent(bandId)}${query.trim() ? `&query=${encodeURIComponent(query.trim())}` : ''}`,
@@ -52,7 +51,7 @@ export function TidalSearchPanel({ disabled = false, statusMessage, sourceMode =
       }
 
       setMessage(payload.message ?? `Queued ${track.title}.`)
-      router.refresh()
+      window.location.reload()
     } catch (fetchError) {
       setError(fetchError instanceof Error ? fetchError.message : 'Unable to add song request.')
     } finally {
@@ -115,7 +114,7 @@ export function TidalSearchPanel({ disabled = false, statusMessage, sourceMode =
             </div>
             <button
               type="button"
-              onClick={() => void queueTrack(track)}
+              onClick={() => setPendingTrack(track)}
               disabled={disabled || queueingId === track.id}
               className="shrink-0 whitespace-nowrap rounded-full border border-white/10 px-3 py-2 text-xs font-medium text-slate-200 transition hover:border-cyan-400/40 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
             >
@@ -124,6 +123,38 @@ export function TidalSearchPanel({ disabled = false, statusMessage, sourceMode =
           </div>
         )) : !loading ? <p className="text-sm text-slate-400">No matches yet.</p> : null}
       </div>
+
+      {pendingTrack ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
+          <div className="w-full max-w-md rounded-3xl border border-white/10 bg-slate-950 p-6 shadow-2xl shadow-black/50">
+            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-cyan-300">Ready to rock?</p>
+            <h3 className="mt-2 text-2xl font-semibold text-white">Are you ready rock?</h3>
+            <p className="mt-2 text-slate-400">{pendingTrack.artist} — {pendingTrack.title}</p>
+            <div className="mt-6 flex gap-3">
+              <button
+                type="button"
+                disabled={disabled || queueingId === pendingTrack.id}
+                onClick={() => {
+                  const track = pendingTrack
+                  setPendingTrack(null)
+                  void queueTrack(track)
+                }}
+                className="flex-1 rounded-full bg-emerald-400 px-5 py-3 font-semibold text-slate-950 transition hover:bg-emerald-300 disabled:opacity-60"
+              >
+                👍
+              </button>
+              <button
+                type="button"
+                disabled={disabled || queueingId === pendingTrack.id}
+                onClick={() => setPendingTrack(null)}
+                className="flex-1 rounded-full border border-white/10 bg-white/5 px-5 py-3 font-semibold text-white transition hover:bg-white/10 disabled:opacity-60"
+              >
+                👎
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </section>
   )
 }

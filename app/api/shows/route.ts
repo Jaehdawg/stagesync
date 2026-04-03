@@ -151,6 +151,7 @@ export async function POST(request: NextRequest) {
 
     if (event?.id) {
       const { error: settingsError } = await serviceSupabase.from('show_settings').insert({
+        band_id: liveAccess.bandId,
         event_id: event.id,
         playlist_only: false,
         lyrics_enabled: true,
@@ -174,6 +175,7 @@ export async function POST(request: NextRequest) {
 
     const { error: settingsError } = await serviceSupabase.from('show_settings').upsert(
       {
+        band_id: liveAccess.bandId,
         event_id: eventId,
         playlist_only: false,
         lyrics_enabled: true,

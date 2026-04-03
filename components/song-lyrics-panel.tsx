@@ -5,12 +5,13 @@ import { useEffect, useState } from 'react'
 type SongLyricsPanelProps = {
   artist?: string | null
   title?: string | null
+  openByDefault?: boolean
 }
 
-export function SongLyricsPanel({ artist, title }: SongLyricsPanelProps) {
+export function SongLyricsPanel({ artist, title, openByDefault = false }: SongLyricsPanelProps) {
   const safeArtist = String(artist ?? '').trim()
   const safeTitle = String(title ?? '').trim()
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(openByDefault)
   const [lyrics, setLyrics] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)

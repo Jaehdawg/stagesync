@@ -47,7 +47,7 @@ export function SingerCurrentRequestCard({ bandId, showId, artist, title }: Sing
           onClick={() => setOpen(true)}
           className="mt-4 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10"
         >
-          Cancel song
+          Change song
         </button>
         {error ? <p className="mt-3 text-sm text-rose-300">{error}</p> : null}
       </section>
@@ -56,8 +56,8 @@ export function SingerCurrentRequestCard({ bandId, showId, artist, title }: Sing
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
           <div className="w-full max-w-md rounded-3xl border border-white/10 bg-slate-950 p-6 shadow-2xl shadow-black/50">
             <p className="text-xs font-semibold uppercase tracking-[0.28em] text-cyan-300">Cancel request</p>
-            <h3 className="mt-2 text-2xl font-semibold text-white">Are you are sure?</h3>
-            <p className="mt-2 text-slate-400">This will remove your song from the queue and free up your slot.</p>
+            <h3 className="mt-2 text-2xl font-semibold text-white">Are you sure?</h3>
+            <p className="mt-2 text-slate-400">This will remove your song from the queue so you can pick another one.</p>
             <div className="mt-6 flex gap-3">
               <button
                 type="button"

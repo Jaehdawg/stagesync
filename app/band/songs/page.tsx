@@ -3,6 +3,7 @@ import { createClient } from '@/utils/supabase/server'
 import { createServiceClient } from '@/utils/supabase/service'
 import { BandAccessForm } from '@/components/band-access-form'
 import { AdminRowDialog } from '@/components/admin-row-dialog'
+import { AutoRefresh } from '@/components/auto-refresh'
 import { getTestSession } from '@/lib/test-session'
 import { getLiveBandAccessContext } from '@/lib/band-access'
 
@@ -146,6 +147,7 @@ export default async function BandSongsPage({
               {importJob.error_message ? <p className="mt-1 text-rose-200">Error: {importJob.error_message}</p> : null}
             </div>
           ) : null}
+          {importState === 'queued' ? <AutoRefresh enabled intervalMs={4000} /> : null}
           <div className="mt-6 grid gap-4 lg:grid-cols-3">
             <form className="rounded-2xl border border-white/10 bg-slate-950/50 p-5" action="/api/band/songs/import" method="post" encType="multipart/form-data">
               <input type="hidden" name="importType" value="csv" />

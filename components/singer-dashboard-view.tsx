@@ -116,23 +116,29 @@ export function SingerDashboardView(state: DashboardState) {
                   {bandProfile.customMessage ?? 'Band links and tip links will appear here when the band profile is filled out.'}
                 </p>
               </div>
-              <LinkList label="Website" links={[{ href: bandProfile.websiteUrl ?? null, text: 'Website' }]} />
-              <LinkList
-                label="Social"
-                links={[
-                  { href: bandProfile.facebookUrl ?? null, text: 'Facebook' },
-                  { href: bandProfile.instagramUrl ?? null, text: 'Instagram' },
-                  { href: bandProfile.tiktokUrl ?? null, text: 'TikTok' },
-                ]}
-              />
-              <LinkList
-                label="Tips"
-                links={[
-                  { href: bandProfile.paypalUrl ?? null, text: 'PayPal' },
-                  { href: bandProfile.venmoUrl ?? null, text: 'Venmo' },
-                  { href: bandProfile.cashappUrl ?? null, text: 'Cash App' },
-                ]}
-              />
+              <div className="flex flex-wrap gap-3">
+                <div className="min-w-[11rem] flex-1"><LinkList label="Website" links={[{ href: bandProfile.websiteUrl ?? null, text: 'Website' }]} /></div>
+                <div className="min-w-[11rem] flex-1">
+                  <LinkList
+                    label="Social"
+                    links={[
+                      { href: bandProfile.facebookUrl ?? null, text: 'Facebook' },
+                      { href: bandProfile.instagramUrl ?? null, text: 'Instagram' },
+                      { href: bandProfile.tiktokUrl ?? null, text: 'TikTok' },
+                    ]}
+                  />
+                </div>
+                <div className="min-w-[11rem] flex-1">
+                  <LinkList
+                    label="Tips"
+                    links={[
+                      { href: bandProfile.paypalUrl ?? null, text: 'PayPal' },
+                      { href: bandProfile.venmoUrl ?? null, text: 'Venmo' },
+                      { href: bandProfile.cashappUrl ?? null, text: 'Cash App' },
+                    ]}
+                  />
+                </div>
+              </div>
             </div>
           </section>
 
@@ -147,23 +153,23 @@ export function SingerDashboardView(state: DashboardState) {
                 <SingerRegistrationForm disabled={!state.signupEnabled} statusMessage={state.signupStatusMessage} />
               )}
 
-              {currentTrack ? (
+              {state.currentRequest ? (
                 <SingerCurrentRequestCard
                   bandId={state.bandId ?? ''}
                   showId={state.showId ?? ''}
                   artist={currentTrack.artist}
                   title={currentTrack.title}
                 />
-              ) : null}
-
-              <TidalSearchPanel
-                disabled={!state.signupEnabled}
-                statusMessage={state.signupStatusMessage}
-                sourceMode={songSourceMode}
-                playlistUrl={state.tidalPlaylistUrl ?? null}
-                bandId={state.bandId ?? ''}
-                showId={state.showId ?? ''}
-              />
+              ) : (
+                <TidalSearchPanel
+                  disabled={!state.signupEnabled}
+                  statusMessage={state.signupStatusMessage}
+                  sourceMode={songSourceMode}
+                  playlistUrl={state.tidalPlaylistUrl ?? null}
+                  bandId={state.bandId ?? ''}
+                  showId={state.showId ?? ''}
+                />
+              )}
             </div>
           </Panel>
 
@@ -226,7 +232,7 @@ export function SingerDashboardView(state: DashboardState) {
         </div>
       </div>
 
-      <SongLyricsPanel artist={currentTrack?.artist ?? null} title={currentTrack?.title ?? null} />
+      <SongLyricsPanel artist={currentTrack?.artist ?? null} title={currentTrack?.title ?? null} openByDefault={Boolean(currentTrack)} />
     </main>
   )
 }

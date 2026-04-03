@@ -64,6 +64,8 @@ export function BandDashboardView({
   singerSignupUrl = null,
 }: BandDashboardState) {
   const canManageShow = bandAccessLevel !== 'member'
+  const liveQueueItems = queueItems.filter((item) => !['played', 'cancelled'].includes(item.status))
+  const historyItems = queueItems.filter((item) => ['played', 'cancelled'].includes(item.status))
   const controls =
     showState === 'active'
       ? [
@@ -257,9 +259,9 @@ export function BandDashboardView({
           ) : null}
 
           <Panel title="Queue management" eyebrow="Queue admin">
-            {queueItems.length ? (
+            {liveQueueItems.length ? (
               <div className="space-y-3">
-                {queueItems.map((item) => (
+                {liveQueueItems.map((item) => (
                   <div key={item.id ?? `${item.position}-${item.name}`} className="rounded-2xl border border-white/10 bg-white/5 p-4">
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
@@ -303,6 +305,32 @@ export function BandDashboardView({
                 No queue items yet. Singer requests will show up here automatically.
               </p>
             )}
+
+            <details className="mt-5 rounded-2xl border border-white/10 bg-slate-900/40 p-4">
+              <summary className="cursor-pointer list-none text-sm font-semibold text-white">
+                History
+                <span className="ml-2 text-xs font-normal text-slate-400">(played and cancelled songs)</span>
+              </summary>
+              <div className="mt-4 space-y-3">
+                {historyItems.length ? (
+                  historyItems.map((item) => (
+                    <div key={item.id ?? `${item.position}-${item.name}-history`} className="rounded-2xl border border-white/10 bg-slate-950/70 p-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <p className="text-xs uppercase tracking-[0.25em] text-slate-400">{item.status}</p>
+                          <p className="mt-1 text-lg font-semibold text-white">
+                            {item.song}
+                          </p>
+                          <p className="text-sm text-slate-400">{item.name}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-slate-400">Played and cancelled songs will appear here.</p>
+                )}
+              </div>
+            </details>
           </Panel>
         </div>
 

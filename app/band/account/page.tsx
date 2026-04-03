@@ -87,7 +87,7 @@ function AccountForm({
         </section>
 
         <section className="rounded-3xl border border-white/10 bg-white/5 p-6">
-          <h2 className="text-2xl font-semibold text-white">Band profile</h2>
+          <h2 className="text-2xl font-semibold text-white">Edit Band Profile</h2>
           <form className="mt-6 grid gap-4 rounded-2xl border border-white/10 bg-slate-950/50 p-5 md:grid-cols-2" action="/api/band/profile" method="post">
             <div className="space-y-2 md:col-span-2">
               <label className="text-sm font-medium text-slate-200" htmlFor="band-name">Band name</label>
