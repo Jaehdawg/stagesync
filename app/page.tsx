@@ -74,19 +74,24 @@ export default async function Home({
       <section className="mx-auto flex min-h-[calc(100vh-8rem)] w-full max-w-5xl items-center">
         <div className="w-full rounded-[2rem] border border-white/10 bg-white/5 p-8 shadow-2xl shadow-cyan-950/20 sm:p-10 lg:p-14">
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">StageSync</p>
-          <h1 className="mt-4 text-5xl font-semibold tracking-tight text-white sm:text-6xl">
-            Karaoke queueing for singers, bands, and admins.
-          </h1>
+          <h1 className="mt-4 text-5xl font-semibold tracking-tight text-white sm:text-6xl">Run karaoke from the stage.</h1>
           <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-300">
-            StageSync keeps the room moving: singers join the queue, bands manage the show, and admins keep everything in sync.
+            StageSync makes it easy for bands to manage the room live while giving singers the thrill of being in the spotlight.
           </p>
+
+          <ul className="mt-8 grid gap-3 text-sm text-slate-200 sm:grid-cols-2">
+            <li className="rounded-2xl border border-white/10 bg-slate-950/30 px-4 py-3">Stage-friendly tools for fast, simple control</li>
+            <li className="rounded-2xl border border-white/10 bg-slate-950/30 px-4 py-3">Live singer queue management</li>
+            <li className="rounded-2xl border border-white/10 bg-slate-950/30 px-4 py-3">Less back-and-forth, more time performing</li>
+            <li className="rounded-2xl border border-white/10 bg-slate-950/30 px-4 py-3">A better experience for both the band and the crowd</li>
+          </ul>
 
           <div className="mt-8 flex flex-wrap gap-4">
             <Link
               href="/band"
               className="rounded-full bg-cyan-400 px-6 py-3 font-semibold text-slate-950 transition hover:bg-cyan-300"
             >
-              Learn more if you’re a band
+              Learn more
             </Link>
             <a
               href="/band"
