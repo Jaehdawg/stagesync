@@ -74,9 +74,9 @@ export default async function Home({
       <section className="mx-auto flex min-h-[calc(100vh-8rem)] w-full max-w-5xl items-center">
         <div className="w-full rounded-[2rem] border border-white/10 bg-white/5 p-8 shadow-2xl shadow-cyan-950/20 sm:p-10 lg:p-14">
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">StageSync</p>
-          <h1 className="mt-4 text-5xl font-semibold tracking-tight text-white sm:text-6xl">Run karaoke from the stage.</h1>
+          <h1 className="mt-4 text-5xl font-semibold tracking-tight text-white sm:text-6xl">Live band karaoke simplified.</h1>
           <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-300">
-            StageSync makes it easy for bands to manage the room live while giving singers the thrill of being in the spotlight.
+            StageSync makes it easy for bands to manage the room while giving singers the thrill of being in the spotlight.
           </p>
 
           <ul className="mt-8 grid gap-3 text-sm text-slate-200 sm:grid-cols-2">
