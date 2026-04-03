@@ -36,31 +36,29 @@ async function getBandState(
     ? await getBandProfileForBandId(supabase, bandId)
     : (await supabase.from('band_profiles').select('band_name, website_url, facebook_url, instagram_url, tiktok_url, paypal_url, venmo_url, cashapp_url, custom_message').limit(1).maybeSingle()).data ?? null
 
-  const [activeEventsResult, latestEventsResult, queueItemsResult] = await Promise.all([
+  const [activeEventsResult, latestEventsResult] = await Promise.all([
     bandId
       ? supabase.from('events').select('id, name, band_id, is_active, allow_signups').eq('band_id', bandId).eq('is_active', true).order('created_at', { ascending: false }).limit(1)
       : Promise.resolve({ data: [] as { id: string; name: string | null; band_id: string | null; is_active: boolean | null; allow_signups: boolean | null }[] }),
     bandId
       ? supabase.from('events').select('id, name, band_id, is_active, allow_signups').eq('band_id', bandId).order('created_at', { ascending: false }).limit(1)
       : supabase.from('events').select('id, name, band_id, is_active, allow_signups').order('created_at', { ascending: false }).limit(1),
-    bandId
-      ? supabase
-          .from('queue_items')
-          .select('id, position, status, song_id, performer_id')
-          .eq('band_id', bandId)
-          .order('position', { ascending: true })
-          .limit(200)
-      : supabase
-          .from('queue_items')
-          .select('id, position, status, song_id, performer_id')
-          .order('position', { ascending: true })
-          .limit(200),
   ])
 
   const activeEvents = activeEventsResult.data ?? []
   const events = activeEvents.length ? activeEvents : (latestEventsResult.data ?? [])
-  const queueItems = queueItemsResult.data ?? []
   const currentShow = events[0]
+  const queueItemsResult = currentShow?.id && bandId
+    ? await supabase
+        .from('queue_items')
+        .select('id, position, status, song_id, performer_id')
+        .eq('band_id', bandId)
+        .eq('event_id', currentShow.id)
+        .order('position', { ascending: true })
+        .limit(200)
+    : { data: [] as { id: string; position: number | null; status: string | null; song_id: string | null; performer_id: string | null }[] }
+
+  const queueItems = queueItemsResult.data ?? []
   const currentSettings = currentShow?.id
     ? await supabase
         .from('show_settings')
