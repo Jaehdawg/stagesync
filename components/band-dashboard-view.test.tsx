@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, vi } from 'vitest'
 import { BandDashboardView } from './band-dashboard-view'
 
@@ -74,6 +74,23 @@ describe('BandDashboardView', () => {
     expect(screen.getByRole('option', { name: /tidal catalog/i })).toBeInTheDocument()
     expect(screen.getByRole('option', { name: /set list/i })).toBeInTheDocument()
     expect(screen.getByText(/active set list/i)).toBeInTheDocument()
+  })
+
+  it('falls back when no active set list exists', () => {
+    render(<BandDashboardView {...state} setLists={[]} />)
+
+    expect(screen.queryByRole('option', { name: /set list/i })).not.toBeInTheDocument()
+    expect(screen.getByText(/activate a set list to use set list mode/i)).toBeInTheDocument()
+  })
+
+  it('asks for confirmation before deleting a set list', () => {
+    const confirmMock = vi.spyOn(window, 'confirm').mockReturnValue(false)
+    render(<BandDashboardView {...state} />)
+
+    fireEvent.submit(screen.getAllByRole('button', { name: /delete/i })[0].closest('form')!)
+
+    expect(confirmMock).toHaveBeenCalledWith(expect.stringContaining('Delete this set list?'))
+    confirmMock.mockRestore()
   })
 
   it('wires queue actions to the queue item id', () => {

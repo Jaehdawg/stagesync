@@ -1,10 +1,10 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
-import { createServiceClient } from '@/utils/supabase/service'
-import { getTestSession } from '@/lib/test-session'
-import { getTestLogin } from '@/lib/test-login-list'
-import { getLiveBandAccessContext } from '@/lib/band-access'
-import { activateBandSetList, copyBandSetList, deactivateBandSetList, deleteBandSetList, updateBandSetList } from '@/lib/set-lists'
+import { createServiceClient } from '../../../../../utils/supabase/service'
+import { getTestSession } from '../../../../../lib/test-session'
+import { getTestLogin } from '../../../../../lib/test-login-list'
+import { getLiveBandAccessContext } from '../../../../../lib/band-access'
+import { activateBandSetList, copyBandSetList, deactivateBandSetList, deleteBandSetList, updateBandSetList } from '../../../../../lib/set-lists'
 
 function getSupabase(request: NextRequest) {
   return createServerClient(
@@ -61,6 +61,8 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
     .map((value) => value.trim())
     .filter(Boolean)
 
+  const uniqueSongIds = Array.from(new Set(songIds))
+
   try {
     if (action === 'delete') {
       await deleteBandSetList(access.bandId, id)
@@ -74,7 +76,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
       if (!name) {
         return NextResponse.json({ message: 'Set list name is required.' }, { status: 400 })
       }
-      await updateBandSetList(access.bandId, id, { name, description, notes, songIds })
+      await updateBandSetList(access.bandId, id, { name, description, notes, songIds: uniqueSongIds })
     }
   } catch (error) {
     return NextResponse.json({ message: error instanceof Error ? error.message : 'Unable to update set list.' }, { status: 500 })

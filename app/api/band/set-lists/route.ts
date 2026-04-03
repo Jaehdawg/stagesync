@@ -1,10 +1,10 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
-import { createServiceClient } from '@/utils/supabase/service'
-import { getTestSession } from '@/lib/test-session'
-import { getTestLogin } from '@/lib/test-login-list'
-import { getLiveBandAccessContext } from '@/lib/band-access'
-import { listBandSetLists, createBandSetList } from '@/lib/set-lists'
+import { createServiceClient } from '../../../../utils/supabase/service'
+import { getTestSession } from '../../../../lib/test-session'
+import { getTestLogin } from '../../../../lib/test-login-list'
+import { getLiveBandAccessContext } from '../../../../lib/band-access'
+import { listBandSetLists, createBandSetList } from '../../../../lib/set-lists'
 
 function getSupabase(request: NextRequest) {
   return createServerClient(
@@ -69,12 +69,14 @@ export async function POST(request: NextRequest) {
     .map((value) => value.trim())
     .filter(Boolean)
 
+  const uniqueSongIds = Array.from(new Set(songIds))
+
   if (!name) {
     return NextResponse.json({ message: 'Set list name is required.' }, { status: 400 })
   }
 
   try {
-    await createBandSetList(access.bandId, { name, description, notes, is_active: false, songIds })
+    await createBandSetList(access.bandId, { name, description, notes, is_active: false, songIds: uniqueSongIds })
   } catch (error) {
     return NextResponse.json({ message: error instanceof Error ? error.message : 'Unable to create set list.' }, { status: 500 })
   }
