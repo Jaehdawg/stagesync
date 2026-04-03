@@ -167,14 +167,14 @@ export function SingerDashboardView(state: DashboardState) {
                 <p className="text-sm uppercase tracking-[0.25em] text-cyan-300">{singerDashboardViewCopy.bandProfile}</p>
                 <p className="mt-2 text-xl font-semibold text-white">{bandProfile.bandName}</p>
                 <p className="mt-2 text-sm leading-6 text-slate-300">
-                  {bandProfile.customMessage ?? 'Band links and tip links will appear here when the band profile is filled out.'}
+                  {bandProfile.customMessage ?? singerDashboardViewCopy.bandProfileEmpty}
                 </p>
               </div>
               <div className="flex flex-wrap gap-3">
-                <div className="min-w-[11rem] flex-1"><LinkList label="Website" links={[{ href: bandProfile.websiteUrl ?? null, text: 'Website' }]} /></div>
+                <div className="min-w-[11rem] flex-1"><LinkList label={singerDashboardViewCopy.website} links={[{ href: bandProfile.websiteUrl ?? null, text: singerDashboardViewCopy.website }]} /></div>
                 <div className="min-w-[11rem] flex-1">
                   <LinkList
-                    label="Social"
+                    label={singerDashboardViewCopy.social}
                     links={[
                       { href: bandProfile.facebookUrl ?? null, text: 'Facebook' },
                       { href: bandProfile.instagramUrl ?? null, text: 'Instagram' },
@@ -184,7 +184,7 @@ export function SingerDashboardView(state: DashboardState) {
                 </div>
                 <div className="min-w-[11rem] flex-1">
                   <LinkList
-                    label="Tips"
+                    label={singerDashboardViewCopy.tips}
                     links={[
                       { href: bandProfile.paypalUrl ?? null, text: 'PayPal' },
                       { href: bandProfile.venmoUrl ?? null, text: 'Venmo' },
@@ -199,7 +199,7 @@ export function SingerDashboardView(state: DashboardState) {
           <div className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-2xl shadow-black/10">
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">{singerDashboardViewCopy.nowPlaying}</p>
             <p className="mt-3 text-2xl font-semibold text-white">
-              {currentTrack ? `${currentTrack.artist} — ${currentTrack.title}` : '{singerDashboardViewCopy.pickASong}'}
+              {currentTrack ? `${currentTrack.artist} — ${currentTrack.title}` : singerDashboardViewCopy.pickASong}
             </p>
           </div>
 
@@ -287,7 +287,7 @@ export function SingerDashboardView(state: DashboardState) {
             </div>
           </Panel>
 
-          <Panel title="Live Queue">
+          <Panel title="{singerDashboardViewCopy.liveQueue}">
             {liveQueueItems.length ? (
               <div className="space-y-3">
                 {liveQueueItems.map((item) => (
@@ -305,13 +305,13 @@ export function SingerDashboardView(state: DashboardState) {
                 ))}
               </div>
             ) : (
-              <p className="text-slate-400">No songs in the live queue yet.</p>
+              <p className="text-slate-400">{singerDashboardViewCopy.liveQueueEmpty}</p>
             )}
 
             <details className="mt-5 rounded-2xl border border-white/10 bg-slate-900/40 p-4">
               <summary className="cursor-pointer list-none text-sm font-semibold text-white">
-                History
-                <span className="ml-2 text-xs font-normal text-slate-400">(played and cancelled songs)</span>
+                {singerDashboardViewCopy.historyTitle}
+                <span className="ml-2 text-xs font-normal text-slate-400">{singerDashboardViewCopy.historySubtitle}</span>
               </summary>
               <div className="mt-4 space-y-3">
                 {historyItems.length ? (
@@ -329,7 +329,7 @@ export function SingerDashboardView(state: DashboardState) {
                     </div>
                   ))
                 ) : (
-                  <p className="text-sm text-slate-400">Played and cancelled songs will appear here.</p>
+                  <p className="text-sm text-slate-400">{singerDashboardViewCopy.historyEmpty}</p>
                 )}
               </div>
             </details>

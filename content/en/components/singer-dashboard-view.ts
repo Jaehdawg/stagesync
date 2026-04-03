@@ -1,6 +1,7 @@
 export const singerDashboardViewCopy = {
   title: 'StageSync Singer Page',
   bandProfile: 'Band profile',
+  bandProfileEmpty: 'Band links and tip links will appear here when the band profile is filled out.',
   nowPlaying: 'Now Playing',
   pickASong: 'Pick a song to load lyrics.',
   singerSignUp: 'Singer Sign-up',
@@ -10,4 +11,9 @@ export const singerDashboardViewCopy = {
   website: 'Website',
   social: 'Social',
   tips: 'Tips',
+  liveQueue: 'Live Queue',
+  liveQueueEmpty: 'No songs in the live queue yet.',
+  historyTitle: 'History',
+  historySubtitle: '(played and cancelled songs)',
+  historyEmpty: 'Played and cancelled songs will appear here.',
 } as const
