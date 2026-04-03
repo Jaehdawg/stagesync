@@ -74,15 +74,15 @@ function AccountForm({
           <h2 className="text-2xl font-semibold text-white">{bandCopy.login.editBandAdmin}</h2>
           <form className="mt-6 grid gap-4 rounded-2xl border border-white/10 bg-slate-950/50 p-5 md:grid-cols-2" action="/api/band/account" method="post">
             <div className="space-y-2 md:col-span-2">
-              <label className="text-sm font-medium text-slate-200" htmlFor="band-username">Username</label>
+              <label className="text-sm font-medium text-slate-200" htmlFor="band-username">{bandCopy.accountPage.usernameLabel}</label>
               <input id="band-username" name="username" defaultValue={username} className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
             </div>
             <div className="space-y-2 md:col-span-2">
-              <label className="text-sm font-medium text-slate-200" htmlFor="band-password">Password</label>
+              <label className="text-sm font-medium text-slate-200" htmlFor="band-password">{bandCopy.accountPage.passwordLabel}</label>
               <input id="band-password" name="password" type="password" className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
             </div>
             <div className="md:col-span-2">
-              <button type="submit" className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-medium text-white">Save account</button>
+              <button type="submit" className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-medium text-white">{bandCopy.accountPage.saveAccountButton}</button>
             </div>
           </form>
         </section>
@@ -91,18 +91,18 @@ function AccountForm({
           <h2 className="text-2xl font-semibold text-white">{bandCopy.login.editBandProfile}</h2>
           <form className="mt-6 grid gap-4 rounded-2xl border border-white/10 bg-slate-950/50 p-5 md:grid-cols-2" action="/api/band/profile" method="post">
             <div className="space-y-2 md:col-span-2">
-              <label className="text-sm font-medium text-slate-200" htmlFor="band-name">Band name</label>
+              <label className="text-sm font-medium text-slate-200" htmlFor="band-name">{bandCopy.accountPage.bandNameLabel}</label>
               <input id="band-name" name="bandName" defaultValue={bandName} className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
             </div>
             {[
-              ['logoUrl', 'Logo URL', bandProfile?.logo_url ?? ''],
-              ['websiteUrl', 'Website', bandProfile?.website_url ?? ''],
-              ['facebookUrl', 'Facebook', bandProfile?.facebook_url ?? ''],
-              ['instagramUrl', 'Instagram', bandProfile?.instagram_url ?? ''],
-              ['tiktokUrl', 'TikTok', bandProfile?.tiktok_url ?? ''],
-              ['paypalUrl', 'PayPal', bandProfile?.paypal_url ?? ''],
-              ['venmoUrl', 'Venmo', bandProfile?.venmo_url ?? ''],
-              ['cashappUrl', 'CashApp', bandProfile?.cashapp_url ?? ''],
+              ['logoUrl', bandCopy.accountPage.logoUrlLabel, bandProfile?.logo_url ?? ''],
+              ['websiteUrl', bandCopy.accountPage.websiteUrlLabel, bandProfile?.website_url ?? ''],
+              ['facebookUrl', bandCopy.accountPage.facebookUrlLabel, bandProfile?.facebook_url ?? ''],
+              ['instagramUrl', bandCopy.accountPage.instagramUrlLabel, bandProfile?.instagram_url ?? ''],
+              ['tiktokUrl', bandCopy.accountPage.tiktokUrlLabel, bandProfile?.tiktok_url ?? ''],
+              ['paypalUrl', bandCopy.accountPage.paypalUrlLabel, bandProfile?.paypal_url ?? ''],
+              ['venmoUrl', bandCopy.accountPage.venmoUrlLabel, bandProfile?.venmo_url ?? ''],
+              ['cashappUrl', bandCopy.accountPage.cashappUrlLabel, bandProfile?.cashapp_url ?? ''],
             ].map(([name, label, defaultValue]) => (
               <div key={name} className="space-y-2">
                 <label htmlFor={name} className="text-sm font-medium text-slate-200">{label}</label>
@@ -110,11 +110,11 @@ function AccountForm({
               </div>
             ))}
             <div className="space-y-2 md:col-span-2">
-              <label className="text-sm font-medium text-slate-200" htmlFor="customMessage">Custom message</label>
+              <label className="text-sm font-medium text-slate-200" htmlFor="customMessage">{bandCopy.accountPage.customMessageLabel}</label>
               <textarea id="customMessage" name="customMessage" defaultValue={bandProfile?.custom_message ?? ''} rows={3} className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
             </div>
             <div className="md:col-span-2">
-              <button type="submit" className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-medium text-white">Save band profile</button>
+              <button type="submit" className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-medium text-white">{bandCopy.accountPage.saveBandProfileButton}</button>
             </div>
           </form>
         </section>
@@ -143,7 +143,7 @@ export default async function BandAccountPage() {
   if (testSession?.role === 'band') {
     const current = await getTestLogin(supabase, testSession.username)
     if (current?.band_access_level === 'admin') {
-      return <AccountForm username={current.username} bandName={current.band_name ?? 'Band'} bandProfile={null} />
+      return <AccountForm username={current.username} bandName={current.band_name ?? bandCopy.accountPage.bandFallbackName} bandProfile={null} />
     }
     return <AccessDenied message={bandCopy.login.accessDenied} />
   }

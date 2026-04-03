@@ -15,7 +15,7 @@ export default async function AdminAnalyticsPage() {
             <header className="rounded-3xl border border-white/10 bg-white/5 p-6">
               <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">{adminCopy.platformControl}</p>
               <h1 className="mt-2 text-4xl font-semibold text-white">{adminCopy.analyticsPage.title}</h1>
-              <p className="mt-3 max-w-2xl text-slate-300">Admin access required.</p>
+              <p className="mt-3 max-w-2xl text-slate-300">{adminCopy.login.description}</p>
             </header>
             <BandAccessForm
               role="admin"
@@ -51,12 +51,12 @@ export default async function AdminAnalyticsPage() {
               </p>
             </div>
             <Link href="/admin" className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-white hover:border-cyan-400/50">
-              Back to admin
+              {adminCopy.backToAdmin}
             </Link>
           </div>
           <form className="mt-4" action="/api/auth/logout" method="post">
             <button type="submit" className="rounded-full border border-white/10 px-4 py-2 text-sm font-medium text-white hover:border-cyan-400/50">
-              Log out
+              {adminCopy.logoutLabel}
             </button>
           </form>
         </header>

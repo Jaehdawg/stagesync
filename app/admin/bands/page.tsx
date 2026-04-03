@@ -123,7 +123,7 @@ export default async function AdminBandsPage({
           <form className="mt-6 grid gap-4 rounded-2xl border border-white/10 bg-slate-950/50 p-5 md:grid-cols-2" action="/api/admin/bands" method="post">
             <input type="hidden" name="action" value="create" />
             <div className="space-y-2 md:col-span-2">
-              <label className="text-sm font-medium text-slate-200">{adminCopy.bandsPage.bandNameLabel ?? 'Band name'}</label>
+              <label className="text-sm font-medium text-slate-200">{adminCopy.bandsPage.bandNameLabel}</label>
               <input name="bandName" type="text" className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
             </div>
             <div className="space-y-2">
@@ -142,7 +142,7 @@ export default async function AdminBandsPage({
             </div>
             <div className="space-y-2 md:col-span-2">
               <label className="text-sm font-medium text-slate-200">{adminCopy.bandsPage.existingProfileLabel}</label>
-              <input list="live-profile-list" name="profileLookup" placeholder="search username" className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
+              <input list="live-profile-list" name="profileLookup" placeholder={adminCopy.bandsPage.profileSearchPlaceholder} className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-200">{adminCopy.bandsPage.firstNameLabel}</label>
@@ -226,7 +226,7 @@ export default async function AdminBandsPage({
                         <form className="grid gap-4 rounded-2xl border border-white/10 bg-slate-950/50 p-5" action={`/api/admin/bands/${band.id}`} method="post">
                           <input type="hidden" name="action" value="update" />
                           <div className="space-y-2 md:col-span-2">
-                            <label className="text-sm font-medium text-slate-200">{adminCopy.bandsPage.bandNameLabel ?? 'Band name'}</label>
+                            <label className="text-sm font-medium text-slate-200">{adminCopy.bandsPage.bandNameLabel}</label>
                             <input name="bandName" defaultValue={band.band_name} className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
                           </div>
                           <div className="space-y-2 md:col-span-2">
@@ -286,7 +286,7 @@ export default async function AdminBandsPage({
                             <form action={`/api/admin/bands/${band.id}`} method="post">
                               <input type="hidden" name="action" value="remove-role" />
                               <input type="hidden" name="profileId" value={role.profile_id} />
-                              <button type="submit" className="rounded-full border border-white/10 px-3 py-1 text-xs text-slate-200">Remove</button>
+                              <button type="submit" className="rounded-full border border-white/10 px-3 py-1 text-xs text-slate-200">{adminCopy.bandsPage.remove}</button>
                             </form>
                           </div>
                             )) : <p className="text-sm text-slate-400">{adminCopy.bandsPage.bandMembersEmpty}</p>}
@@ -314,8 +314,8 @@ export default async function AdminBandsPage({
           <div className="mt-6 flex items-center justify-between gap-3 text-sm text-slate-400">
             <p>Page {page} of {Math.max(Math.ceil((liveBandCount ?? 0) / pageSize), 1)}</p>
             <div className="flex gap-2">
-              {page > 1 ? <Link href={`/admin/bands?page=${page - 1}${query ? `&q=${encodeURIComponent(query)}` : ''}`} className="rounded-full border border-white/10 px-4 py-2 text-white">Previous</Link> : null}
-              {(liveBandCount ?? 0) > offset + pageSize ? <Link href={`/admin/bands?page=${page + 1}${query ? `&q=${encodeURIComponent(query)}` : ''}`} className="rounded-full border border-white/10 px-4 py-2 text-white">Next</Link> : null}
+              {page > 1 ? <Link href={`/admin/bands?page=${page - 1}${query ? `&q=${encodeURIComponent(query)}` : ''}`} className="rounded-full border border-white/10 px-4 py-2 text-white">{adminCopy.bandsPage.previous}</Link> : null}
+              {(liveBandCount ?? 0) > offset + pageSize ? <Link href={`/admin/bands?page=${page + 1}${query ? `&q=${encodeURIComponent(query)}` : ''}`} className="rounded-full border border-white/10 px-4 py-2 text-white">{adminCopy.bandsPage.next}</Link> : null}
             </div>
           </div>
         </section>
@@ -330,24 +330,24 @@ export default async function AdminBandsPage({
                   <p className="text-xs uppercase tracking-[0.2em] text-slate-400">{login.username}</p>
                 </div>
                 <div className="flex gap-2">
-                  <AdminRowDialog triggerLabel="Edit" title={`Edit ${login.username}`}>
+                  <AdminRowDialog triggerLabel={adminCopy.bandsPage.edit} title={`Edit ${login.username}`}>
                     <form className="grid gap-4 rounded-2xl border border-white/10 bg-slate-950/50 p-5" action="/api/testing/logins" method="post">
                       <input type="hidden" name="action" value="upsert" />
                       <input type="hidden" name="role" value="band" />
                       <div className="space-y-2">
-                        <label className="text-sm font-medium text-slate-200" htmlFor={`band-username-${login.username}`}>Username</label>
+                        <label className="text-sm font-medium text-slate-200" htmlFor={`band-username-${login.username}`}>{adminCopy.bandsPage.usernameLabel}</label>
                         <input id={`band-username-${login.username}`} name="username" defaultValue={login.username} className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-sm font-medium text-slate-200" htmlFor={`band-password-${login.username}`}>Password</label>
+                        <label className="text-sm font-medium text-slate-200" htmlFor={`band-password-${login.username}`}>{adminCopy.bandsPage.passwordLabel}</label>
                         <input id={`band-password-${login.username}`} name="password" type="password" className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-sm font-medium text-slate-200" htmlFor={`band-name-${login.username}`}>Band name</label>
+                        <label className="text-sm font-medium text-slate-200" htmlFor={`band-name-${login.username}`}>{adminCopy.bandsPage.bandNameLabel}</label>
                         <input id={`band-name-${login.username}`} name="bandName" defaultValue={login.band_name ?? ''} className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
                       </div>
                       <div>
-                        <button type="submit" className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-medium text-white">Save changes</button>
+                        <button type="submit" className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-medium text-white">{adminCopy.bandsPage.saveChanges}</button>
                       </div>
                     </form>
                   </AdminRowDialog>

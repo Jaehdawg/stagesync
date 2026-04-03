@@ -98,12 +98,12 @@ async function getBandState(
     return {
       id: item.id,
       position: item.position ?? index + 1,
-      status: item.status ?? 'Waiting',
+      status: item.status ?? sharedCopy.waitingStatus,
       name:
         performer?.display_name ||
         [performer?.first_name, performer?.last_name].filter(Boolean).join(' ') ||
         sharedCopy.guestSinger,
-      song: song ? `${song.title} - ${song.artist}` : 'Requested song',
+      song: song ? `${song.title} - ${song.artist}` : sharedCopy.requestedSong,
     }
   })
   const liveQueueCount = decoratedQueueItems.filter((item) => !['played', 'cancelled'].includes(item.status)).length

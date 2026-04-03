@@ -14,5 +14,7 @@ export const sharedCopy = {
   unknownArtist: 'Unknown artist',
   unknownSong: 'Unknown song',
   queuedStatus: 'queued',
+  waitingStatus: 'Waiting',
+  requestedSong: 'Requested song',
   noActiveBandSelected: 'No active band selected.',
 } as const

@@ -151,7 +151,7 @@ export default async function AdminUsersPage({
               <select name="role" defaultValue="singer" className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white">
                 <option value="singer">singer</option>
                 <option value="band">band</option>
-                <option value="admin">admin</option>
+                <option value="admin">{adminCopy.usersPage.bandRoleAdmin}</option>
               </select>
             </div>
             <div className="space-y-2 md:col-span-2">
@@ -223,7 +223,7 @@ export default async function AdminUsersPage({
                       <p className="text-sm text-slate-400">@{user.username ?? 'unknown'}</p>
                       <p className="text-xs uppercase tracking-[0.2em] text-slate-400">{user.role ?? 'unknown'}</p>
                       {user.email ? <p className="mt-1 text-sm text-slate-300">{user.email}</p> : null}
-                      {user.active_band_id ? <p className="mt-1 text-xs text-cyan-200">Active band: {bandsById.get(user.active_band_id)?.band_name ?? user.active_band_id}</p> : null}
+                      {user.active_band_id ? <p className="mt-1 text-xs text-cyan-200">{adminCopy.usersPage.activeBand}: {bandsById.get(user.active_band_id)?.band_name ?? user.active_band_id}</p> : null}
                       <div className="mt-3 flex flex-wrap gap-2">
                         {userRoles.map((roleRow) => {
                           const bandName = bandsById.get(roleRow.band_id)?.band_name ?? roleRow.band_id
@@ -236,51 +236,51 @@ export default async function AdminUsersPage({
                       </div>
                     </div>
                     <div className="flex gap-2">
-                      <AdminRowDialog triggerLabel="Edit" title={`Edit ${displayNameForUser(user)}`}>
+                      <AdminRowDialog triggerLabel={adminCopy.usersPage.edit} title={`Edit ${displayNameForUser(user)}`}>
                         <form className="grid gap-4 rounded-2xl border border-white/10 bg-slate-950/50 p-5" action="/api/admin/users" method="post">
                           <input type="hidden" name="action" value="update" />
                           <input type="hidden" name="profileId" value={user.id} />
                           <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-200">Username</label>
+                            <label className="text-sm font-medium text-slate-200">{adminCopy.usersPage.usernameLabel}</label>
                             <input name="username" defaultValue={user.username ?? ''} className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
                           </div>
                           <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-200">Display name</label>
+                            <label className="text-sm font-medium text-slate-200">{adminCopy.usersPage.displayNameLabel}</label>
                             <input name="displayName" defaultValue={user.display_name ?? ''} className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
                           </div>
                           <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-200">First name</label>
+                            <label className="text-sm font-medium text-slate-200">{adminCopy.usersPage.firstNameLabel}</label>
                             <input name="firstName" defaultValue={user.first_name ?? ''} className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
                           </div>
                           <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-200">Last name</label>
+                            <label className="text-sm font-medium text-slate-200">{adminCopy.usersPage.lastNameLabel}</label>
                             <input name="lastName" defaultValue={user.last_name ?? ''} className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
                           </div>
                           <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-200">Email</label>
+                            <label className="text-sm font-medium text-slate-200">{adminCopy.usersPage.emailLabel}</label>
                             <input name="email" defaultValue={user.email ?? ''} className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
                           </div>
                           <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-200">Role</label>
+                            <label className="text-sm font-medium text-slate-200">{adminCopy.usersPage.roleLabel}</label>
                             <select name="role" defaultValue={user.role ?? 'singer'} className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white">
                               <option value="singer">singer</option>
                               <option value="band">band</option>
-                              <option value="admin">admin</option>
+                              <option value="admin">{adminCopy.usersPage.bandRoleAdmin}</option>
                             </select>
                           </div>
                           <div className="space-y-2 md:col-span-2">
-                            <label className="text-sm font-medium text-slate-200">Add band</label>
-                            <input name="bandLookup" list="live-band-list" placeholder="search band" className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white placeholder:text-slate-500" />
+                            <label className="text-sm font-medium text-slate-200">{adminCopy.usersPage.addBand}</label>
+                            <input name="bandLookup" list="live-band-list" placeholder={adminCopy.usersPage.searchPlaceholder} className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white placeholder:text-slate-500" />
                           </div>
                           <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-200">Band role</label>
+                            <label className="text-sm font-medium text-slate-200">{adminCopy.usersPage.bandRoleLabel}</label>
                             <select name="bandRole" className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white">
-                              <option value="member">member</option>
-                              <option value="admin">admin</option>
+                              <option value="member">{adminCopy.usersPage.bandRoleMember}</option>
+                              <option value="admin">{adminCopy.usersPage.bandRoleAdmin}</option>
                             </select>
                           </div>
                           <div>
-                            <button type="submit" className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-medium text-white">Save changes</button>
+                            <button type="submit" className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-medium text-white">{adminCopy.usersPage.saveChanges}</button>
                           </div>
                         </form>
 
@@ -294,7 +294,7 @@ export default async function AdminUsersPage({
                                   <input type="hidden" name="action" value="remove-role" />
                                   <input type="hidden" name="profileId" value={user.id} />
                                   <input type="hidden" name="bandLookup" value={bandsById.get(roleRow.band_id)?.band_name ?? roleRow.band_id} />
-                                  <button type="submit" className="rounded-full border border-white/10 px-3 py-1 text-xs text-slate-200">Remove</button>
+                                  <button type="submit" className="rounded-full border border-white/10 px-3 py-1 text-xs text-slate-200">{adminCopy.usersPage.remove}</button>
                                 </form>
                               </div>
                             )) : <p className="text-sm text-slate-400">{adminCopy.usersPage.noBandMemberships}</p>}
@@ -304,7 +304,7 @@ export default async function AdminUsersPage({
                       <form action="/api/admin/users" method="post">
                         <input type="hidden" name="action" value="delete" />
                         <input type="hidden" name="profileId" value={user.id} />
-                        <button type="submit" className="rounded-full border border-white/10 px-3 py-1 text-xs text-slate-200">Delete</button>
+                        <button type="submit" className="rounded-full border border-white/10 px-3 py-1 text-xs text-slate-200">{adminCopy.usersPage.delete}</button>
                       </form>
                     </div>
                   </div>
@@ -316,8 +316,8 @@ export default async function AdminUsersPage({
           <div className="mt-6 flex items-center justify-between gap-3 text-sm text-slate-400">
             <p>Page {page} of {Math.max(Math.ceil((liveUserCount ?? 0) / pageSize), 1)}</p>
             <div className="flex gap-2">
-              {page > 1 ? <Link href={`/admin/users?page=${page - 1}${query ? `&q=${encodeURIComponent(query)}` : ''}${role !== 'all' ? `&role=${encodeURIComponent(role)}` : ''}`} className="rounded-full border border-white/10 px-4 py-2 text-white">Previous</Link> : null}
-              {(liveUserCount ?? 0) > offset + pageSize ? <Link href={`/admin/users?page=${page + 1}${query ? `&q=${encodeURIComponent(query)}` : ''}${role !== 'all' ? `&role=${encodeURIComponent(role)}` : ''}`} className="rounded-full border border-white/10 px-4 py-2 text-white">Next</Link> : null}
+              {page > 1 ? <Link href={`/admin/users?page=${page - 1}${query ? `&q=${encodeURIComponent(query)}` : ''}${role !== 'all' ? `&role=${encodeURIComponent(role)}` : ''}`} className="rounded-full border border-white/10 px-4 py-2 text-white">{adminCopy.usersPage.previous}</Link> : null}
+              {(liveUserCount ?? 0) > offset + pageSize ? <Link href={`/admin/users?page=${page + 1}${query ? `&q=${encodeURIComponent(query)}` : ''}${role !== 'all' ? `&role=${encodeURIComponent(role)}` : ''}`} className="rounded-full border border-white/10 px-4 py-2 text-white">{adminCopy.usersPage.next}</Link> : null}
             </div>
           </div>
         </section>
@@ -333,19 +333,19 @@ export default async function AdminUsersPage({
                   {login.band_name ? <p className="text-xs text-cyan-200">Band: {login.band_name}</p> : null}
                 </div>
                 <div className="flex gap-2">
-                  <AdminRowDialog triggerLabel="Edit" title={`Edit ${login.username}`}>
+                  <AdminRowDialog triggerLabel={adminCopy.usersPage.edit} title={`Edit ${login.username}`}>
                     <form className="grid gap-4 rounded-2xl border border-white/10 bg-slate-950/50 p-5" action="/api/testing/logins" method="post">
                       <input type="hidden" name="action" value="upsert" />
                       <div className="space-y-2">
-                        <label className="text-sm font-medium text-slate-200" htmlFor={`username-${login.username}`}>Username</label>
+                        <label className="text-sm font-medium text-slate-200" htmlFor={`username-${login.username}`}>{adminCopy.usersPage.usernameLabel}</label>
                         <input id={`username-${login.username}`} name="username" defaultValue={login.username} className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-sm font-medium text-slate-200" htmlFor={`role-${login.username}`}>Role</label>
+                        <label className="text-sm font-medium text-slate-200" htmlFor={`role-${login.username}`}>{adminCopy.usersPage.roleLabel}</label>
                         <select id={`role-${login.username}`} name="role" defaultValue={login.role} className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white">
                           <option value="singer">singer</option>
                           <option value="band">band</option>
-                          <option value="admin">admin</option>
+                          <option value="admin">{adminCopy.usersPage.bandRoleAdmin}</option>
                         </select>
                       </div>
                       <div className="space-y-2">
@@ -353,18 +353,18 @@ export default async function AdminUsersPage({
                         <input id={`password-${login.username}`} name="password" type="password" className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-sm font-medium text-slate-200" htmlFor={`band-${login.username}`}>Band name</label>
+                        <label className="text-sm font-medium text-slate-200" htmlFor={`band-${login.username}`}>{adminCopy.usersPage.bandLabel}</label>
                         <input id={`band-${login.username}`} name="bandName" defaultValue={login.band_name ?? ''} className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
                       </div>
                       <div>
-                        <button type="submit" className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-medium text-white">Save changes</button>
+                        <button type="submit" className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-medium text-white">{adminCopy.usersPage.saveChanges}</button>
                       </div>
                     </form>
                   </AdminRowDialog>
                 <form action="/api/testing/logins" method="post">
                   <input type="hidden" name="action" value="delete" />
                   <input type="hidden" name="username" value={login.username} />
-                  <button type="submit" className="rounded-full border border-white/10 px-3 py-1 text-xs text-slate-200">Delete</button>
+                  <button type="submit" className="rounded-full border border-white/10 px-3 py-1 text-xs text-slate-200">{adminCopy.usersPage.delete}</button>
                 </form>
                 </div>
               </div>
