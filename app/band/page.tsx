@@ -46,8 +46,8 @@ async function getBandState(
   ])
 
   const activeEvents = activeEventsResult.data ?? []
-  const events = activeEvents.length ? activeEvents : (latestEventsResult.data ?? [])
-  const currentShow = events[0]
+  const events = activeEvents
+  const currentShow = events[0] ?? null
   const queueItemsResult = currentShow?.id && bandId
     ? await supabase
         .from('queue_items')
@@ -136,28 +136,28 @@ async function getBandTestState(supabase: Awaited<ReturnType<typeof createClient
   const testBandProfile = await getTestBandProfileByBandId(supabase, activeBandId)
   const currentShow = await getLatestTestShow(supabase, activeBandId)
   const currentSettings = await getLatestTestShowSettings(supabase, activeBandId)
+  const activeTestShow = currentShow?.is_active ? currentShow : null
+
   const state = await getBandState(supabase, activeBandId, testBandProfile ?? undefined)
 
   return {
     ...state,
-    currentShowId: currentShow?.id ?? null,
-    currentShowName: currentShow?.name ?? 'StageSync Show',
-    showState: currentShow?.is_active
-      ? currentShow.allow_signups === false
+    currentShowId: activeTestShow?.id ?? null,
+    currentShowName: activeTestShow?.name ?? null,
+    showState: activeTestShow
+      ? activeTestShow.allow_signups === false
         ? 'paused'
         : 'active'
       : 'ended',
-    signupEnabled: Boolean(currentShow?.is_active && currentShow?.allow_signups),
-    signupStatusMessage: currentShow
-      ? currentShow.is_active
-        ? currentShow.allow_signups === false
-          ? 'Signups are paused by the band.'
-          : 'Signups are open for the test show.'
-        : 'This show has ended and singer signups are closed.'
+    signupEnabled: Boolean(activeTestShow?.is_active && activeTestShow?.allow_signups),
+    signupStatusMessage: activeTestShow
+      ? activeTestShow.allow_signups === false
+        ? 'Signups are paused by the band.'
+        : 'Signups are open for the test show.'
       : 'No show exists yet. Create one to begin.',
-    showDurationMinutes: currentSettings?.show_duration_minutes ?? 60,
-    signupBufferMinutes: currentSettings?.signup_buffer_minutes ?? 1,
-    songSourceMode: currentSettings?.song_source_mode === 'tidal_playlist' ? 'tidal_playlist' : 'uploaded',
+    showDurationMinutes: activeTestShow ? (currentSettings?.show_duration_minutes ?? 60) : 60,
+    signupBufferMinutes: activeTestShow ? (currentSettings?.signup_buffer_minutes ?? 1) : 1,
+    songSourceMode: activeTestShow && currentSettings?.song_source_mode === 'tidal_playlist' ? 'tidal_playlist' : 'uploaded',
   }
 }
 
