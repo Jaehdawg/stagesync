@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { NextRequest } from 'next/server'
 
 const getTestSessionMock = vi.fn()
+const getRequestAdminAccessMock = vi.fn()
 const createUserMock = vi.fn()
 const profileUpsertMock = vi.fn()
 const bandUpsertMock = vi.fn()
@@ -60,12 +61,17 @@ vi.mock('../../../../utils/supabase/service', () => ({
   createServiceClient: createServiceClientMock,
 }))
 
+vi.mock('../../../../lib/admin-access', () => ({
+  getRequestAdminAccess: getRequestAdminAccessMock,
+}))
+
 async function loadRoute() {
   return await import('./route')
 }
 
 beforeEach(() => {
   getTestSessionMock.mockReset()
+  getRequestAdminAccessMock.mockReset()
   createUserMock.mockReset()
   profileUpsertMock.mockReset()
   profilesSelectMaybeSingleMock.mockReset()
@@ -74,6 +80,7 @@ beforeEach(() => {
   profileDeleteMock.mockReset()
   authDeleteUserMock.mockReset()
   createServiceClientMock.mockClear()
+  getRequestAdminAccessMock.mockResolvedValue({ source: 'live', username: 'stagesync-admin', userId: 'admin-1' })
 })
 
 describe('admin users route', () => {
