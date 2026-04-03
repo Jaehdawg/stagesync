@@ -490,6 +490,7 @@ export function BandDashboardView({
                     alt={bandDashboardViewCopy.signupLink.qrAlt}
                     width={96}
                     height={96}
+                    unoptimized
                     className="h-24 w-24 rounded-xl border border-white/10 bg-white p-2"
                   />
                   <p className="text-sm text-slate-300">
