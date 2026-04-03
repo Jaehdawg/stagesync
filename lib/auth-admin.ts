@@ -14,6 +14,7 @@ type SupabaseAuthAdmin = {
     id: string,
     input: {
       password?: string
+      email?: string
       email_confirm?: boolean
       user_metadata?: Record<string, unknown>
     }
@@ -87,6 +88,7 @@ export async function createOrReuseAuthUser(
 
     const updated = await supabase.auth.admin.updateUserById(existing.id, {
       password: input.password,
+      email: input.email,
       email_confirm: true,
       user_metadata: input.user_metadata,
     })

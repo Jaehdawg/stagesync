@@ -162,62 +162,88 @@ export function BandDashboardView({
                     </form>
                   ))}
                 </div>
-                {testMode && currentShowId ? (
-                  <>
-                    <form className="mt-6 space-y-4 rounded-2xl border border-white/10 bg-white/5 p-4" action="/api/testing/show" method="post">
-                      <input type="hidden" name="action" value="settings" />
-                      <input type="hidden" name="eventId" value={currentShowId} />
-                      <h3 className="text-lg font-semibold text-white">Show settings</h3>
-                      <div className="grid gap-4 sm:grid-cols-2">
-                        <div className="space-y-2">
-                          <label htmlFor="show-duration" className="text-sm font-medium text-slate-200">
-                            Show duration (minutes)
-                          </label>
-                          <input
-                            id="show-duration"
-                            name="showDurationMinutes"
-                            type="number"
-                            min={0}
-                            defaultValue={showDurationMinutes ?? 60}
-                            className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <label htmlFor="signup-buffer" className="text-sm font-medium text-slate-200">
-                            Buffer between songs (minutes)
-                          </label>
-                          <input
-                            id="signup-buffer"
-                            name="signupBufferMinutes"
-                            type="number"
-                            min={0}
-                            defaultValue={signupBufferMinutes ?? 1}
-                            className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none"
-                          />
-                        </div>
-                        <div className="space-y-2 sm:col-span-2">
-                          <label htmlFor="song-source-mode" className="text-sm font-medium text-slate-200">
-                            Song source
-                          </label>
-                          <select
-                            id="song-source-mode"
-                            name="songSourceMode"
-                            defaultValue={songSourceMode}
-                            className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white focus:border-cyan-400 focus:outline-none"
-                          >
-                            <option value="uploaded">Uploaded song list</option>
-                            <option value="tidal_playlist">Tidal playlist</option>
-                          </select>
-                        </div>
+                {currentShowId ? (
+                  <form
+                    className="mt-6 space-y-4 rounded-2xl border border-white/10 bg-white/5 p-4"
+                    action={testMode ? '/api/testing/show' : '/api/shows'}
+                    method="post"
+                  >
+                    <input type="hidden" name="action" value="settings" />
+                    <input type="hidden" name="eventId" value={currentShowId} />
+                    <h3 className="text-lg font-semibold text-white">Show settings</h3>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div className="space-y-2 sm:col-span-2">
+                        <label htmlFor="show-name" className="text-sm font-medium text-slate-200">
+                          Show name
+                        </label>
+                        <input
+                          id="show-name"
+                          name="name"
+                          type="text"
+                          defaultValue={currentShowName ?? 'StageSync Live'}
+                          className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none"
+                        />
                       </div>
-                      <button
-                        type="submit"
-                        className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-medium text-white"
-                      >
-                        Save settings
-                      </button>
-                    </form>
-                  </>
+                      <div className="space-y-2 sm:col-span-2">
+                        <label htmlFor="show-description" className="text-sm font-medium text-slate-200">
+                          Description
+                        </label>
+                        <input
+                          id="show-description"
+                          name="description"
+                          type="text"
+                          defaultValue="Live karaoke show"
+                          className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label htmlFor="show-duration" className="text-sm font-medium text-slate-200">
+                          Show duration (minutes)
+                        </label>
+                        <input
+                          id="show-duration"
+                          name="showDurationMinutes"
+                          type="number"
+                          min={0}
+                          defaultValue={showDurationMinutes ?? 60}
+                          className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label htmlFor="signup-buffer" className="text-sm font-medium text-slate-200">
+                          Buffer between songs (minutes)
+                        </label>
+                        <input
+                          id="signup-buffer"
+                          name="signupBufferMinutes"
+                          type="number"
+                          min={0}
+                          defaultValue={signupBufferMinutes ?? 1}
+                          className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none"
+                        />
+                      </div>
+                      <div className="space-y-2 sm:col-span-2">
+                        <label htmlFor="song-source-mode" className="text-sm font-medium text-slate-200">
+                          Song source
+                        </label>
+                        <select
+                          id="song-source-mode"
+                          name="songSourceMode"
+                          defaultValue={songSourceMode}
+                          className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white focus:border-cyan-400 focus:outline-none"
+                        >
+                          <option value="uploaded">Uploaded song list</option>
+                          <option value="tidal_playlist">Tidal playlist</option>
+                        </select>
+                      </div>
+                    </div>
+                    <button
+                      type="submit"
+                      className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-medium text-white"
+                    >
+                      Save settings
+                    </button>
+                  </form>
                 ) : null}
                 <div className="mt-4 flex flex-wrap gap-3">
                   <a href="/band/songs" className="rounded-full border border-white/10 px-4 py-2 text-sm font-medium text-white hover:border-cyan-400/50">

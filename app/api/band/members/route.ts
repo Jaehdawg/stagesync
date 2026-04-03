@@ -31,6 +31,10 @@ function usernameToEmail(username: string) {
   return `${username.toLowerCase().replace(/[^a-z0-9._-]+/g, '') || 'band-member'}@stagesync.local`
 }
 
+function normalizeBandRole(value: FormDataEntryValue | null) {
+  return String(value ?? '').trim() === 'admin' ? 'admin' : 'member'
+}
+
 export async function POST(request: NextRequest) {
   const testSession = await getTestSession()
   const testSupabase = getSupabase(request)
@@ -96,43 +100,60 @@ export async function POST(request: NextRequest) {
   }
 
   const activeBandId = liveAccess.bandId
+  const profileId = String(formData.get('profileId') ?? '').trim()
   const username = String(formData.get('username') ?? '').trim().toLowerCase()
   const password = String(formData.get('password') ?? '')
+  const bandRole = normalizeBandRole(formData.get('bandRole'))
 
   try {
     if (action === 'delete') {
-      const profileId = String(formData.get('profileId') ?? '').trim()
-      if (profileId) {
-        await serviceSupabase.from('band_roles').delete().eq('band_id', activeBandId).eq('profile_id', profileId)
-        await serviceSupabase.from('band_memberships').delete().eq('band_id', activeBandId).eq('member_key', profileId)
-        await serviceSupabase.from('profiles').delete().eq('id', profileId)
-        await serviceSupabase.auth.admin.deleteUser(profileId)
+      const targetProfileId = profileId || username
+      if (!targetProfileId) {
+        return NextResponse.json({ message: 'Profile ID is required.' }, { status: 400 })
       }
+
+      await serviceSupabase.from('band_roles').delete().eq('band_id', activeBandId).eq('profile_id', targetProfileId)
+      await serviceSupabase.from('band_memberships').delete().eq('band_id', activeBandId).eq('member_key', targetProfileId)
+      await serviceSupabase.from('profiles').delete().eq('id', targetProfileId)
+      await serviceSupabase.auth.admin.deleteUser(targetProfileId)
       return NextResponse.redirect(new URL('/band/members', request.url))
     }
 
-    if (action !== 'upsert') {
-      return NextResponse.json({ message: 'Unknown action.' }, { status: 400 })
+    if (!username) {
+      return NextResponse.json({ message: 'Username is required.' }, { status: 400 })
     }
 
-    if (!username || !password) {
-      return NextResponse.json({ message: 'Username and password are required.' }, { status: 400 })
-    }
+    let targetProfileId = profileId
 
-    const { user: authUser, created } = await createOrReuseAuthUser(serviceSupabase, {
-      email: usernameToEmail(username),
-      password,
-      user_metadata: { first_name: username, last_name: '', role: 'band' },
-    })
+    if (targetProfileId) {
+      const authUpdate: { password?: string; email?: string; email_confirm?: boolean; user_metadata?: Record<string, unknown> } = {
+        email: usernameToEmail(username),
+        email_confirm: true,
+        user_metadata: { username, role: 'band' },
+      }
+      if (password) {
+        authUpdate.password = password
+      }
+      const { error: authError } = await serviceSupabase.auth.admin.updateUserById(targetProfileId, authUpdate)
+      if (authError) {
+        return NextResponse.json({ message: authError.message }, { status: 500 })
+      }
+    } else {
+      if (!password) {
+        return NextResponse.json({ message: 'Password is required for new members.' }, { status: 400 })
+      }
 
-    const profileId = authUser.id
-    if (!created) {
-      await serviceSupabase.auth.admin.updateUserById(profileId, { password, user_metadata: { username } })
+      const { user: authUser } = await createOrReuseAuthUser(serviceSupabase, {
+        email: usernameToEmail(username),
+        password,
+        user_metadata: { username, role: 'band' },
+      })
+      targetProfileId = authUser.id
     }
 
     const { error: profileError } = await serviceSupabase.from('profiles').upsert(
       {
-        id: profileId,
+        id: targetProfileId,
         email: usernameToEmail(username),
         username,
         display_name: username,
@@ -149,13 +170,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: profileError.message }, { status: 500 })
     }
 
-    await upsertBandRole(serviceSupabase, activeBandId, profileId, 'member', true)
+    await upsertBandRole(serviceSupabase, activeBandId, targetProfileId, bandRole, true)
     await serviceSupabase.from('band_memberships').upsert(
       {
         band_id: activeBandId,
         member_type: 'profile',
-        member_key: profileId,
-        band_access_level: 'member',
+        member_key: targetProfileId,
+        band_access_level: bandRole,
         active: true,
       },
       { onConflict: 'band_id,member_type,member_key' }

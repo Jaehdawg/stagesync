@@ -1,14 +1,33 @@
+import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { createServiceClient } from '@/utils/supabase/service'
-import { isBandAdminRequest } from '@/lib/band-auth'
 import { getTestSession } from '@/lib/test-session'
 import { slugifySongId } from '@/lib/song-library'
+import { getLiveBandAccessContext } from '@/lib/band-access'
+
+function getSupabase(request: NextRequest) {
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll()
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) => {
+            request.cookies.set(name, value)
+          })
+        },
+      },
+    }
+  )
+}
 
 export async function POST(request: NextRequest) {
-  if (!(await isBandAdminRequest(request))) {
-    return NextResponse.json({ message: 'Band access required.' }, { status: 401 })
-  }
-
+  const testSession = await getTestSession()
+  const authSupabase = getSupabase(request)
+  const serviceSupabase = createServiceClient()
   const formData = await request.formData()
   const title = String(formData.get('title') ?? '').trim()
   const artist = String(formData.get('artist') ?? '').trim()
@@ -19,13 +38,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: 'Song title and artist are required.' }, { status: 400 })
   }
 
-  const testSession = await getTestSession()
-  const bandId = testSession?.activeBandId ?? null
+  const bandId =
+    testSession?.role === 'band' || testSession?.role === 'admin'
+      ? testSession.activeBandId ?? null
+      : (await getLiveBandAccessContext(authSupabase, serviceSupabase, { requireAdmin: true }))?.bandId ?? null
+
   if (!bandId) {
     return NextResponse.json({ message: 'No active band selected.' }, { status: 400 })
   }
 
-  const serviceSupabase = createServiceClient()
   const { error } = await serviceSupabase.from('songs').upsert(
     {
       id: slugifySongId(title, artist),

@@ -35,7 +35,10 @@ async function getBandState(
     ? await getBandProfileForBandId(supabase, bandId)
     : (await supabase.from('band_profiles').select('band_name, website_url, facebook_url, instagram_url, tiktok_url, paypal_url, venmo_url, cashapp_url, custom_message').limit(1).maybeSingle()).data ?? null
 
-  const [eventsResult, queueItemsResult] = await Promise.all([
+  const [activeEventsResult, latestEventsResult, queueItemsResult] = await Promise.all([
+    bandId
+      ? supabase.from('events').select('id, name, band_id, is_active, allow_signups').eq('band_id', bandId).eq('is_active', true).order('created_at', { ascending: false }).limit(1)
+      : Promise.resolve({ data: [] as { id: string; name: string | null; band_id: string | null; is_active: boolean | null; allow_signups: boolean | null }[] }),
     bandId
       ? supabase.from('events').select('id, name, band_id, is_active, allow_signups').eq('band_id', bandId).order('created_at', { ascending: false }).limit(1)
       : supabase.from('events').select('id, name, band_id, is_active, allow_signups').order('created_at', { ascending: false }).limit(1),
@@ -53,7 +56,8 @@ async function getBandState(
           .limit(6),
   ])
 
-  const events = eventsResult.data ?? []
+  const activeEvents = activeEventsResult.data ?? []
+  const events = activeEvents.length ? activeEvents : (latestEventsResult.data ?? [])
   const queueItems = queueItemsResult.data ?? []
   const currentShow = events[0]
   const currentSettings = currentShow?.id
@@ -117,6 +121,7 @@ async function getBandState(
           ? 'Signups are paused by the band.'
           : 'This show has ended and singer signups are closed.',
     currentShowId: currentShow?.id ?? null,
+    currentShowName: currentShow?.name ?? null,
     showState,
     showDurationMinutes,
     signupBufferMinutes,

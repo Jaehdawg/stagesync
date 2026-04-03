@@ -1,24 +1,43 @@
+import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { createServiceClient } from '@/utils/supabase/service'
-import { isBandAdminRequest } from '@/lib/band-auth'
 import { getTestSession } from '@/lib/test-session'
+import { getLiveBandAccessContext } from '@/lib/band-access'
+
+function getSupabase(request: NextRequest) {
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll()
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) => {
+            request.cookies.set(name, value)
+          })
+        },
+      },
+    }
+  )
+}
 
 export async function POST(request: NextRequest, context: { params: Promise<{ id: string }> }) {
-  if (!(await isBandAdminRequest(request))) {
-    return NextResponse.json({ message: 'Band access required.' }, { status: 401 })
-  }
-
+  const testSession = await getTestSession()
+  const authSupabase = getSupabase(request)
+  const serviceSupabase = createServiceClient()
   const { id } = await context.params
   const formData = await request.formData()
   const action = String(formData.get('action') ?? 'update')
-  const testSession = await getTestSession()
-  const bandId = testSession?.activeBandId ?? null
+  const bandId =
+    testSession?.role === 'band' || testSession?.role === 'admin'
+      ? testSession.activeBandId ?? null
+      : (await getLiveBandAccessContext(authSupabase, serviceSupabase, { requireAdmin: true }))?.bandId ?? null
 
   if (!bandId) {
     return NextResponse.json({ message: 'No active band selected.' }, { status: 400 })
   }
-
-  const serviceSupabase = createServiceClient()
 
   if (action === 'delete') {
     const { error } = await serviceSupabase.from('songs').update({ archived_at: new Date().toISOString() }).eq('id', id).eq('band_id', bandId)

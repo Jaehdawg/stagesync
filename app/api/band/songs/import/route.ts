@@ -1,6 +1,6 @@
+import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { createServiceClient } from '@/utils/supabase/service'
-import { isBandAdminRequest } from '@/lib/band-auth'
 import { getTestSession } from '@/lib/test-session'
 import {
   buildGoogleSheetExportUrl,
@@ -10,6 +10,26 @@ import {
   type SongImportRecord,
 } from '@/lib/song-library'
 import { createTidalPlaylistImportJob, queueTidalPlaylistImport } from '@/lib/song-import-jobs'
+import { getLiveBandAccessContext } from '@/lib/band-access'
+
+function getSupabase(request: NextRequest) {
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll()
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) => {
+            request.cookies.set(name, value)
+          })
+        },
+      },
+    }
+  )
+}
 
 async function readImportSongs(formData: FormData): Promise<SongImportRecord[]> {
   const importType = String(formData.get('importType') ?? '').trim()
@@ -40,16 +60,19 @@ async function readImportSongs(formData: FormData): Promise<SongImportRecord[]> 
 }
 
 export async function POST(request: NextRequest) {
-  if (!(await isBandAdminRequest(request))) {
-    return NextResponse.json({ message: 'Band access required.' }, { status: 401 })
-  }
-
   const testSession = await getTestSession()
-  if (!testSession?.activeBandId) {
+  const authSupabase = getSupabase(request)
+  const serviceSupabase = createServiceClient()
+  const formData = await request.formData()
+
+  const bandId =
+    testSession?.role === 'band' || testSession?.role === 'admin'
+      ? testSession.activeBandId ?? null
+      : (await getLiveBandAccessContext(authSupabase, serviceSupabase, { requireAdmin: true }))?.bandId ?? null
+
+  if (!bandId) {
     return NextResponse.json({ message: 'No active band selected.' }, { status: 400 })
   }
-
-  const formData = await request.formData()
 
   let songs: SongImportRecord[] = []
   try {
@@ -65,10 +88,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'Playlist URL is required.' }, { status: 400 })
     }
 
-    const job = await createTidalPlaylistImportJob(testSession.activeBandId, playlistUrl)
+    const job = await createTidalPlaylistImportJob(bandId, playlistUrl)
     queueTidalPlaylistImport({
       id: job.id,
-      band_id: testSession.activeBandId,
+      band_id: bandId,
       source_type: 'tidal_playlist',
       source_url: playlistUrl,
       source_ref: job.sourceRef,
@@ -81,12 +104,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: 'No valid songs found in the import.' }, { status: 400 })
   }
 
-  const serviceSupabase = createServiceClient()
   const uniqueSongs = dedupeSongImportRecords(songs)
   const { error } = await serviceSupabase.from('songs').upsert(
     uniqueSongs.map((song) => ({
       ...song,
-      band_id: testSession.activeBandId,
+      band_id: bandId,
       archived_at: null,
     })),
     { onConflict: 'band_id,id' }
