@@ -50,9 +50,11 @@ export default async function SingerPage({
         .select('id, band_id, name, is_active, allow_signups')
         .eq('band_id', band.id)
         .eq('is_active', true)
-        .maybeSingle()
+        .order('created_at', { ascending: false })
+        .limit(1)
 
-  const showId = requestedShowId || activeShowResult?.data?.id || ''
+  const activeShow = activeShowResult?.data?.[0] ?? null
+  const showId = requestedShowId || activeShow?.id || ''
 
   if (!showId) {
     const bandProfile = await getBandProfileForBandId(serviceSupabase, band.id)
@@ -203,7 +205,7 @@ export default async function SingerPage({
       liveQueueItems={liveQueueItems}
       historyItems={historyItems}
       lyricsTrack={liveQueueItems[0] ? { artist: liveQueueItems[0].artist, title: liveQueueItems[0].title } : currentSingerRequest ? { artist: currentSingerRequest.artist, title: currentSingerRequest.title } : null}
-      currentShowName={currentShow?.name ?? 'StageSync Show'}
+      currentShowName={currentShow?.name ?? activeShow?.name ?? 'StageSync Show'}
     />
   )
 }

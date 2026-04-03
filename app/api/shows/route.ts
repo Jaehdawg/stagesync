@@ -132,6 +132,12 @@ export async function POST(request: NextRequest) {
   }
 
   if (action === 'create') {
+    await serviceSupabase
+      .from('events')
+      .update({ is_active: false, allow_signups: false, ended_at: new Date().toISOString() })
+      .eq('band_id', liveAccess.bandId)
+      .eq('is_active', true)
+
     const { data: event, error } = await serviceSupabase
       .from('events')
       .insert({
