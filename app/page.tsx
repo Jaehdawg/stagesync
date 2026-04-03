@@ -66,9 +66,9 @@ export default async function Home({
     <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100 sm:px-6 lg:px-8">
       {auth ? (
         <div className="mx-auto mb-6 max-w-5xl rounded-2xl border border-cyan-400/20 bg-cyan-400/10 px-4 py-3 text-center text-sm text-cyan-100">
-          {auth === 'success' ? 'Magic link confirmed. You’re signed in.' : null}
-          {auth === 'missing-code' ? 'Missing auth code in the callback URL.' : null}
-          {auth === 'error' ? `Sign-in issue: ${message ?? 'Unable to complete the login.'}` : null}
+          {auth === 'success' ? homeCopy.authAlerts.success : null}
+          {auth === 'missing-code' ? homeCopy.authAlerts.missingCode : null}
+          {auth === 'error' ? `${homeCopy.authAlerts.errorPrefix} ${message ?? homeCopy.authAlerts.errorFallback}` : null}
         </div>
       ) : null}
 

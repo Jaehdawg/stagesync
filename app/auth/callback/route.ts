@@ -2,6 +2,7 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { buildHomeUrl } from '@/lib/auth'
 import { getRoleHomePath } from '@/lib/roles'
+import { homeCopy } from '@/content/en/home'
 
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get('code')
@@ -9,7 +10,7 @@ export async function GET(request: NextRequest) {
   const requestedRole = request.nextUrl.searchParams.get('role')
 
   if (!code) {
-    return NextResponse.redirect(buildHomeUrl(baseUrl, 'missing-code', 'Missing auth code'))
+    return NextResponse.redirect(buildHomeUrl(baseUrl, 'missing-code', homeCopy.authAlerts.missingCode))
   }
 
   const response = NextResponse.redirect(buildHomeUrl(baseUrl, 'success'))

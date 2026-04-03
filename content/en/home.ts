@@ -12,4 +12,10 @@ export const homeCopy = {
   primaryCta: 'Learn more',
   secondaryCta: 'Band portal',
   footerNote: 'Need a singer sign-up link? Your band can generate one from the band dashboard.',
+  authAlerts: {
+    success: 'Magic link confirmed. You’re signed in.',
+    missingCode: 'Missing auth code in the callback URL.',
+    errorPrefix: 'Sign-in issue:',
+    errorFallback: 'Unable to complete the login.',
+  },
 } as const

@@ -3,6 +3,7 @@ import { createClient } from '@/utils/supabase/server'
 import { BandAccessForm } from '@/components/band-access-form'
 import { getAdminAccess } from '@/lib/admin-access'
 import { adminCopy } from '@/content/en/admin'
+import { sharedCopy } from '@/content/en/shared'
 
 export default async function AdminPage() {
   const supabase = await createClient()
@@ -16,7 +17,7 @@ export default async function AdminPage() {
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">{adminCopy.platformControl}</p>
             <h1 className="mt-2 text-4xl font-semibold text-white">{adminCopy.dashboardTitle}</h1>
             <p className="mt-3 max-w-2xl text-slate-300">
-              Logged in as <span className="font-semibold">{liveAdminAccess?.username}</span>.
+              {sharedCopy.loggedInAs} <span className="font-semibold">{liveAdminAccess?.username}</span>.
             </p>
             <form className="mt-4" action="/api/auth/logout" method="post">
               <button type="submit" className="rounded-full border border-white/10 px-4 py-2 text-sm font-medium text-white hover:border-cyan-400/50">
