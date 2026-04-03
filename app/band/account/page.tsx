@@ -17,7 +17,7 @@ function LoginCard({ title, description }: { title: string; description: string 
           <h1 className="mt-2 text-4xl font-semibold text-white">{title}</h1>
           <p className="mt-3 max-w-2xl text-slate-300">{description}</p>
         </header>
-        <BandAccessForm role="band" title="{bandCopy.login.editBandAdmin}" description="{bandCopy.login.bandAdminDescription}" submitLabel="{bandCopy.login.submitLabel}" successMessage="{bandCopy.login.bandAdminSuccess}" />
+        <BandAccessForm role="band" title={bandCopy.login.editBandAdmin} description={bandCopy.login.bandAdminDescription} submitLabel={bandCopy.login.submitLabel} successMessage={bandCopy.login.bandAdminSuccess} />
       </div>
     </main>
   )
@@ -145,8 +145,8 @@ export default async function BandAccountPage() {
     if (current?.band_access_level === 'admin') {
       return <AccountForm username={current.username} bandName={current.band_name ?? 'Band'} bandProfile={null} />
     }
-    return <AccessDenied message="{bandCopy.login.accessDenied}" />
+    return <AccessDenied message={bandCopy.login.accessDenied} />
   }
 
-  return <LoginCard title="{bandCopy.login.accountTitle}" description="{bandCopy.login.editBandAdmin} required." />
+  return <LoginCard title={bandCopy.login.accountTitle} description={`${bandCopy.login.editBandAdmin} required.`} />
 }

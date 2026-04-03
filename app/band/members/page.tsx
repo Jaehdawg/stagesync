@@ -19,7 +19,7 @@ function LoginCard({ title, description }: { title: string; description: string 
           <h1 className="mt-2 text-4xl font-semibold text-white">{title}</h1>
           <p className="mt-3 max-w-2xl text-slate-300">{description}</p>
         </header>
-        <BandAccessForm role="band" title="Band login" description="Use your band username and password to access show controls." submitLabel="Sign in" successMessage="Band login successful." />
+        <BandAccessForm role="band" title={bandCopy.login.title} description={bandCopy.login.description} submitLabel={bandCopy.login.submitLabel} successMessage={bandCopy.login.successMessage} />
       </div>
     </main>
   )
@@ -221,12 +221,12 @@ export default async function BandMembersPage() {
       return <LiveMembersPage bandName={liveAccess.bandName} members={members} currentUserId={liveAccess.userId} />
     }
 
-    return <AccessDenied message="{bandCopy.login.accessDenied}" />
+    return <AccessDenied message={bandCopy.login.accessDenied} />
   }
 
   const liveAccess = await getLiveBandAccessContext(supabase, serviceSupabase, { requireAdmin: true })
   if (!liveAccess) {
-    return <LoginCard title="{bandCopy.login.membersTitle}" description="{bandCopy.login.loginRequired}" />
+    return <LoginCard title={bandCopy.login.membersTitle} description={bandCopy.login.loginRequired} />
   }
 
   const roles = await listBandRolesWithProfilesForBandId(serviceSupabase, liveAccess.bandId)
