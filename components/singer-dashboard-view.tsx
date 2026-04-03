@@ -88,6 +88,7 @@ function LinkList({ label, links }: { label: string; links: Array<{ href?: strin
 
 export function SingerDashboardView(state: DashboardState) {
   const [currentRequest, setCurrentRequest] = useState<Track | null>(state.currentRequest ?? null)
+  const [authMode, setAuthMode] = useState<'signup' | 'login'>('signup')
   const [liveQueueItems, setLiveQueueItems] = useState<QueueEntry[]>(state.liveQueueItems ?? [])
   const [historyItems, setHistoryItems] = useState<QueueEntry[]>(state.historyItems ?? [])
   const [lyricsTrack, setLyricsTrack] = useState<Track | null>(state.lyricsTrack ?? null)
@@ -190,13 +191,32 @@ export function SingerDashboardView(state: DashboardState) {
 
           <Panel title="Singer Sign-up">
             <div className="space-y-4">
+              <div className="flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  onClick={() => setAuthMode('signup')}
+                  className={authMode === 'signup' ? 'rounded-full bg-cyan-400 px-4 py-2 text-sm font-semibold text-slate-950' : 'rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white'}
+                >
+                  Sign-up
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAuthMode('login')}
+                  className={authMode === 'login' ? 'rounded-full bg-cyan-400 px-4 py-2 text-sm font-semibold text-slate-950' : 'rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white'}
+                >
+                  Singer Login
+                </button>
+              </div>
+
               {state.singerName ? (
                 <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
                   <h3 className="text-lg font-semibold text-white">Singer details</h3>
                   <p className="mt-3 text-2xl font-semibold text-white">{state.singerName}</p>
                 </div>
+              ) : authMode === 'signup' ? (
+                <SingerRegistrationForm mode="signup" disabled={!state.signupEnabled} statusMessage={state.signupStatusMessage} />
               ) : (
-                <SingerRegistrationForm disabled={!state.signupEnabled} statusMessage={state.signupStatusMessage} />
+                <SingerRegistrationForm mode="login" />
               )}
 
               {currentRequest ? (
@@ -222,7 +242,7 @@ export function SingerDashboardView(state: DashboardState) {
                     ])
                   }}
                 />
-              ) : (
+              ) : authMode === 'signup' ? (
                 <TidalSearchPanel
                   disabled={!state.signupEnabled}
                   statusMessage={state.signupStatusMessage}
@@ -247,7 +267,7 @@ export function SingerDashboardView(state: DashboardState) {
                     ])
                   }}
                 />
-              )}
+              ) : null}
             </div>
           </Panel>
 

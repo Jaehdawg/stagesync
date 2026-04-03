@@ -55,7 +55,8 @@ describe('Singer dashboard', () => {
     await waitFor(() => expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining('/api/songs/search?bandId=')))
 
     expect(screen.getByRole('heading', { name: /neon echo/i })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: /singer sign-up/i })).toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: /sign-up/i }).length).toBeGreaterThanOrEqual(2)
+    expect(screen.getByRole('button', { name: /singer login/i })).toBeInTheDocument()
     expect(screen.getByText(/band profile/i)).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: /pick a song/i })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: /live queue/i })).toBeInTheDocument()
