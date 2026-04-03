@@ -330,7 +330,7 @@ export default async function AdminUsersPage({
                 <div>
                   <h2 className="text-xl font-semibold text-white">{login.username}</h2>
                   <p className="text-xs uppercase tracking-[0.2em] text-slate-400">{login.role}</p>
-                  {login.band_name ? <p className="text-xs text-cyan-200">Band: {login.band_name}</p> : null}
+                  {login.band_name ? <p className="text-xs text-cyan-200">{adminCopy.usersPage.bandLabel}: {login.band_name}</p> : null}
                 </div>
                 <div className="flex gap-2">
                   <AdminRowDialog triggerLabel={adminCopy.usersPage.edit} title={`Edit ${login.username}`}>
@@ -349,7 +349,7 @@ export default async function AdminUsersPage({
                         </select>
                       </div>
                       <div className="space-y-2">
-                        <label className="text-sm font-medium text-slate-200" htmlFor={`password-${login.username}`}>Password</label>
+                        <label className="text-sm font-medium text-slate-200" htmlFor={`password-${login.username}`}>{adminCopy.usersPage.passwordLabel}</label>
                         <input id={`password-${login.username}`} name="password" type="password" className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
                       </div>
                       <div className="space-y-2">
