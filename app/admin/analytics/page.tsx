@@ -76,7 +76,7 @@ export default async function AdminAnalyticsPage() {
         </section>
 
         <section className="rounded-3xl border border-white/10 bg-white/5 p-6">
-          <h2 className="text-2xl font-semibold text-white">Recent shows</h2>
+          <h2 className="text-2xl font-semibold text-white">{adminCopy.analyticsPage.recentShowsTitle}</h2>
           <div className="mt-4 space-y-3">
             {(recentShows ?? []).map((show) => (
               <div key={show.id} className="rounded-2xl border border-white/10 bg-slate-950/50 p-4">
