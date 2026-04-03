@@ -71,15 +71,15 @@ export function BandDashboardView({
   const controls =
     showState === 'active'
       ? [
-          { label: '{bandDashboardViewCopy.operations.pauseSignups}', value: 'pause' },
-          { label: '{bandDashboardViewCopy.operations.endShow}', value: 'end' },
+          { label: bandDashboardViewCopy.operations.pauseSignups, value: 'pause' },
+          { label: bandDashboardViewCopy.operations.endShow, value: 'end' },
         ]
       : showState === 'paused'
         ? [
-            { label: '{bandDashboardViewCopy.operations.resumeSignups}', value: 'resume' },
-            { label: '{bandDashboardViewCopy.operations.endShow}', value: 'end' },
+            { label: bandDashboardViewCopy.operations.resumeSignups, value: 'resume' },
+            { label: bandDashboardViewCopy.operations.endShow, value: 'end' },
           ]
-        : [{ label: '{bandDashboardViewCopy.operations.startShow}', value: 'start' }]
+        : [{ label: bandDashboardViewCopy.operations.startShow, value: 'start' }]
 
   return (
     <main className="space-y-8">
@@ -260,7 +260,7 @@ export function BandDashboardView({
           </Panel>
           ) : null}
 
-          <Panel title="{bandDashboardViewCopy.queue.title}" eyebrow="{bandDashboardViewCopy.queue.eyebrow}">
+          <Panel title={bandDashboardViewCopy.queue.title} eyebrow={bandDashboardViewCopy.queue.eyebrow}>
             {liveQueueItems.length ? (
               <div className="space-y-3">
                 {liveQueueItems.map((item) => (
@@ -276,10 +276,10 @@ export function BandDashboardView({
                       </span>
                     </div>
                     <div className="mt-4 flex flex-wrap gap-2 text-xs font-medium text-slate-200">
-                      <QueueActionButtons queueItemId={item.id} action="played" label="{bandDashboardViewCopy.queue.played}" />
-                      <QueueActionButtons queueItemId={item.id} action="remove" label="{bandDashboardViewCopy.queue.remove}" />
-                      <QueueActionButtons queueItemId={item.id} action="up" label="{bandDashboardViewCopy.queue.moveUp}" />
-                      <QueueActionButtons queueItemId={item.id} action="down" label="{bandDashboardViewCopy.queue.moveDown}" />
+                      <QueueActionButtons queueItemId={item.id} action="played" label={bandDashboardViewCopy.queue.played} />
+                      <QueueActionButtons queueItemId={item.id} action="remove" label={bandDashboardViewCopy.queue.remove} />
+                      <QueueActionButtons queueItemId={item.id} action="up" label={bandDashboardViewCopy.queue.moveUp} />
+                      <QueueActionButtons queueItemId={item.id} action="down" label={bandDashboardViewCopy.queue.moveDown} />
                     </div>
                   </div>
                 ))}
@@ -311,7 +311,7 @@ export function BandDashboardView({
                     </div>
                   ))
                 ) : (
-                  <p className="text-sm text-slate-400">{bandDashboardViewCopy.queue.played} and cancelled songs will appear here.</p>
+                  <p className="text-sm text-slate-400">{bandDashboardViewCopy.queue.historyEmpty}</p>
                 )}
               </div>
             </details>
@@ -320,7 +320,7 @@ export function BandDashboardView({
 
         {canManageShow ? (
         <div className="grid gap-8">
-          <Panel title="{bandDashboardViewCopy.signupLink.title}" eyebrow="{bandDashboardViewCopy.signupLink.eyebrow}">
+          <Panel title={bandDashboardViewCopy.signupLink.title} eyebrow={bandDashboardViewCopy.signupLink.eyebrow}>
             {singerSignupUrl ? (
               <div className="space-y-4">
                 <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
@@ -335,7 +335,7 @@ export function BandDashboardView({
                 <div className="flex items-center gap-4 rounded-2xl border border-white/10 bg-slate-900/60 p-4">
                   <img
                     src={buildQrCodeImageUrl(singerSignupUrl)}
-                    alt="{bandDashboardViewCopy.signupLink.qrAlt}"
+                    alt={bandDashboardViewCopy.signupLink.qrAlt}
                     className="h-24 w-24 rounded-xl border border-white/10 bg-white p-2"
                   />
                   <p className="text-sm text-slate-300">

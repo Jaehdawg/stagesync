@@ -287,7 +287,7 @@ export function SingerDashboardView(state: DashboardState) {
             </div>
           </Panel>
 
-          <Panel title="{singerDashboardViewCopy.liveQueue}">
+          <Panel title={singerDashboardViewCopy.liveQueue}>
             {liveQueueItems.length ? (
               <div className="space-y-3">
                 {liveQueueItems.map((item) => (
