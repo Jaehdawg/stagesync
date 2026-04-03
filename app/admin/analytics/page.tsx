@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { createClient } from '@/utils/supabase/server'
 import { BandAccessForm } from '@/components/band-access-form'
 import { getAdminAccess } from '@/lib/admin-access'
+import { adminCopy } from '@/content/en/admin'
 
 export default async function AdminAnalyticsPage() {
   const supabase = await createClient()
@@ -12,16 +13,16 @@ export default async function AdminAnalyticsPage() {
         <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100 sm:px-6 lg:px-8">
           <div className="mx-auto grid w-full max-w-5xl gap-6 lg:grid-cols-[1fr_0.9fr]">
             <header className="rounded-3xl border border-white/10 bg-white/5 p-6">
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">Platform control</p>
-              <h1 className="mt-2 text-4xl font-semibold text-white">System analytics</h1>
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">{adminCopy.platformControl}</p>
+              <h1 className="mt-2 text-4xl font-semibold text-white">{adminCopy.analyticsPage.title}</h1>
               <p className="mt-3 max-w-2xl text-slate-300">Admin access required.</p>
             </header>
             <BandAccessForm
               role="admin"
-              title="Admin login"
-              description="Use your admin username and password to access system controls."
-              submitLabel="Sign in"
-              successMessage="Admin login successful."
+              title={adminCopy.login.title}
+              description={adminCopy.login.description}
+              submitLabel={adminCopy.login.submitLabel}
+              successMessage={adminCopy.login.successMessage}
               endpoint="/api/auth/login"
             />
           </div>
@@ -43,10 +44,10 @@ export default async function AdminAnalyticsPage() {
         <header className="rounded-3xl border border-white/10 bg-white/5 p-6">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">Platform control</p>
-              <h1 className="mt-2 text-4xl font-semibold text-white">System analytics</h1>
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">{adminCopy.platformControl}</p>
+              <h1 className="mt-2 text-4xl font-semibold text-white">{adminCopy.analyticsPage.title}</h1>
               <p className="mt-3 max-w-2xl text-slate-300">
-                Visibility into shows, singers, and track utilization.
+                {adminCopy.analyticsPage.description}
               </p>
             </div>
             <Link href="/admin" className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-white hover:border-cyan-400/50">

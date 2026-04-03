@@ -4,6 +4,7 @@ import { createServiceClient } from '@/utils/supabase/service'
 import { BandAccessForm } from '@/components/band-access-form'
 import { AdminRowDialog } from '@/components/admin-row-dialog'
 import { getAdminAccess } from '@/lib/admin-access'
+import { adminCopy } from '@/content/en/admin'
 import { listTestLogins } from '@/lib/test-login-list'
 import { listBandRolesForProfileId } from '@/lib/band-roles'
 
@@ -36,16 +37,16 @@ export default async function AdminUsersPage({
       <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100 sm:px-6 lg:px-8">
         <div className="mx-auto grid w-full max-w-5xl gap-6 lg:grid-cols-[1fr_0.9fr]">
           <header className="rounded-3xl border border-white/10 bg-white/5 p-6">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">Platform control</p>
-            <h1 className="mt-2 text-4xl font-semibold text-white">User management</h1>
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">{adminCopy.platformControl}</p>
+            <h1 className="mt-2 text-4xl font-semibold text-white">{adminCopy.usersPage.title}</h1>
             <p className="mt-3 max-w-2xl text-slate-300">Admin access required.</p>
           </header>
           <BandAccessForm
             role="admin"
-            title="Admin login"
-            description="Use your admin username and password to access system controls."
-            submitLabel="Sign in"
-            successMessage="Admin login successful."
+            title={adminCopy.login.title}
+            description={adminCopy.login.description}
+            submitLabel={adminCopy.login.submitLabel}
+            successMessage={adminCopy.login.successMessage}
             endpoint="/api/auth/login"
           />
         </div>
@@ -98,9 +99,9 @@ export default async function AdminUsersPage({
         <header className="rounded-3xl border border-white/10 bg-white/5 p-6">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">Platform control</p>
-              <h1 className="mt-2 text-4xl font-semibold text-white">User management</h1>
-              <p className="mt-3 max-w-2xl text-slate-300">Search users, filter by role, page through the full dataset, and manage band assignments.</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">{adminCopy.platformControl}</p>
+              <h1 className="mt-2 text-4xl font-semibold text-white">{adminCopy.usersPage.title}</h1>
+              <p className="mt-3 max-w-2xl text-slate-300">{adminCopy.usersPage.description}</p>
             </div>
             <Link href="/admin" className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-white hover:border-cyan-400/50">
               Back to admin
@@ -116,14 +117,14 @@ export default async function AdminUsersPage({
         <section className="rounded-3xl border border-white/10 bg-white/5 p-6">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <h2 className="text-2xl font-semibold text-white">Live users</h2>
-              <p className="mt-2 text-sm text-slate-300">Create singers, band admins, and band members. Search is full-dataset.</p>
+              <h2 className="text-2xl font-semibold text-white">{adminCopy.usersPage.liveTitle}</h2>
+              <p className="mt-2 text-sm text-slate-300">{adminCopy.usersPage.liveDescription}</p>
             </div>
             <form method="get" className="flex flex-wrap items-center gap-3">
               <input
                 name="q"
                 defaultValue={query}
-                placeholder="Search users"
+                placeholder={adminCopy.usersPage.searchPlaceholder}
                 className="rounded-xl border border-white/10 bg-slate-950/70 px-4 py-2 text-sm text-white placeholder:text-slate-500"
               />
               <select name="role" defaultValue={role} className="rounded-xl border border-white/10 bg-slate-950/70 px-4 py-2 text-sm text-white">
@@ -132,7 +133,7 @@ export default async function AdminUsersPage({
                 <option value="band">Band members</option>
                 <option value="admin">Admins</option>
               </select>
-              <button type="submit" className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white">Search</button>
+              <button type="submit" className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white">{adminCopy.usersPage.searchButton}</button>
             </form>
           </div>
 
