@@ -1,4 +1,7 @@
+'use client'
+
 import type { ReactNode } from 'react'
+import { useEffect, useState } from 'react'
 import { SingerRegistrationForm } from './singer-registration-form'
 import { TidalSearchPanel } from './tidal-search-panel'
 import { SingerCurrentRequestCard } from './singer-current-request-card'
@@ -12,6 +15,11 @@ type QueueEntry = {
   title: string
   singerName?: string | null
   status: string
+}
+
+type Track = {
+  artist: string
+  title: string
 }
 
 type BandProfile = {
@@ -39,10 +47,10 @@ type DashboardState = {
   singerName?: string | null
   bandId?: string | null
   showId?: string | null
-  currentRequest?: { artist: string; title: string } | null
+  currentRequest?: Track | null
   liveQueueItems?: QueueEntry[]
   historyItems?: QueueEntry[]
-  lyricsTrack?: { artist: string; title: string } | null
+  lyricsTrack?: Track | null
   currentShowName?: string | null
 }
 
@@ -79,6 +87,18 @@ function LinkList({ label, links }: { label: string; links: Array<{ href?: strin
 }
 
 export function SingerDashboardView(state: DashboardState) {
+  const [currentRequest, setCurrentRequest] = useState<Track | null>(state.currentRequest ?? null)
+  const [liveQueueItems, setLiveQueueItems] = useState<QueueEntry[]>(state.liveQueueItems ?? [])
+  const [historyItems, setHistoryItems] = useState<QueueEntry[]>(state.historyItems ?? [])
+  const [lyricsTrack, setLyricsTrack] = useState<Track | null>(state.lyricsTrack ?? null)
+
+  useEffect(() => {
+    setCurrentRequest(state.currentRequest ?? null)
+    setLiveQueueItems(state.liveQueueItems ?? [])
+    setHistoryItems(state.historyItems ?? [])
+    setLyricsTrack(state.lyricsTrack ?? null)
+  }, [state.currentRequest, state.liveQueueItems, state.historyItems, state.lyricsTrack])
+
   const bandProfile = state.bandProfile ?? {
     bandName: state.brand?.title ?? 'StageSync',
     websiteUrl: state.bandLinks?.find((link) => link.label === 'Website')?.href ?? null,
@@ -91,9 +111,7 @@ export function SingerDashboardView(state: DashboardState) {
     customMessage: state.customMessage ?? null,
   }
   const songSourceMode = state.songSourceMode === 'tidal_playlist' ? 'tidal_playlist' : 'uploaded'
-  const liveQueueItems = state.liveQueueItems ?? []
-  const historyItems = state.historyItems ?? []
-  const currentTrack = state.currentRequest ?? state.lyricsTrack ?? liveQueueItems[0] ?? null
+  const currentTrack = currentRequest ?? lyricsTrack ?? liveQueueItems[0] ?? null
 
   return (
     <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100 sm:px-6 lg:px-8">
@@ -154,12 +172,28 @@ export function SingerDashboardView(state: DashboardState) {
                 <SingerRegistrationForm disabled={!state.signupEnabled} statusMessage={state.signupStatusMessage} />
               )}
 
-              {state.currentRequest ? (
+              {currentRequest ? (
                 <SingerCurrentRequestCard
                   bandId={state.bandId ?? ''}
                   showId={state.showId ?? ''}
                   artist={currentTrack.artist}
                   title={currentTrack.title}
+                  onCancelled={() => {
+                    setCurrentRequest(null)
+                    setLyricsTrack(null)
+                    setLiveQueueItems((items) => items.filter((item) => item.artist !== currentTrack.artist || item.title !== currentTrack.title))
+                    setHistoryItems((items) => [
+                      {
+                        id: `cancelled-${Date.now()}`,
+                        position: 0,
+                        artist: currentTrack.artist,
+                        title: currentTrack.title,
+                        singerName: state.singerName ?? null,
+                        status: 'cancelled',
+                      },
+                      ...items,
+                    ])
+                  }}
                 />
               ) : (
                 <TidalSearchPanel
@@ -169,6 +203,22 @@ export function SingerDashboardView(state: DashboardState) {
                   playlistUrl={state.tidalPlaylistUrl ?? null}
                   bandId={state.bandId ?? ''}
                   showId={state.showId ?? ''}
+                  onQueued={(track) => {
+                    const queued = { artist: track.artist, title: track.title }
+                    setCurrentRequest(queued)
+                    setLyricsTrack(queued)
+                    setLiveQueueItems((items) => [
+                      {
+                        id: `queued-${Date.now()}`,
+                        position: items.length + 1,
+                        artist: track.artist,
+                        title: track.title,
+                        singerName: state.singerName ?? null,
+                        status: 'queued',
+                      },
+                      ...items,
+                    ])
+                  }}
                 />
               )}
             </div>

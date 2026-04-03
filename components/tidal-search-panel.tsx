@@ -16,9 +16,10 @@ type TidalSearchPanelProps = {
   playlistUrl?: string | null
   bandId: string
   showId: string
+  onQueued?: (track: TidalTrack) => void
 }
 
-export function TidalSearchPanel({ disabled = false, statusMessage, sourceMode = 'uploaded', playlistUrl = null, bandId, showId }: TidalSearchPanelProps) {
+export function TidalSearchPanel({ disabled = false, statusMessage, sourceMode = 'uploaded', playlistUrl = null, bandId, showId, onQueued }: TidalSearchPanelProps) {
   const [query, setQuery] = useState('')
   const [tracks, setTracks] = useState<TidalTrack[]>([])
   const [loading, setLoading] = useState(false)
@@ -51,7 +52,7 @@ export function TidalSearchPanel({ disabled = false, statusMessage, sourceMode =
       }
 
       setMessage(payload.message ?? `Queued ${track.title}.`)
-      window.location.reload()
+      onQueued?.(track)
     } catch (fetchError) {
       setError(fetchError instanceof Error ? fetchError.message : 'Unable to add song request.')
     } finally {

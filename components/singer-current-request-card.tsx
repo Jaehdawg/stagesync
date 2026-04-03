@@ -1,16 +1,16 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 
 type SingerCurrentRequestCardProps = {
   bandId: string
   showId: string
   artist: string
   title: string
+  onCancelled?: () => void
 }
 
-export function SingerCurrentRequestCard({ bandId, showId, artist, title }: SingerCurrentRequestCardProps) {
+export function SingerCurrentRequestCard({ bandId, showId, artist, title, onCancelled }: SingerCurrentRequestCardProps) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -29,7 +29,7 @@ export function SingerCurrentRequestCard({ bandId, showId, artist, title }: Sing
         throw new Error(payload.message ?? 'Unable to cancel song.')
       }
       setOpen(false)
-      window.location.reload()
+      onCancelled?.()
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Unable to cancel song.')
     } finally {
