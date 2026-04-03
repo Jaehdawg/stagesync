@@ -26,6 +26,7 @@ export type BandDashboardState = {
   bandAccessLevel?: 'admin' | 'member'
   testMode?: boolean
   singerSignupUrl?: string | null
+  setLists?: { id: string; name: string; description?: string | null; notes?: string | null; is_active?: boolean | null }[]
 }
 
 function Panel({
@@ -65,6 +66,7 @@ export function BandDashboardView({
   bandAccessLevel = 'admin',
   testMode = false,
   singerSignupUrl = null,
+  setLists = [],
 }: BandDashboardState) {
   const canManageShow = bandAccessLevel !== 'member'
   const liveQueueItems = queueItems.filter((item) => !['played', 'cancelled'].includes(item.status))
@@ -348,8 +350,50 @@ export function BandDashboardView({
 
         <div className="grid gap-8">
           <Panel title={bandSetListsCopy.title} eyebrow={bandSetListsCopy.eyebrow}>
-            {bandSetListsCopy.activeOnlyNote ? <p className="text-sm text-slate-400">{bandSetListsCopy.activeOnlyNote}</p> : null}
-            {([] as { id: string; name: string; is_active?: boolean | null }[]).length ? null : <p className="mt-4 text-sm text-slate-400">{bandSetListsCopy.empty}</p>}
+            <p className="text-sm text-slate-400">{bandSetListsCopy.activeOnlyNote}</p>
+            {setLists.length ? (
+              <div className="mt-4 space-y-3">
+                {setLists.map((setList) => (
+                  <div key={setList.id} className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-base font-semibold text-white">{setList.name}</h3>
+                          <span className={`rounded-full px-3 py-1 text-xs font-semibold ${setList.is_active ? 'bg-emerald-400/15 text-emerald-300' : 'bg-white/10 text-slate-300'}`}>
+                            {setList.is_active ? bandSetListsCopy.activeBadge : bandSetListsCopy.inactiveBadge}
+                          </span>
+                        </div>
+                        {setList.description ? <p className="mt-2 text-sm text-slate-300">{setList.description}</p> : null}
+                        {setList.notes ? <p className="mt-2 text-xs text-slate-400">{setList.notes}</p> : null}
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {setList.is_active ? (
+                          <form action={`/api/band/set-lists/${setList.id}`} method="post">
+                            <input type="hidden" name="action" value="deactivate" />
+                            <button type="submit" className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-medium text-white">{bandSetListsCopy.deactivate}</button>
+                          </form>
+                        ) : (
+                          <form action={`/api/band/set-lists/${setList.id}`} method="post">
+                            <input type="hidden" name="action" value="activate" />
+                            <button type="submit" className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-medium text-white">{bandSetListsCopy.activate}</button>
+                          </form>
+                        )}
+                        <form action={`/api/band/set-lists/${setList.id}`} method="post">
+                          <input type="hidden" name="action" value="copy" />
+                          <button type="submit" className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-medium text-white">{bandSetListsCopy.copy}</button>
+                        </form>
+                        <form action={`/api/band/set-lists/${setList.id}`} method="post" onSubmit={(event) => { if (!window.confirm(bandSetListsCopy.confirmDeleteTitle)) { event.preventDefault() } }}>
+                          <input type="hidden" name="action" value="delete" />
+                          <button type="submit" className="rounded-xl border border-red-400/30 bg-red-500/10 px-3 py-2 text-xs font-medium text-red-200">{bandSetListsCopy.delete}</button>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="mt-4 text-sm text-slate-400">{bandSetListsCopy.empty}</p>
+            )}
           </Panel>
 
           <Panel title={bandDashboardViewCopy.signupLink.title} eyebrow={bandDashboardViewCopy.signupLink.eyebrow}>
