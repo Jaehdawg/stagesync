@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import Image from 'next/image'
 import { buildQrCodeImageUrl } from '../lib/public-links'
+import { AdminRowDialog } from './admin-row-dialog'
 import { QueueActionButtons } from './queue-action-buttons'
 import { bandDashboardViewCopy } from '@/content/en/components/band-dashboard-view'
 import { bandSetListsCopy } from '@/content/en/components/band-set-lists'
@@ -27,7 +28,7 @@ export type BandDashboardState = {
   bandAccessLevel?: 'admin' | 'member'
   testMode?: boolean
   singerSignupUrl?: string | null
-  setLists?: { id: string; name: string; description?: string | null; notes?: string | null; is_active?: boolean | null }[]
+  setLists?: { id: string; name: string; description?: string | null; notes?: string | null; is_active?: boolean | null; songIds?: string[] }[]
 }
 
 function Panel({
@@ -397,8 +398,36 @@ export function BandDashboardView({
                         </div>
                         {setList.description ? <p className="mt-2 text-sm text-slate-300">{setList.description}</p> : null}
                         {setList.notes ? <p className="mt-2 text-xs text-slate-400">{setList.notes}</p> : null}
+                        <p className="mt-2 text-xs text-slate-400">
+                          {setList.songIds?.length ? bandSetListsCopy.songCountLabel(setList.songIds.length) : bandSetListsCopy.emptySongs}
+                        </p>
                       </div>
                       <div className="flex flex-wrap gap-2">
+                        <AdminRowDialog triggerLabel={bandSetListsCopy.editButton} title={`${bandSetListsCopy.editButton} ${setList.name}`}>
+                          <form className="grid gap-4 rounded-2xl border border-white/10 bg-slate-950/50 p-5" action={`/api/band/set-lists/${setList.id}`} method="post">
+                            <input type="hidden" name="action" value="update" />
+                            <div className="space-y-2 md:col-span-2">
+                              <label className="text-sm font-medium text-slate-200" htmlFor={`set-list-name-${setList.id}`}>{bandSetListsCopy.nameLabel}</label>
+                              <input id={`set-list-name-${setList.id}`} name="name" defaultValue={setList.name} className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
+                            </div>
+                            <div className="space-y-2 md:col-span-2">
+                              <label className="text-sm font-medium text-slate-200" htmlFor={`set-list-description-${setList.id}`}>{bandSetListsCopy.descriptionLabel}</label>
+                              <input id={`set-list-description-${setList.id}`} name="description" defaultValue={setList.description ?? ''} className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
+                            </div>
+                            <div className="space-y-2 md:col-span-2">
+                              <label className="text-sm font-medium text-slate-200" htmlFor={`set-list-notes-${setList.id}`}>{bandSetListsCopy.notesLabel}</label>
+                              <input id={`set-list-notes-${setList.id}`} name="notes" defaultValue={setList.notes ?? ''} className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
+                            </div>
+                            <div className="space-y-2 md:col-span-2">
+                              <label className="text-sm font-medium text-slate-200" htmlFor={`set-list-song-ids-${setList.id}`}>{bandSetListsCopy.songsLabel}</label>
+                              <textarea id={`set-list-song-ids-${setList.id}`} name="songIds" rows={4} defaultValue={(setList.songIds ?? []).join(', ')} className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none" />
+                              <p className="text-xs text-slate-400">{bandSetListsCopy.songsHelper}</p>
+                            </div>
+                            <div className="md:col-span-2 flex justify-end">
+                              <button type="submit" className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-medium text-white">{bandSetListsCopy.saveButton}</button>
+                            </div>
+                          </form>
+                        </AdminRowDialog>
                         {setList.is_active ? (
                           <form action={`/api/band/set-lists/${setList.id}`} method="post">
                             <input type="hidden" name="action" value="deactivate" />
@@ -414,7 +443,7 @@ export function BandDashboardView({
                           <input type="hidden" name="action" value="copy" />
                           <button type="submit" className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-medium text-white">{bandSetListsCopy.copy}</button>
                         </form>
-                        <form action={`/api/band/set-lists/${setList.id}`} method="post" onSubmit={(event) => { if (!window.confirm(bandSetListsCopy.confirmDeleteTitle)) { event.preventDefault() } }}>
+                        <form action={`/api/band/set-lists/${setList.id}`} method="post" onSubmit={(event) => { if (!window.confirm(`${bandSetListsCopy.confirmDeleteTitle}\n\n${setList.name}\n\n${bandSetListsCopy.confirmDeleteBody}`)) { event.preventDefault() } }}>
                           <input type="hidden" name="action" value="delete" />
                           <button type="submit" className="rounded-xl border border-red-400/30 bg-red-500/10 px-3 py-2 text-xs font-medium text-red-200">{bandSetListsCopy.delete}</button>
                         </form>

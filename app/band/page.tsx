@@ -10,7 +10,7 @@ import { getTestBandProfileByBandId } from '@/lib/test-band-profile'
 import { getTestLogin } from '@/lib/test-login-list'
 import { getBandProfileForBandId } from '@/lib/band-tenancy'
 import { getLiveBandAccessContext } from '@/lib/band-access'
-import { listBandSetLists } from '@/lib/set-lists'
+import { getBandSetListSongs, listBandSetLists } from '@/lib/set-lists'
 import { listBandRolesForProfileId } from '@/lib/band-roles'
 import { AutoRefresh } from '@/components/auto-refresh'
 import { headers } from 'next/headers'
@@ -131,6 +131,23 @@ async function getBandState(
   })
 }
 
+async function getBandSetListsWithSongs(bandId?: string | null) {
+  if (!bandId) return [] as Array<{ id: string; name: string; description?: string | null; notes?: string | null; is_active?: boolean | null; songIds: string[] }>
+
+  const setLists = await listBandSetLists(bandId)
+  const withSongs = await Promise.all(
+    setLists.map(async (setList) => {
+      const songs = await getBandSetListSongs(bandId, setList.id)
+      return {
+        ...setList,
+        songIds: songs.map((song) => song.song_id),
+      }
+    })
+  )
+
+  return withSongs
+}
+
 async function getBandTestState(supabase: Awaited<ReturnType<typeof createClient>>): Promise<BandDashboardState> {
   const testSession = await getTestSession()
   const activeBandId = testSession?.activeBandId ?? null
@@ -187,7 +204,7 @@ export default async function BandPage() {
       const liveAccess = await getLiveBandAccessContext(supabase, serviceSupabase, { requireAdmin: false })
       if (liveAccess) {
         const state = await getBandState(serviceSupabase, liveBandId)
-        const setLists = await listBandSetLists(liveBandId)
+        const setLists = await getBandSetListsWithSongs(liveBandId)
         const singerSignupUrl = buildSingerSignupUrl(appUrl, slugifyBandName(state.brand.title))
 
         return (
@@ -226,7 +243,7 @@ export default async function BandPage() {
     const state = await getBandTestState(serviceSupabase)
     const currentBandLogin = await getTestLogin(serviceSupabase, testSession.username)
     const isBandAdmin = currentBandLogin?.band_access_level !== 'member'
-    const setLists = testSession?.activeBandId ? await listBandSetLists(testSession.activeBandId) : []
+    const setLists = await getBandSetListsWithSongs(testSession?.activeBandId)
     const singerSignupUrl = buildSingerSignupUrl(appUrl, slugifyBandName(state.brand.title))
 
     return (
@@ -326,7 +343,7 @@ export default async function BandPage() {
   }
 
   const state = await getBandState(serviceSupabase, testSession?.activeBandId ?? liveBandId)
-  const setLists = testSession?.activeBandId || liveBandId ? await listBandSetLists((testSession?.activeBandId ?? liveBandId) as string) : []
+  const setLists = await getBandSetListsWithSongs(testSession?.activeBandId ?? liveBandId)
   const singerSignupUrl = buildSingerSignupUrl(appUrl, slugifyBandName(state.brand.title))
 
   return (

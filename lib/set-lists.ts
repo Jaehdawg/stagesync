@@ -223,7 +223,7 @@ export async function replaceBandSetListSongs(bandIdInput: unknown, setListIdInp
   if (!setListId) throw new Error('set_list_id is required.')
 
   const supabase = createServiceClient()
-  const normalizedSongIds = songIds.map((songId) => normalizeId(songId)).filter((songId): songId is string => Boolean(songId))
+  const normalizedSongIds = Array.from(new Set(songIds.map((songId) => normalizeId(songId)).filter((songId): songId is string => Boolean(songId))))
 
   const { error: deleteError } = await supabase.from('band_set_list_songs').delete().eq('band_id', bandId).eq('set_list_id', setListId)
   if (deleteError) throw new Error(deleteError.message)

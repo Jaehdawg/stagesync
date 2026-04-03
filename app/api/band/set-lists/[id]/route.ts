@@ -57,7 +57,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
   const description = String(formData.get('description') ?? '').trim() || null
   const notes = String(formData.get('notes') ?? '').trim() || null
   const songIds = String(formData.get('songIds') ?? '')
-    .split(',')
+    .split(/[\n,]/)
     .map((value) => value.trim())
     .filter(Boolean)
 
