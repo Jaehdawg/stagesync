@@ -31,7 +31,7 @@ export type DashboardSource = {
   showState?: 'active' | 'paused' | 'ended'
   showDurationMinutes?: number | null
   signupBufferMinutes?: number | null
-  songSourceMode?: 'uploaded' | 'tidal_playlist' | 'set_list'
+  songSourceMode?: 'uploaded' | 'tidal_playlist' | 'tidal_catalog' | 'set_list'
   singerName?: string | null
   bandId?: string | null
   showId?: string | null
@@ -56,7 +56,7 @@ export type DashboardState = {
   showState: 'active' | 'paused' | 'ended'
   showDurationMinutes?: number | null
   signupBufferMinutes?: number | null
-  songSourceMode?: 'uploaded' | 'tidal_playlist' | 'set_list'
+  songSourceMode?: 'uploaded' | 'tidal_playlist' | 'tidal_catalog' | 'set_list'
   singerName?: string | null
   bandId?: string | null
   showId?: string | null

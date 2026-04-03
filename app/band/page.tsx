@@ -175,7 +175,7 @@ async function getBandTestState(supabase: Awaited<ReturnType<typeof createClient
       : 'No show exists yet. Create one to begin.',
     showDurationMinutes: activeTestShow ? (currentSettings?.show_duration_minutes ?? 60) : 60,
     signupBufferMinutes: activeTestShow ? (currentSettings?.signup_buffer_minutes ?? 1) : 1,
-    songSourceMode: activeTestShow && currentSettings?.song_source_mode === 'tidal_playlist' ? 'tidal_playlist' : 'uploaded',
+    songSourceMode: activeTestShow ? (currentSettings?.song_source_mode ?? 'uploaded') : 'uploaded',
   }
 }
 

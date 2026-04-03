@@ -29,6 +29,10 @@ const state = {
   showState: 'active' as const,
   signupStatusMessage: 'Signups are open.',
   singerSignupUrl: 'https://stagesync.example/?band=neon-echo&show=show-1',
+  setLists: [
+    { id: 'set-1', name: 'Friday Set', is_active: true, songIds: ['song-1', 'song-2'] },
+    { id: 'set-2', name: 'Backup Set', is_active: false, songIds: [] },
+  ],
 }
 
 afterEach(() => {
@@ -67,7 +71,9 @@ describe('BandDashboardView', () => {
     expect(screen.getByRole('button', { name: /save settings/i })).toBeInTheDocument()
     expect(screen.getByLabelText(/show duration/i)).toHaveValue(90)
     expect(screen.getByLabelText(/buffer between songs/i)).toHaveValue(2)
-    expect(screen.queryByLabelText(/tidal playlist url/i)).not.toBeInTheDocument()
+    expect(screen.getByRole('option', { name: /tidal catalog/i })).toBeInTheDocument()
+    expect(screen.getByRole('option', { name: /set list/i })).toBeInTheDocument()
+    expect(screen.getByText(/active set list/i)).toBeInTheDocument()
   })
 
   it('wires queue actions to the queue item id', () => {

@@ -24,7 +24,7 @@ function getSupabase(request: NextRequest) {
 }
 
 function normalizeSongSourceMode(value: string) {
-  return value === 'set_list' || value === 'tidal_playlist' ? value : 'uploaded'
+  return value === 'set_list' || value === 'tidal_playlist' || value === 'tidal_catalog' ? value : 'uploaded'
 }
 
 export async function POST(request: NextRequest) {

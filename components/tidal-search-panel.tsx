@@ -13,7 +13,7 @@ type TidalTrack = {
 type TidalSearchPanelProps = {
   disabled?: boolean
   statusMessage?: string
-  sourceMode?: 'uploaded' | 'tidal_playlist'
+  sourceMode?: 'uploaded' | 'tidal_playlist' | 'tidal_catalog'
   playlistUrl?: string | null
   bandId: string
   showId: string

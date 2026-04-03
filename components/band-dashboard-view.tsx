@@ -3,8 +3,8 @@ import Image from 'next/image'
 import { buildQrCodeImageUrl } from '../lib/public-links'
 import { AdminRowDialog } from './admin-row-dialog'
 import { QueueActionButtons } from './queue-action-buttons'
-import { bandDashboardViewCopy } from '@/content/en/components/band-dashboard-view'
-import { bandSetListsCopy } from '@/content/en/components/band-set-lists'
+import { bandDashboardViewCopy } from '../content/en/components/band-dashboard-view'
+import { bandSetListsCopy } from '../content/en/components/band-set-lists'
 
 export type BandDashboardState = {
   brand: {
@@ -24,7 +24,7 @@ export type BandDashboardState = {
   signupEnabled?: boolean
   showDurationMinutes?: number | null
   signupBufferMinutes?: number | null
-  songSourceMode?: 'uploaded' | 'tidal_playlist' | 'set_list'
+  songSourceMode?: 'uploaded' | 'tidal_playlist' | 'tidal_catalog' | 'set_list'
   bandAccessLevel?: 'admin' | 'member'
   testMode?: boolean
   singerSignupUrl?: string | null
@@ -71,6 +71,13 @@ export function BandDashboardView({
   setLists = [],
 }: BandDashboardState) {
   const canManageShow = bandAccessLevel !== 'member'
+  const activeSetList = setLists.find((setList) => setList.is_active) ?? null
+  const songSourceSelection =
+    songSourceMode === 'set_list' && activeSetList
+      ? 'set_list'
+      : songSourceMode === 'tidal_catalog' || songSourceMode === 'tidal_playlist'
+        ? 'tidal_catalog'
+        : 'uploaded'
   const liveQueueItems = queueItems.filter((item) => !['played', 'cancelled'].includes(item.status))
   const historyItems = queueItems.filter((item) => ['played', 'cancelled'].includes(item.status))
   const controls =
@@ -264,17 +271,25 @@ export function BandDashboardView({
                       </div>
                       <div className="space-y-2 sm:col-span-2">
                         <label htmlFor="song-source-mode" className="text-sm font-medium text-slate-200">
-{bandDashboardViewCopy.operations.songSourceLabel}
+                          {bandDashboardViewCopy.operations.songSourceLabel}
                         </label>
                         <select
                           id="song-source-mode"
                           name="songSourceMode"
-                          defaultValue={songSourceMode}
+                          defaultValue={songSourceSelection}
                           className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white focus:border-cyan-400 focus:outline-none"
                         >
                           <option value="uploaded">{bandDashboardViewCopy.operations.uploadedSongList}</option>
-                          <option value="tidal_playlist">{bandDashboardViewCopy.operations.tidalPlaylist}</option>
+                          <option value="tidal_catalog">{bandDashboardViewCopy.operations.tidalCatalog}</option>
+                          {activeSetList ? <option value="set_list">{bandDashboardViewCopy.operations.setList}</option> : null}
                         </select>
+                        {songSourceSelection === 'set_list' && activeSetList ? (
+                          <p className="text-xs text-cyan-100">
+                            {bandDashboardViewCopy.operations.activeSetListLabel}: <span className="font-semibold">{activeSetList.name}</span>
+                            {' '}{bandDashboardViewCopy.operations.activeSetListNote}
+                          </p>
+                        ) : null}
+                        {!activeSetList ? <p className="text-xs text-amber-100">{bandDashboardViewCopy.operations.noActiveSetList}</p> : null}
                       </div>
                     </div>
                     <button

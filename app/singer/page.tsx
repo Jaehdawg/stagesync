@@ -195,7 +195,7 @@ export default async function SingerPage({
             ? singerCopy.signupStatus.paused
             : singerCopy.signupStatus.ended
       }
-      songSourceMode={settingsResult.data?.song_source_mode === 'tidal_playlist' ? 'tidal_playlist' : 'uploaded'}
+      songSourceMode={settingsResult.data?.song_source_mode ?? 'uploaded'}
       tidalPlaylistUrl={settingsResult.data?.tidal_playlist_url ?? null}
       singerName={singerName}
       bandId={band.id}

@@ -43,7 +43,7 @@ type DashboardState = {
   customMessage?: string
   signupEnabled: boolean
   signupStatusMessage: string
-  songSourceMode?: 'uploaded' | 'tidal_playlist' | 'set_list'
+  songSourceMode?: 'uploaded' | 'tidal_playlist' | 'tidal_catalog' | 'set_list'
   tidalPlaylistUrl?: string | null
   singerName?: string | null
   bandId?: string | null
@@ -145,7 +145,7 @@ export function SingerDashboardView(state: DashboardState) {
     cashappUrl: state.paymentLinks?.find((link) => link.label === 'CashApp')?.href ?? null,
     customMessage: state.customMessage ?? null,
   }
-  const songSourceMode = state.songSourceMode === 'tidal_playlist' ? 'tidal_playlist' : 'uploaded'
+  const songSourceMode = state.songSourceMode === 'tidal_playlist' ? 'tidal_playlist' : state.songSourceMode === 'tidal_catalog' ? 'tidal_catalog' : 'uploaded'
   const currentTrack = liveQueueItems[0] ?? currentRequest ?? lyricsTrack ?? null
 
   return (
