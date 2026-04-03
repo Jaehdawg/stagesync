@@ -332,6 +332,14 @@ export function BandDashboardView({
                   <label className="text-sm font-medium text-slate-200" htmlFor="set-list-description">{bandSetListsCopy.descriptionLabel}</label>
                   <input id="set-list-description" name="description" type="text" className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none" />
                 </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-200" htmlFor="set-list-notes">{bandSetListsCopy.notesLabel}</label>
+                  <input id="set-list-notes" name="notes" type="text" className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-200" htmlFor="set-list-song-ids">{bandSetListsCopy.songsLabel}</label>
+                  <textarea id="set-list-song-ids" name="songIds" rows={3} className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none" />
+                </div>
                 <button type="submit" className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-medium text-white">{bandSetListsCopy.createButton}</button>
               </form>
             </Panel>
@@ -339,6 +347,11 @@ export function BandDashboardView({
         ) : null}
 
         <div className="grid gap-8">
+          <Panel title={bandSetListsCopy.title} eyebrow={bandSetListsCopy.eyebrow}>
+            {bandSetListsCopy.activeOnlyNote ? <p className="text-sm text-slate-400">{bandSetListsCopy.activeOnlyNote}</p> : null}
+            {([] as { id: string; name: string; is_active?: boolean | null }[]).length ? null : <p className="mt-4 text-sm text-slate-400">{bandSetListsCopy.empty}</p>}
+          </Panel>
+
           <Panel title={bandDashboardViewCopy.signupLink.title} eyebrow={bandDashboardViewCopy.signupLink.eyebrow}>
             {singerSignupUrl ? (
               <div className="space-y-4">
