@@ -108,9 +108,12 @@ export function SingerDashboardView(state: DashboardState) {
       }
     }
 
-    if (state.liveQueueItems?.length) {
-      setLiveQueueItems(state.liveQueueItems)
+    const serverHasPendingQueue = Boolean(state.liveQueueItems?.length)
+    const shouldSyncLiveQueue = serverHasPendingQueue || (currentRequest ? state.historyItems?.some((item) => item.artist === currentRequest.artist && item.title === currentRequest.title) : false)
+    if (shouldSyncLiveQueue) {
+      setLiveQueueItems(state.liveQueueItems ?? [])
     }
+
     if (state.historyItems?.length) {
       setHistoryItems(state.historyItems)
     }
