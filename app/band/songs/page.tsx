@@ -4,6 +4,7 @@ import { createServiceClient } from '@/utils/supabase/service'
 import { BandAccessForm } from '@/components/band-access-form'
 import { AdminRowDialog } from '@/components/admin-row-dialog'
 import { AutoRefresh } from '@/components/auto-refresh'
+import { DeleteAllSongsButton } from '@/components/delete-all-songs-button'
 import { getTestSession } from '@/lib/test-session'
 import { getLiveBandAccessContext } from '@/lib/band-access'
 import { bandCopy } from '@/content/en/band'
@@ -44,20 +45,24 @@ export default async function BandSongsPage({
   const q = typeof params?.q === 'string' ? params.q.trim() : ''
   const importState = typeof params?.import === 'string' ? params.import : ''
   const importJobId = typeof params?.job === 'string' ? params.job.trim() : ''
+  const deletedAll = typeof params?.deleted === 'string' ? params.deleted === 'all' : false
 
   const liveAccess = await getLiveBandAccessContext(supabase, serviceSupabase, { requireAdmin: false })
   let accessGranted = false
   let username = ''
   let activeBandId: string | null = null
+  let bandRole: 'admin' | 'member' = 'member'
 
   if (liveAccess) {
     accessGranted = true
     username = liveAccess.username
     activeBandId = liveAccess.bandId
+    bandRole = liveAccess.bandRole
   } else if (testSession?.role === 'band' || testSession?.role === 'admin') {
     accessGranted = true
     username = testSession.username
     activeBandId = testSession.activeBandId ?? null
+    bandRole = testSession.role === 'admin' ? 'admin' : 'member'
   }
 
   if (!accessGranted) {
@@ -205,6 +210,15 @@ export default async function BandSongsPage({
               <input type="search" name="q" defaultValue={q} placeholder={bandCopy.songsPage.searchPlaceholder} className="rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white placeholder:text-slate-500" />
               <button type="submit" className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-medium text-white">{bandCopy.songsPage.searchButton}</button>
             </form>
+          </div>
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+            {bandRole === 'admin' ? (
+              <DeleteAllSongsButton
+                label={bandCopy.songsPage.deleteAllSongsButton}
+                confirmText={`${bandCopy.songsPage.deleteAllSongsConfirmTitle}\n\n${bandCopy.songsPage.deleteAllSongsConfirmBody}`}
+              />
+            ) : null}
+            {deletedAll ? <p className="text-sm text-emerald-300">{bandCopy.songsPage.deleteAllSongsArchivedMessage}</p> : null}
           </div>
 
           <div className="mt-6 overflow-hidden rounded-2xl border border-white/10">

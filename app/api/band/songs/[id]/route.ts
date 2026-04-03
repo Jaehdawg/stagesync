@@ -1,8 +1,8 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
-import { createServiceClient } from '@/utils/supabase/service'
-import { getTestSession } from '@/lib/test-session'
-import { getLiveBandAccessContext } from '@/lib/band-access'
+import { createServiceClient } from '../../../../../utils/supabase/service'
+import { getTestSession } from '../../../../../lib/test-session'
+import { getLiveBandAccessContext } from '../../../../../lib/band-access'
 
 function getSupabase(request: NextRequest) {
   return createServerClient(

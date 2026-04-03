@@ -1,9 +1,9 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
-import { createServiceClient } from '@/utils/supabase/service'
-import { getTestSession } from '@/lib/test-session'
-import { slugifySongId } from '@/lib/song-library'
-import { getLiveBandAccessContext } from '@/lib/band-access'
+import { createServiceClient } from '../../../../utils/supabase/service'
+import { getTestSession } from '../../../../lib/test-session'
+import { slugifySongId } from '../../../../lib/song-library'
+import { getLiveBandAccessContext } from '../../../../lib/band-access'
 
 function getSupabase(request: NextRequest) {
   return createServerClient(
@@ -29,14 +29,11 @@ export async function POST(request: NextRequest) {
   const authSupabase = getSupabase(request)
   const serviceSupabase = createServiceClient()
   const formData = await request.formData()
+  const action = String(formData.get('action') ?? 'create')
   const title = String(formData.get('title') ?? '').trim()
   const artist = String(formData.get('artist') ?? '').trim()
   const durationValue = String(formData.get('durationMs') ?? '').trim()
   const duration_ms = durationValue ? Number(durationValue) : null
-
-  if (!title || !artist) {
-    return NextResponse.json({ message: 'Song title and artist are required.' }, { status: 400 })
-  }
 
   const bandId =
     testSession?.role === 'band' || testSession?.role === 'admin'
@@ -45,6 +42,24 @@ export async function POST(request: NextRequest) {
 
   if (!bandId) {
     return NextResponse.json({ message: 'No active band selected.' }, { status: 400 })
+  }
+
+  if (action === 'delete-all') {
+    const { error } = await serviceSupabase
+      .from('songs')
+      .update({ archived_at: new Date().toISOString() })
+      .eq('band_id', bandId)
+      .is('archived_at', null)
+
+    if (error) {
+      return NextResponse.json({ message: error.message }, { status: 500 })
+    }
+
+    return NextResponse.redirect(new URL('/band/songs?deleted=all', request.url), { status: 303 })
+  }
+
+  if (!title || !artist) {
+    return NextResponse.json({ message: 'Song title and artist are required.' }, { status: 400 })
   }
 
   const { error } = await serviceSupabase.from('songs').upsert(
