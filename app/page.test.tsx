@@ -56,12 +56,20 @@ describe('Singer dashboard', () => {
 
     expect(screen.getByRole('heading', { name: /neon echo/i })).toBeInTheDocument()
     expect(screen.getAllByRole('button', { name: /sign-up/i }).length).toBeGreaterThanOrEqual(2)
-    expect(screen.getByRole('button', { name: /singer login/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^login$/i })).toBeInTheDocument()
     expect(screen.getByText(/band profile/i)).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: /pick a song/i })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: /live queue/i })).toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: /band management/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: /saas admin/i })).not.toBeInTheDocument()
+  })
+
+  it('hides the auth buttons when the singer is signed in', () => {
+    render(<SingerDashboardView {...state} singerName="Maya Chen" />)
+
+    expect(screen.queryByRole('button', { name: /^sign-up$/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^login$/i })).not.toBeInTheDocument()
+    expect(screen.getByText(/maya chen/i)).toBeInTheDocument()
   })
 
   it('redirects auth codes from the root page to the callback route', async () => {

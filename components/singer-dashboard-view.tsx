@@ -191,22 +191,24 @@ export function SingerDashboardView(state: DashboardState) {
 
           <Panel title="Singer Sign-up">
             <div className="space-y-4">
-              <div className="flex flex-wrap gap-3">
-                <button
-                  type="button"
-                  onClick={() => setAuthMode('signup')}
-                  className={authMode === 'signup' ? 'rounded-full bg-cyan-400 px-4 py-2 text-sm font-semibold text-slate-950' : 'rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white'}
-                >
-                  Sign-up
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setAuthMode('login')}
-                  className={authMode === 'login' ? 'rounded-full bg-cyan-400 px-4 py-2 text-sm font-semibold text-slate-950' : 'rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white'}
-                >
-                  Singer Login
-                </button>
-              </div>
+              {!state.singerName ? (
+                <div className="flex flex-wrap gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setAuthMode('signup')}
+                    className={authMode === 'signup' ? 'rounded-full bg-cyan-400 px-4 py-2 text-sm font-semibold text-slate-950' : 'rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white'}
+                  >
+                    Sign-up
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAuthMode('login')}
+                    className={authMode === 'login' ? 'rounded-full bg-cyan-400 px-4 py-2 text-sm font-semibold text-slate-950' : 'rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white'}
+                  >
+                    Login
+                  </button>
+                </div>
+              ) : null}
 
               {state.singerName ? (
                 <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
