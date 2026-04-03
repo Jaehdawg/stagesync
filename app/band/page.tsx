@@ -134,18 +134,35 @@ async function getBandState(
 async function getBandSetListsWithSongs(bandId?: string | null) {
   if (!bandId) return [] as Array<{ id: string; name: string; description?: string | null; notes?: string | null; is_active?: boolean | null; songIds: string[] }>
 
-  const setLists = await listBandSetLists(bandId)
-  const withSongs = await Promise.all(
-    setLists.map(async (setList) => {
-      const songs = await getBandSetListSongs(bandId, setList.id)
-      return {
-        ...setList,
-        songIds: songs.map((song) => song.song_id),
-      }
-    })
-  )
+  try {
+    const setLists = await listBandSetLists(bandId)
+    const withSongs = await Promise.all(
+      setLists.map(async (setList) => {
+        try {
+          const songs = await getBandSetListSongs(bandId, setList.id)
+          return {
+            ...setList,
+            songIds: songs.map((song) => song.song_id),
+          }
+        } catch (error) {
+          if (error instanceof Error && (error.message.includes('band_set_list_songs') || error.message.includes('schema cache'))) {
+            return {
+              ...setList,
+              songIds: [],
+            }
+          }
+          throw error
+        }
+      })
+    )
 
-  return withSongs
+    return withSongs
+  } catch (error) {
+    if (error instanceof Error && (error.message.includes('band_set_lists') || error.message.includes('schema cache'))) {
+      return []
+    }
+    throw error
+  }
 }
 
 async function getBandTestState(supabase: Awaited<ReturnType<typeof createClient>>): Promise<BandDashboardState> {
