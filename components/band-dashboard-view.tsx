@@ -71,15 +71,15 @@ export function BandDashboardView({
   const controls =
     showState === 'active'
       ? [
-          { label: 'Pause signups', value: 'pause' },
-          { label: 'End show', value: 'end' },
+          { label: '{bandDashboardViewCopy.operations.pauseSignups}', value: 'pause' },
+          { label: '{bandDashboardViewCopy.operations.endShow}', value: 'end' },
         ]
       : showState === 'paused'
         ? [
-            { label: 'Resume signups', value: 'resume' },
-            { label: 'End show', value: 'end' },
+            { label: '{bandDashboardViewCopy.operations.resumeSignups}', value: 'resume' },
+            { label: '{bandDashboardViewCopy.operations.endShow}', value: 'end' },
           ]
-        : [{ label: 'Start show', value: 'start' }]
+        : [{ label: '{bandDashboardViewCopy.operations.startShow}', value: 'start' }]
 
   return (
     <main className="space-y-8">
@@ -178,7 +178,7 @@ export function BandDashboardView({
                     <div className="grid gap-4 sm:grid-cols-2">
                       <div className="space-y-2 sm:col-span-2">
                         <label htmlFor="show-name" className="text-sm font-medium text-slate-200">
-                          Show name
+                          {bandDashboardViewCopy.operations.showNameLabel}
                         </label>
                         <input
                           id="show-name"
@@ -190,7 +190,7 @@ export function BandDashboardView({
                       </div>
                       <div className="space-y-2 sm:col-span-2">
                         <label htmlFor="show-description" className="text-sm font-medium text-slate-200">
-                          Description
+                          {bandDashboardViewCopy.operations.descriptionLabel}
                         </label>
                         <input
                           id="show-description"
@@ -260,14 +260,14 @@ export function BandDashboardView({
           </Panel>
           ) : null}
 
-          <Panel title="Queue management" eyebrow="Queue admin">
+          <Panel title="{bandDashboardViewCopy.queue.title}" eyebrow="{bandDashboardViewCopy.queue.eyebrow}">
             {liveQueueItems.length ? (
               <div className="space-y-3">
                 {liveQueueItems.map((item) => (
                   <div key={item.id ?? `${item.position}-${item.name}`} className="rounded-2xl border border-white/10 bg-white/5 p-4">
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
-                        <p className="text-xs uppercase tracking-[0.22em] text-slate-400">Position {item.position}</p>
+                        <p className="text-xs uppercase tracking-[0.22em] text-slate-400">{bandDashboardViewCopy.queue.positionPrefix} {item.position}</p>
                         <h3 className="mt-1 text-base font-semibold text-white">{item.song}</h3>
                         <p className="text-sm text-slate-400">{item.name}</p>
                       </div>
@@ -276,24 +276,24 @@ export function BandDashboardView({
                       </span>
                     </div>
                     <div className="mt-4 flex flex-wrap gap-2 text-xs font-medium text-slate-200">
-                      <QueueActionButtons queueItemId={item.id} action="played" label="Played" />
-                      <QueueActionButtons queueItemId={item.id} action="remove" label="Remove" />
-                      <QueueActionButtons queueItemId={item.id} action="up" label="Move up" />
-                      <QueueActionButtons queueItemId={item.id} action="down" label="Move down" />
+                      <QueueActionButtons queueItemId={item.id} action="played" label="{bandDashboardViewCopy.queue.played}" />
+                      <QueueActionButtons queueItemId={item.id} action="remove" label="{bandDashboardViewCopy.queue.remove}" />
+                      <QueueActionButtons queueItemId={item.id} action="up" label="{bandDashboardViewCopy.queue.moveUp}" />
+                      <QueueActionButtons queueItemId={item.id} action="down" label="{bandDashboardViewCopy.queue.moveDown}" />
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
               <p className="rounded-2xl border border-dashed border-white/10 bg-white/5 px-4 py-6 text-slate-400">
-                No queue items yet. Singer requests will show up here automatically.
+                {bandDashboardViewCopy.queue.empty}
               </p>
             )}
 
             <details className="mt-5 rounded-2xl border border-white/10 bg-slate-900/40 p-4">
               <summary className="cursor-pointer list-none text-sm font-semibold text-white">
-                History
-                <span className="ml-2 text-xs font-normal text-slate-400">(played and cancelled songs)</span>
+                {bandDashboardViewCopy.queue.historyTitle}
+                <span className="ml-2 text-xs font-normal text-slate-400">{bandDashboardViewCopy.queue.historySubtitle}</span>
               </summary>
               <div className="mt-4 space-y-3">
                 {historyItems.length ? (
@@ -311,7 +311,7 @@ export function BandDashboardView({
                     </div>
                   ))
                 ) : (
-                  <p className="text-sm text-slate-400">Played and cancelled songs will appear here.</p>
+                  <p className="text-sm text-slate-400">{bandDashboardViewCopy.queue.played} and cancelled songs will appear here.</p>
                 )}
               </div>
             </details>
@@ -320,11 +320,11 @@ export function BandDashboardView({
 
         {canManageShow ? (
         <div className="grid gap-8">
-          <Panel title="Singer signup link" eyebrow="Shareable public flow">
+          <Panel title="{bandDashboardViewCopy.signupLink.title}" eyebrow="{bandDashboardViewCopy.signupLink.eyebrow}">
             {singerSignupUrl ? (
               <div className="space-y-4">
                 <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
-                  <p className="text-xs uppercase tracking-[0.22em] text-slate-400">Public URL</p>
+                  <p className="text-xs uppercase tracking-[0.22em] text-slate-400">{bandDashboardViewCopy.signupLink.publicUrl}</p>
                   <a
                     href={singerSignupUrl}
                     className="mt-2 block break-all text-sm text-cyan-200 underline decoration-cyan-400/40 underline-offset-4"
@@ -335,16 +335,16 @@ export function BandDashboardView({
                 <div className="flex items-center gap-4 rounded-2xl border border-white/10 bg-slate-900/60 p-4">
                   <img
                     src={buildQrCodeImageUrl(singerSignupUrl)}
-                    alt="Singer signup QR code"
+                    alt="{bandDashboardViewCopy.signupLink.qrAlt}"
                     className="h-24 w-24 rounded-xl border border-white/10 bg-white p-2"
                   />
                   <p className="text-sm text-slate-300">
-                    Scan this QR code to open the singer sign-up page for this band.
+                    {bandDashboardViewCopy.signupLink.qrPrompt}
                   </p>
                 </div>
               </div>
             ) : (
-              <p className="text-slate-400">A public link will appear once the band has a profile and active show.</p>
+              <p className="text-slate-400">{bandDashboardViewCopy.signupLink.empty}</p>
             )}
           </Panel>
 
