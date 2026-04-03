@@ -21,7 +21,7 @@ export type BandDashboardState = {
   signupEnabled?: boolean
   showDurationMinutes?: number | null
   signupBufferMinutes?: number | null
-  songSourceMode?: 'uploaded' | 'tidal_playlist'
+  songSourceMode?: 'uploaded' | 'tidal_playlist' | 'set_list'
   bandAccessLevel?: 'admin' | 'member'
   testMode?: boolean
   singerSignupUrl?: string | null

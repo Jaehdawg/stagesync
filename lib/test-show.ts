@@ -1,24 +1,6 @@
-type SupabaseError = { message: string; code?: string }
+import type { SupabaseClient } from '@supabase/supabase-js'
 
-type QueryResult = Promise<{ data: unknown; error: SupabaseError | null }>
-
-type SupabaseQuery = {
-  select: (columns?: string) => SupabaseQuery
-  eq: (column: string, value: unknown) => SupabaseQuery
-  order: (column: string, options?: { ascending?: boolean }) => SupabaseQuery
-  limit: (count: number) => SupabaseQuery
-  insert: (values: unknown) => SupabaseQuery
-  update: (values: unknown) => SupabaseQuery
-  upsert: (values: unknown, options?: unknown) => SupabaseQuery
-  delete: () => SupabaseQuery
-  maybeSingle: () => QueryResult
-  single: () => QueryResult
-}
-
-type SupabaseLike = {
-  from: (table: string) => SupabaseQuery
-  rpc?: (fn: string, args?: Record<string, unknown>) => Promise<unknown>
-}
+type SupabaseLike = Pick<SupabaseClient, 'from'>
 
 export type TestShowRow = {
   id: string

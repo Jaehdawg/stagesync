@@ -43,7 +43,7 @@ type DashboardState = {
   customMessage?: string
   signupEnabled: boolean
   signupStatusMessage: string
-  songSourceMode?: 'uploaded' | 'tidal_playlist'
+  songSourceMode?: 'uploaded' | 'tidal_playlist' | 'set_list'
   tidalPlaylistUrl?: string | null
   singerName?: string | null
   bandId?: string | null
