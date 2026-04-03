@@ -63,10 +63,10 @@ export default async function AdminAnalyticsPage() {
 
         <section className="grid gap-4 md:grid-cols-4">
           {[
-            { label: 'Band-shows', value: String(showCount ?? 0) },
-            { label: 'Active Show', value: activeShowCount ? '🤘' : '⛔️' },
-            { label: 'Singer count', value: String(singerCount ?? 0) },
-            { label: 'Tracks played', value: String(tracksPlayedCount ?? 0) },
+            { label: adminCopy.analyticsPage.metrics.bandShows, value: String(showCount ?? 0) },
+            { label: adminCopy.analyticsPage.metrics.activeShow, value: activeShowCount ? '🤘' : '⛔️' },
+            { label: adminCopy.analyticsPage.metrics.singerCount, value: String(singerCount ?? 0) },
+            { label: adminCopy.analyticsPage.metrics.tracksPlayed, value: String(tracksPlayedCount ?? 0) },
           ].map((item) => (
             <div key={item.label} className="rounded-3xl border border-white/10 bg-white/5 p-5">
               <p className="text-xs uppercase tracking-[0.22em] text-slate-400">{item.label}</p>
@@ -86,8 +86,8 @@ export default async function AdminAnalyticsPage() {
                     <p className="text-sm text-slate-400">{show.created_at}</p>
                   </div>
                   <div className="flex gap-2 text-xs uppercase tracking-[0.2em] text-slate-300">
-                    <span className="rounded-full border border-white/10 px-3 py-1">{show.is_active ? 'active' : 'ended'}</span>
-                    <span className="rounded-full border border-white/10 px-3 py-1">{show.allow_signups ? 'signups on' : 'signups off'}</span>
+                    <span className="rounded-full border border-white/10 px-3 py-1">{show.is_active ? adminCopy.analyticsPage.activeLabel : adminCopy.analyticsPage.endedLabel}</span>
+                    <span className="rounded-full border border-white/10 px-3 py-1">{show.allow_signups ? adminCopy.analyticsPage.signupsOn : adminCopy.analyticsPage.signupsOff}</span>
                   </div>
                 </div>
               </div>

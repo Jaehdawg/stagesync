@@ -7,6 +7,7 @@ import { getAdminAccess } from '@/lib/admin-access'
 import { listTestLogins } from '@/lib/test-login-list'
 import { getBandProfileForBandId } from '@/lib/band-tenancy'
 import { listBandRolesWithProfilesForBandId } from '@/lib/band-roles'
+import { adminCopy } from '@/content/en/admin'
 
 type SearchParams = Record<string, string | string[] | undefined>
 
@@ -27,16 +28,16 @@ export default async function AdminBandsPage({
       <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100 sm:px-6 lg:px-8">
         <div className="mx-auto grid w-full max-w-5xl gap-6 lg:grid-cols-[1fr_0.9fr]">
           <header className="rounded-3xl border border-white/10 bg-white/5 p-6">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">Platform control</p>
-            <h1 className="mt-2 text-4xl font-semibold text-white">Manage bands</h1>
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">{adminCopy.platformControl}</p>
+            <h1 className="mt-2 text-4xl font-semibold text-white">{adminCopy.bandsPage.title}</h1>
             <p className="mt-3 max-w-2xl text-slate-300">Admin access required.</p>
           </header>
           <BandAccessForm
             role="admin"
-            title="Admin login"
-            description="Use your admin username and password to access system controls."
-            submitLabel="Sign in"
-            successMessage="Admin login successful."
+            title={adminCopy.login.title}
+            description={adminCopy.login.description}
+            submitLabel={adminCopy.login.submitLabel}
+            successMessage={adminCopy.login.successMessage}
             endpoint="/api/auth/login"
           />
         </div>
@@ -87,9 +88,9 @@ export default async function AdminBandsPage({
           <header className="rounded-3xl border border-white/10 bg-white/5 p-6">
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">Platform control</p>
-                <h1 className="mt-2 text-4xl font-semibold text-white">Manage bands</h1>
-                <p className="mt-3 max-w-2xl text-slate-300">Create, edit, and delete band login accounts.</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">{adminCopy.platformControl}</p>
+                <h1 className="mt-2 text-4xl font-semibold text-white">{adminCopy.bandsPage.title}</h1>
+                <p className="mt-3 max-w-2xl text-slate-300">{adminCopy.bandsPage.description}</p>
               </div>
               <Link href="/admin" className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-white hover:border-cyan-400/50">
                 Back to admin
@@ -112,10 +113,10 @@ export default async function AdminBandsPage({
               <input
                 name="q"
                 defaultValue={query}
-                placeholder="Search bands or users"
+                placeholder={adminCopy.bandsPage.searchPlaceholder}
                 className="rounded-xl border border-white/10 bg-slate-950/70 px-4 py-2 text-sm text-white placeholder:text-slate-500"
               />
-              <button type="submit" className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white">Search</button>
+              <button type="submit" className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white">{adminCopy.bandsPage.searchButton}</button>
             </form>
           </div>
 
