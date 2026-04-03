@@ -8,13 +8,14 @@ import { getTestLogin } from '@/lib/test-login-list'
 import { listTestLogins } from '@/lib/test-login-list'
 import { getLiveBandAccessContext } from '@/lib/band-access'
 import { listBandRolesWithProfilesForBandId, type BandRoleWithProfile } from '@/lib/band-roles'
+import { bandCopy } from '@/content/en/band'
 
 function LoginCard({ title, description }: { title: string; description: string }) {
   return (
     <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100 sm:px-6 lg:px-8">
       <div className="mx-auto grid w-full max-w-5xl gap-6 lg:grid-cols-[1fr_0.9fr]">
         <header className="rounded-3xl border border-white/10 bg-white/5 p-6">
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">Band portal</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">{bandCopy.bandPortal}</p>
           <h1 className="mt-2 text-4xl font-semibold text-white">{title}</h1>
           <p className="mt-3 max-w-2xl text-slate-300">{description}</p>
         </header>
@@ -29,8 +30,8 @@ function AccessDenied({ message }: { message: string }) {
     <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-5xl">
         <header className="rounded-3xl border border-white/10 bg-white/5 p-6">
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">Band portal</p>
-          <h1 className="mt-2 text-4xl font-semibold text-white">Band members</h1>
+          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">{bandCopy.bandPortal}</p>
+          <h1 className="mt-2 text-4xl font-semibold text-white">{bandCopy.login.membersTitle}</h1>
           <p className="mt-3 max-w-2xl text-slate-300">{message}</p>
         </header>
       </div>
@@ -53,16 +54,16 @@ function LiveMembersPage({
         <header className="rounded-3xl border border-white/10 bg-white/5 p-6">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">Band portal</p>
-              <h1 className="mt-2 text-4xl font-semibold text-white">Band members</h1>
-              <p className="mt-3 max-w-2xl text-slate-300">Create, edit, delete, and promote members for {bandName}.</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">{bandCopy.bandPortal}</p>
+              <h1 className="mt-2 text-4xl font-semibold text-white">{bandCopy.login.membersTitle}</h1>
+              <p className="mt-3 max-w-2xl text-slate-300">{bandCopy.login.membersDescription(bandName)}</p>
             </div>
-            <Link href="/band" className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-white hover:border-cyan-400/50">Back to band dashboard</Link>
+            <Link href="/band" className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-white hover:border-cyan-400/50">{bandCopy.login.backToDashboard}</Link>
           </div>
         </header>
 
         <section className="rounded-3xl border border-white/10 bg-white/5 p-6">
-          <h2 className="text-2xl font-semibold text-white">Create member</h2>
+          <h2 className="text-2xl font-semibold text-white">{bandCopy.login.createMember}</h2>
           <form className="mt-6 grid gap-4 rounded-2xl border border-white/10 bg-slate-950/50 p-5 md:grid-cols-4" action="/api/band/members" method="post">
             <input type="hidden" name="action" value="upsert" />
             <div className="space-y-2">
@@ -85,7 +86,7 @@ function LiveMembersPage({
               <div className="rounded-xl border border-white/10 bg-slate-900/50 px-4 py-3 text-white">{bandName}</div>
             </div>
             <div className="md:col-span-4">
-              <button type="submit" className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-medium text-white">Create member</button>
+              <button type="submit" className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-medium text-white">{bandCopy.login.createMember}</button>
             </div>
           </form>
         </section>
@@ -164,16 +165,16 @@ export default async function BandMembersPage() {
             <header className="rounded-3xl border border-white/10 bg-white/5 p-6">
               <div className="flex flex-wrap items-center justify-between gap-4">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">Band portal</p>
-                  <h1 className="mt-2 text-4xl font-semibold text-white">Band members</h1>
+                  <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">{bandCopy.bandPortal}</p>
+                  <h1 className="mt-2 text-4xl font-semibold text-white">{bandCopy.login.membersTitle}</h1>
                   <p className="mt-3 max-w-2xl text-slate-300">Create, edit, and delete members for {current.band_name}.</p>
                 </div>
-                <Link href="/band" className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-white hover:border-cyan-400/50">Back to band dashboard</Link>
+                <Link href="/band" className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-white hover:border-cyan-400/50">{bandCopy.login.backToDashboard}</Link>
               </div>
             </header>
 
             <section className="rounded-3xl border border-white/10 bg-white/5 p-6">
-              <h2 className="text-2xl font-semibold text-white">Create member</h2>
+              <h2 className="text-2xl font-semibold text-white">{bandCopy.login.createMember}</h2>
               <form className="mt-6 grid gap-4 rounded-2xl border border-white/10 bg-slate-950/50 p-5 md:grid-cols-4" action="/api/band/members" method="post">
                 <input type="hidden" name="action" value="upsert" />
                 <input type="hidden" name="bandName" value={current.band_name ?? ''} />
@@ -190,7 +191,7 @@ export default async function BandMembersPage() {
                   <div className="rounded-xl border border-white/10 bg-slate-900/50 px-4 py-3 text-white">{current.band_name}</div>
                 </div>
                 <div className="md:col-span-4">
-                  <button type="submit" className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-medium text-white">Create member</button>
+                  <button type="submit" className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-medium text-white">{bandCopy.login.createMember}</button>
                 </div>
               </form>
             </section>
@@ -220,12 +221,12 @@ export default async function BandMembersPage() {
       return <LiveMembersPage bandName={liveAccess.bandName} members={members} currentUserId={liveAccess.userId} />
     }
 
-    return <AccessDenied message="Band admin access required." />
+    return <AccessDenied message="{bandCopy.login.accessDenied}" />
   }
 
   const liveAccess = await getLiveBandAccessContext(supabase, serviceSupabase, { requireAdmin: true })
   if (!liveAccess) {
-    return <LoginCard title="Band members" description="Band login required." />
+    return <LoginCard title="{bandCopy.login.membersTitle}" description="{bandCopy.login.loginRequired}" />
   }
 
   const roles = await listBandRolesWithProfilesForBandId(serviceSupabase, liveAccess.bandId)

@@ -6,6 +6,7 @@ import { AdminRowDialog } from '@/components/admin-row-dialog'
 import { AutoRefresh } from '@/components/auto-refresh'
 import { getTestSession } from '@/lib/test-session'
 import { getLiveBandAccessContext } from '@/lib/band-access'
+import { bandCopy } from '@/content/en/band'
 
 type SearchParams = Record<string, string | string[] | undefined>
 
@@ -62,11 +63,11 @@ export default async function BandSongsPage({
       <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100 sm:px-6 lg:px-8">
         <div className="mx-auto grid w-full max-w-5xl gap-6 lg:grid-cols-[1fr_0.9fr]">
           <header className="rounded-3xl border border-white/10 bg-white/5 p-6">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">Band portal</p>
-            <h1 className="mt-2 text-4xl font-semibold text-white">Song library</h1>
-            <p className="mt-3 max-w-2xl text-slate-300">Band login required.</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">{bandCopy.bandPortal}</p>
+            <h1 className="mt-2 text-4xl font-semibold text-white">{bandCopy.login.songsTitle}</h1>
+            <p className="mt-3 max-w-2xl text-slate-300">{bandCopy.login.loginRequired}</p>
           </header>
-          <BandAccessForm role="band" title="Band login" description="Use your band username and password to manage the song library." submitLabel="Sign in" successMessage="Band login successful." />
+          <BandAccessForm role="band" title="{bandCopy.login.title}" description="{bandCopy.login.songsDescription}" submitLabel="{bandCopy.login.submitLabel}" successMessage="{bandCopy.login.title} successful." />
         </div>
       </main>
     )
@@ -122,13 +123,13 @@ export default async function BandSongsPage({
         <header className="rounded-3xl border border-white/10 bg-white/5 p-6">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">Band portal</p>
-              <h1 className="mt-2 text-4xl font-semibold text-white">Song library</h1>
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">{bandCopy.bandPortal}</p>
+              <h1 className="mt-2 text-4xl font-semibold text-white">{bandCopy.login.songsTitle}</h1>
               <p className="mt-3 max-w-2xl text-slate-300">Manage the band’s song list, import from CSV, Google Sheets, or Tidal, and keep the singer picker fast.</p>
               {username ? <p className="mt-2 text-sm text-slate-400">Signed in as <span className="font-semibold text-slate-200">{username}</span>.</p> : null}
             </div>
             <div className="flex flex-wrap gap-3">
-              <Link href="/band" className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-white hover:border-cyan-400/50">Back to band dashboard</Link>
+              <Link href="/band" className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-white hover:border-cyan-400/50">{bandCopy.login.backToDashboard}</Link>
               <form action="/api/auth/logout" method="post">
                 <button type="submit" className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-white hover:border-cyan-400/50">Log out</button>
               </form>
