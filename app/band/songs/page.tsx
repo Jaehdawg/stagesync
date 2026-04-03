@@ -136,6 +136,8 @@ export default async function BandSongsPage({
               {username ? <p className="mt-2 text-sm text-slate-400">{bandCopy.songsPage.signedInAs} <span className="font-semibold text-slate-200">{username}</span>.</p> : null}
             </div>
             <div className="flex flex-wrap gap-3">
+              <Link href="/band/songs/set-lists" className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-white hover:border-cyan-400/50">{bandCopy.songsPage.manageSetListsButton}</Link>
+              <Link href="/band/songs/set-lists" className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-white hover:border-cyan-400/50">{bandCopy.songsPage.manageSetListsButton}</Link>
               <Link href="/band" className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-white hover:border-cyan-400/50">{bandCopy.login.backToDashboard}</Link>
               <form action="/api/auth/logout" method="post">
                 <button type="submit" className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-white hover:border-cyan-400/50">{authCopy.logoutLabel}</button>

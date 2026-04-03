@@ -67,6 +67,7 @@ export const bandCopy = {
     saveSongButton: 'Save song',
     songListTitle: 'Song list',
     activeSongsSuffix: 'active songs in the library.',
+    manageSetListsButton: 'Manage set lists',
     searchPlaceholder: 'Search songs',
     searchButton: 'Search',
     rowArtistLabel: 'Artist',
