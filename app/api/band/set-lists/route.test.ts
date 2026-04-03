@@ -6,6 +6,7 @@ const getTestLoginMock = vi.fn()
 const getLiveBandAccessContextMock = vi.fn()
 const listBandSetListsMock = vi.fn()
 const createBandSetListMock = vi.fn()
+const appendBandSetListSongsMock = vi.fn()
 const createServerClientMock = vi.fn(() => ({
   auth: { getUser: vi.fn() },
 }))
@@ -34,6 +35,7 @@ vi.mock('../../../../lib/band-access', () => ({
 vi.mock('../../../../lib/set-lists', () => ({
   listBandSetLists: listBandSetListsMock,
   createBandSetList: createBandSetListMock,
+  appendBandSetListSongs: appendBandSetListSongsMock,
 }))
 
 function makeRequest(formData: FormData) {
@@ -53,6 +55,7 @@ beforeEach(() => {
   getLiveBandAccessContextMock.mockReset()
   listBandSetListsMock.mockReset()
   createBandSetListMock.mockReset()
+  appendBandSetListSongsMock.mockReset()
   createServerClientMock.mockReset()
   createServiceClientMock.mockReset()
 })
@@ -104,5 +107,22 @@ describe('band set-lists api route', () => {
       is_active: false,
       songIds: ['song-1', 'song-2'],
     })
+  })
+
+  it('appends a song to an existing set list', async () => {
+    getTestSessionMock.mockResolvedValue({ role: 'band', username: 'stagesync-band', activeBandId: 'band-1' })
+    getTestLoginMock.mockResolvedValue({ role: 'band', band_access_level: 'admin', active_band_id: 'band-1' })
+    appendBandSetListSongsMock.mockResolvedValue([{ id: 'row-1' }])
+
+    const { POST } = await loadRoute()
+    const formData = new FormData()
+    formData.set('action', 'append')
+    formData.set('songId', 'song-3')
+    formData.set('setListId', 'set-1')
+
+    const response = await POST(makeRequest(formData))
+
+    expect(response.status).toBe(303)
+    expect(appendBandSetListSongsMock).toHaveBeenCalledWith('band-1', 'set-1', ['song-3'])
   })
 })

@@ -86,14 +86,12 @@ export default async function BandSetListsPage() {
         </header>
 
         <section className="rounded-3xl border border-white/10 bg-white/5 p-6">
-          <h2 className="text-2xl font-semibold text-white">{bandSetListsCopy.createTitle}</h2>
-          <p className="mt-2 text-sm text-slate-300">Create a new set list here. Songs are added from the Song Library flow.</p>
-          <form className="mt-6 grid gap-4 lg:grid-cols-[1.1fr_1.1fr_1fr_auto]" action="/api/band/set-lists" method="post">
-            <div className="space-y-2"><label className="text-sm font-medium text-slate-200" htmlFor="set-list-name">{bandSetListsCopy.nameLabel}</label><input id="set-list-name" name="name" type="text" className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" placeholder="Opening Set" /></div>
-            <div className="space-y-2"><label className="text-sm font-medium text-slate-200" htmlFor="set-list-description">{bandSetListsCopy.descriptionLabel}</label><input id="set-list-description" name="description" type="text" className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" /></div>
-            <div className="space-y-2"><label className="text-sm font-medium text-slate-200" htmlFor="set-list-notes">{bandSetListsCopy.notesLabel}</label><input id="set-list-notes" name="notes" type="text" className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" /></div>
-            <div className="flex items-end"><button type="submit" className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-medium text-white">{bandSetListsCopy.createButton}</button></div>
-          </form>
+          <h2 className="text-2xl font-semibold text-white">{bandSetListsCopy.title}</h2>
+          <p className="mt-2 text-sm text-slate-300">Create new set lists from the Song Library flow, then manage them here.</p>
+          <div className="mt-4 rounded-2xl border border-white/10 bg-slate-950/50 p-4 text-sm text-slate-300">
+            <p>{bandSetListsCopy.createWithSongNote}</p>
+            <p className="mt-2">Use the Song Library to seed a new set list with songs, or add songs into an existing set list without overwriting what is already there.</p>
+          </div>
         </section>
 
         <section className="rounded-3xl border border-white/10 bg-white/5 p-6">

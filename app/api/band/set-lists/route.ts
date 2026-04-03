@@ -4,7 +4,7 @@ import { createServiceClient } from '../../../../utils/supabase/service'
 import { getTestSession } from '../../../../lib/test-session'
 import { getTestLogin } from '../../../../lib/test-login-list'
 import { getLiveBandAccessContext } from '../../../../lib/band-access'
-import { listBandSetLists, createBandSetList } from '../../../../lib/set-lists'
+import { listBandSetLists, createBandSetList, appendBandSetListSongs } from '../../../../lib/set-lists'
 
 function getSupabase(request: NextRequest) {
   return createServerClient(
@@ -64,6 +64,9 @@ export async function POST(request: NextRequest) {
   const name = String(formData.get('name') ?? '').trim()
   const description = String(formData.get('description') ?? '').trim() || null
   const notes = String(formData.get('notes') ?? '').trim() || null
+  const action = String(formData.get('action') ?? 'create')
+  const songId = String(formData.get('songId') ?? '').trim()
+  const setListId = String(formData.get('setListId') ?? '').trim()
   const songIds = String(formData.get('songIds') ?? '')
     .split(/[\n,]/)
     .map((value) => value.trim())
@@ -71,15 +74,29 @@ export async function POST(request: NextRequest) {
 
   const uniqueSongIds = Array.from(new Set(songIds))
 
-  if (!name) {
-    return NextResponse.json({ message: 'Set list name is required.' }, { status: 400 })
-  }
-
   try {
+    if (action === 'append') {
+      if (!setListId) {
+        return NextResponse.json({ message: 'Set list is required.' }, { status: 400 })
+      }
+
+      const ids = songId ? [songId] : uniqueSongIds
+      if (!ids.length) {
+        return NextResponse.json({ message: 'Song is required.' }, { status: 400 })
+      }
+
+      await appendBandSetListSongs(access.bandId, setListId, ids)
+      return NextResponse.redirect(new URL('/band/songs/set-lists', request.url), { status: 303 })
+    }
+
+    if (!name) {
+      return NextResponse.json({ message: 'Set list name is required.' }, { status: 400 })
+    }
+
     await createBandSetList(access.bandId, { name, description, notes, is_active: false, songIds: uniqueSongIds })
   } catch (error) {
     return NextResponse.json({ message: error instanceof Error ? error.message : 'Unable to create set list.' }, { status: 500 })
   }
 
-  return NextResponse.redirect(new URL('/band', request.url), { status: 303 })
+  return NextResponse.redirect(new URL('/band/songs/set-lists', request.url), { status: 303 })
 }

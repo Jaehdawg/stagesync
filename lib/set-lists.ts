@@ -242,3 +242,39 @@ export async function replaceBandSetListSongs(bandIdInput: unknown, setListIdInp
   if (error) throw new Error(error.message)
   return (data ?? []) as BandSetListSongRow[]
 }
+
+export async function appendBandSetListSongs(bandIdInput: unknown, setListIdInput: unknown, songIds: string[]) {
+  const bandId = assertBandId(bandIdInput)
+  const setListId = normalizeId(setListIdInput)
+  if (!setListId) throw new Error('set_list_id is required.')
+
+  const supabase = createServiceClient()
+  const normalizedSongIds = Array.from(new Set(songIds.map((songId) => normalizeId(songId)).filter((songId): songId is string => Boolean(songId))))
+  if (!normalizedSongIds.length) return [] as BandSetListSongRow[]
+
+  const { data: existingRows, error: selectError } = await supabase
+    .from('band_set_list_songs')
+    .select('song_id, position')
+    .eq('band_id', bandId)
+    .eq('set_list_id', setListId)
+    .order('position', { ascending: true })
+
+  if (selectError) throw new Error(selectError.message)
+
+  const existingIds = new Set((existingRows ?? []).map((row) => row.song_id))
+  const toAdd = normalizedSongIds.filter((songId) => !existingIds.has(songId))
+  if (!toAdd.length) return (existingRows ?? []) as BandSetListSongRow[]
+
+  const nextPosition = (existingRows ?? []).reduce((max, row) => Math.max(max, row.position), 0) + 1
+  const { data, error } = await supabase.from('band_set_list_songs').insert(
+    toAdd.map((songId, index) => ({
+      band_id: bandId,
+      set_list_id: setListId,
+      song_id: songId,
+      position: nextPosition + index,
+    }))
+  ).select('*')
+
+  if (error) throw new Error(error.message)
+  return [...(existingRows ?? []), ...((data ?? []) as BandSetListSongRow[])]
+}

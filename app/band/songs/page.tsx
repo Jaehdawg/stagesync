@@ -5,11 +5,13 @@ import { BandAccessForm } from '@/components/band-access-form'
 import { AdminRowDialog } from '@/components/admin-row-dialog'
 import { AutoRefresh } from '@/components/auto-refresh'
 import { DeleteAllSongsButton } from '@/components/delete-all-songs-button'
+import { SongSetListDialog } from '@/components/song-set-list-dialog'
 import { getTestSession } from '@/lib/test-session'
 import { getLiveBandAccessContext } from '@/lib/band-access'
 import { bandCopy } from '@/content/en/band'
 import { authCopy } from '@/content/en/auth'
 import { sharedCopy } from '@/content/en/shared'
+import { listBandSetLists } from '@/lib/set-lists'
 
 type SearchParams = Record<string, string | string[] | undefined>
 
@@ -82,6 +84,7 @@ export default async function BandSongsPage({
 
   const pageSize = 12
   const offset = (page - 1) * pageSize
+  const setLists = bandRole === 'admin' && activeBandId ? await listBandSetLists(activeBandId) : []
 
   if (!activeBandId) {
     return (
@@ -136,7 +139,6 @@ export default async function BandSongsPage({
               {username ? <p className="mt-2 text-sm text-slate-400">{bandCopy.songsPage.signedInAs} <span className="font-semibold text-slate-200">{username}</span>.</p> : null}
             </div>
             <div className="flex flex-wrap gap-3">
-              <Link href="/band/songs/set-lists" className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-white hover:border-cyan-400/50">{bandCopy.songsPage.manageSetListsButton}</Link>
               <Link href="/band/songs/set-lists" className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-white hover:border-cyan-400/50">{bandCopy.songsPage.manageSetListsButton}</Link>
               <Link href="/band" className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-white hover:border-cyan-400/50">{bandCopy.login.backToDashboard}</Link>
               <form action="/api/auth/logout" method="post">
@@ -231,6 +233,7 @@ export default async function BandSongsPage({
                   <div><p className="text-xs uppercase tracking-[0.22em] text-slate-400">{bandCopy.songsPage.rowSongTitleLabel}</p><p className="mt-1 text-base font-semibold text-white">{song.title}</p>{song.source_ref ? <p className="mt-2 text-xs text-slate-500">{bandCopy.songsPage.sourceRefPrefix} {song.source_ref}</p> : null}</div>
                   <div><p className="text-xs uppercase tracking-[0.22em] text-slate-400">{bandCopy.songsPage.rowDurationLabel}</p><p className="mt-1 text-base font-semibold text-white">{formatDuration(song.duration_ms)}</p></div>
                   <div className="flex flex-wrap gap-2 lg:justify-end">
+                    {bandRole === 'admin' ? <SongSetListDialog songId={song.id} songTitle={song.title} songArtist={song.artist} setLists={setLists} /> : null}
                     <AdminRowDialog triggerLabel={bandCopy.songsPage.editButton} title={`Edit ${song.title}`}>
                       <form className="grid gap-4 rounded-2xl border border-white/10 bg-slate-950/50 p-5" action={`/api/band/songs/${song.id}`} method="post">
                         <input type="hidden" name="action" value="update" />
