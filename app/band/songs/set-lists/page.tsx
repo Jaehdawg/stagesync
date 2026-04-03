@@ -139,8 +139,28 @@ export default async function BandSetListsPage() {
                   <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Songs</p>
                   <ol className="mt-3 space-y-2">
                     {songs.length ? songs.map((song, index) => (
-                      <li key={song.id} className="rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2 text-sm text-slate-200">
-                        {index + 1}. {song.artist} — {song.title}
+                      <li key={song.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2 text-sm text-slate-200">
+                        <div>
+                          <span className="mr-2 text-xs uppercase tracking-[0.2em] text-slate-500">{index + 1}</span>
+                          <span className="font-medium text-white">{song.artist} — {song.title}</span>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          <form action={`/api/band/set-lists/${setList.id}`} method="post">
+                            <input type="hidden" name="action" value="move-up" />
+                            <input type="hidden" name="songId" value={song.id} />
+                            <button type="submit" disabled={index === 0} className="rounded-lg border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-white disabled:cursor-not-allowed disabled:opacity-40">{bandSetListsCopy.moveUp}</button>
+                          </form>
+                          <form action={`/api/band/set-lists/${setList.id}`} method="post">
+                            <input type="hidden" name="action" value="move-down" />
+                            <input type="hidden" name="songId" value={song.id} />
+                            <button type="submit" disabled={index === songs.length - 1} className="rounded-lg border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-white disabled:cursor-not-allowed disabled:opacity-40">{bandSetListsCopy.moveDown}</button>
+                          </form>
+                          <form action={`/api/band/set-lists/${setList.id}`} method="post">
+                            <input type="hidden" name="action" value="remove-song" />
+                            <input type="hidden" name="songId" value={song.id} />
+                            <button type="submit" className="rounded-lg border border-red-400/30 bg-red-500/10 px-3 py-1 text-xs font-medium text-red-200">{bandSetListsCopy.removeSong}</button>
+                          </form>
+                        </div>
                       </li>
                     )) : <li className="text-sm text-slate-400">No songs in this set list yet.</li>}
                   </ol>

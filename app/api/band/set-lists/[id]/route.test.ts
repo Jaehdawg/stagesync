@@ -8,6 +8,8 @@ const activateBandSetListMock = vi.fn()
 const copyBandSetListMock = vi.fn()
 const deactivateBandSetListMock = vi.fn()
 const deleteBandSetListMock = vi.fn()
+const moveBandSetListSongMock = vi.fn()
+const removeBandSetListSongMock = vi.fn()
 const updateBandSetListMock = vi.fn()
 const createServerClientMock = vi.fn(() => ({
   auth: { getUser: vi.fn() },
@@ -39,6 +41,8 @@ vi.mock('../../../../../lib/set-lists', () => ({
   copyBandSetList: copyBandSetListMock,
   deactivateBandSetList: deactivateBandSetListMock,
   deleteBandSetList: deleteBandSetListMock,
+  moveBandSetListSong: moveBandSetListSongMock,
+  removeBandSetListSong: removeBandSetListSongMock,
   updateBandSetList: updateBandSetListMock,
 }))
 
@@ -61,6 +65,8 @@ beforeEach(() => {
   copyBandSetListMock.mockReset()
   deactivateBandSetListMock.mockReset()
   deleteBandSetListMock.mockReset()
+  moveBandSetListSongMock.mockReset()
+  removeBandSetListSongMock.mockReset()
   updateBandSetListMock.mockReset()
   createServerClientMock.mockReset()
   createServiceClientMock.mockReset()
@@ -148,5 +154,37 @@ describe('band set-lists [id] api route', () => {
 
     expect(response.status).toBe(303)
     expect(deleteBandSetListMock).toHaveBeenCalledWith('band-1', 'set-1')
+  })
+
+  it('removes a song from a set list', async () => {
+    getTestSessionMock.mockResolvedValue({ role: 'band', username: 'stagesync-band', activeBandId: 'band-1' })
+    getTestLoginMock.mockResolvedValue({ role: 'band', band_access_level: 'admin', active_band_id: 'band-1' })
+    removeBandSetListSongMock.mockResolvedValue([{ id: 'row-1' }])
+
+    const { POST } = await loadRoute()
+    const formData = new FormData()
+    formData.set('action', 'remove-song')
+    formData.set('songId', 'song-3')
+
+    const response = await POST(makeRequest(formData), { params: Promise.resolve({ id: 'set-1' }) })
+
+    expect(response.status).toBe(303)
+    expect(removeBandSetListSongMock).toHaveBeenCalledWith('band-1', 'set-1', 'song-3')
+  })
+
+  it('moves a song up or down in a set list', async () => {
+    getTestSessionMock.mockResolvedValue({ role: 'band', username: 'stagesync-band', activeBandId: 'band-1' })
+    getTestLoginMock.mockResolvedValue({ role: 'band', band_access_level: 'admin', active_band_id: 'band-1' })
+    moveBandSetListSongMock.mockResolvedValue([{ id: 'row-1' }])
+
+    const { POST } = await loadRoute()
+    const formData = new FormData()
+    formData.set('action', 'move-up')
+    formData.set('songId', 'song-3')
+
+    const response = await POST(makeRequest(formData), { params: Promise.resolve({ id: 'set-1' }) })
+
+    expect(response.status).toBe(303)
+    expect(moveBandSetListSongMock).toHaveBeenCalledWith('band-1', 'set-1', 'song-3', 'up')
   })
 })

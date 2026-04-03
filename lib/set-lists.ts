@@ -278,3 +278,98 @@ export async function appendBandSetListSongs(bandIdInput: unknown, setListIdInpu
   if (error) throw new Error(error.message)
   return [...(existingRows ?? []), ...((data ?? []) as BandSetListSongRow[])]
 }
+
+export async function removeBandSetListSong(bandIdInput: unknown, setListIdInput: unknown, songIdInput: unknown) {
+  const bandId = assertBandId(bandIdInput)
+  const setListId = normalizeId(setListIdInput)
+  const songId = normalizeId(songIdInput)
+  if (!setListId) throw new Error('set_list_id is required.')
+  if (!songId) throw new Error('song_id is required.')
+
+  const supabase = createServiceClient()
+  const { data: rows, error: selectError } = await supabase
+    .from('band_set_list_songs')
+    .select('id, song_id, position')
+    .eq('band_id', bandId)
+    .eq('set_list_id', setListId)
+    .order('position', { ascending: true })
+
+  if (selectError) throw new Error(selectError.message)
+
+  const existingRows = rows ?? []
+  const removed = existingRows.find((row) => row.song_id === songId)
+  if (!removed) return existingRows as BandSetListSongRow[]
+
+  const { error: deleteError } = await supabase
+    .from('band_set_list_songs')
+    .delete()
+    .eq('band_id', bandId)
+    .eq('set_list_id', setListId)
+    .eq('song_id', songId)
+
+  if (deleteError) throw new Error(deleteError.message)
+
+  const remainingRows = existingRows.filter((row) => row.song_id !== songId)
+  for (let index = 0; index < remainingRows.length; index += 1) {
+    const row = remainingRows[index]
+    const position = index + 1
+    if (row.position !== position) {
+      const { error: updateError } = await supabase
+        .from('band_set_list_songs')
+        .update({ position })
+        .eq('band_id', bandId)
+        .eq('set_list_id', setListId)
+        .eq('id', row.id)
+
+      if (updateError) throw new Error(updateError.message)
+    }
+  }
+
+  return remainingRows as BandSetListSongRow[]
+}
+
+export async function moveBandSetListSong(bandIdInput: unknown, setListIdInput: unknown, songIdInput: unknown, direction: 'up' | 'down') {
+  const bandId = assertBandId(bandIdInput)
+  const setListId = normalizeId(setListIdInput)
+  const songId = normalizeId(songIdInput)
+  if (!setListId) throw new Error('set_list_id is required.')
+  if (!songId) throw new Error('song_id is required.')
+
+  const supabase = createServiceClient()
+  const { data: rows, error: selectError } = await supabase
+    .from('band_set_list_songs')
+    .select('id, song_id, position')
+    .eq('band_id', bandId)
+    .eq('set_list_id', setListId)
+    .order('position', { ascending: true })
+
+  if (selectError) throw new Error(selectError.message)
+
+  const orderedRows = rows ?? []
+  const index = orderedRows.findIndex((row) => row.song_id === songId)
+  if (index < 0) return orderedRows as BandSetListSongRow[]
+
+  const targetIndex = direction === 'up' ? index - 1 : index + 1
+  if (targetIndex < 0 || targetIndex >= orderedRows.length) return orderedRows as BandSetListSongRow[]
+
+  const swapped = [...orderedRows]
+  const [item] = swapped.splice(index, 1)
+  swapped.splice(targetIndex, 0, item)
+
+  for (let newIndex = 0; newIndex < swapped.length; newIndex += 1) {
+    const row = swapped[newIndex]
+    const position = newIndex + 1
+    if (row.position !== position) {
+      const { error: updateError } = await supabase
+        .from('band_set_list_songs')
+        .update({ position })
+        .eq('band_id', bandId)
+        .eq('set_list_id', setListId)
+        .eq('id', row.id)
+
+      if (updateError) throw new Error(updateError.message)
+    }
+  }
+
+  return swapped as BandSetListSongRow[]
+}

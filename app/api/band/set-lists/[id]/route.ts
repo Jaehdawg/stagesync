@@ -4,7 +4,7 @@ import { createServiceClient } from '../../../../../utils/supabase/service'
 import { getTestSession } from '../../../../../lib/test-session'
 import { getTestLogin } from '../../../../../lib/test-login-list'
 import { getLiveBandAccessContext } from '../../../../../lib/band-access'
-import { activateBandSetList, copyBandSetList, deactivateBandSetList, deleteBandSetList, updateBandSetList } from '../../../../../lib/set-lists'
+import { activateBandSetList, copyBandSetList, deactivateBandSetList, deleteBandSetList, moveBandSetListSong, removeBandSetListSong, updateBandSetList } from '../../../../../lib/set-lists'
 
 function getSupabase(request: NextRequest) {
   return createServerClient(
@@ -56,6 +56,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
   const name = String(formData.get('name') ?? '').trim()
   const description = String(formData.get('description') ?? '').trim() || null
   const notes = String(formData.get('notes') ?? '').trim() || null
+  const songId = String(formData.get('songId') ?? '').trim()
   const songIds = String(formData.get('songIds') ?? '')
     .split(/[\n,]/)
     .map((value) => value.trim())
@@ -72,6 +73,10 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
       await activateBandSetList(access.bandId, id)
     } else if (action === 'deactivate') {
       await deactivateBandSetList(access.bandId, id)
+    } else if (action === 'remove-song') {
+      await removeBandSetListSong(access.bandId, id, songId)
+    } else if (action === 'move-up' || action === 'move-down') {
+      await moveBandSetListSong(access.bandId, id, songId, action === 'move-up' ? 'up' : 'down')
     } else {
       if (!name) {
         return NextResponse.json({ message: 'Set list name is required.' }, { status: 400 })
@@ -82,5 +87,5 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
     return NextResponse.json({ message: error instanceof Error ? error.message : 'Unable to update set list.' }, { status: 500 })
   }
 
-  return NextResponse.redirect(new URL('/band', request.url), { status: 303 })
+  return NextResponse.redirect(new URL('/band/songs/set-lists', request.url), { status: 303 })
 }
