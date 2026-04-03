@@ -20,7 +20,7 @@ create table if not exists public.band_set_list_songs (
   id uuid primary key default gen_random_uuid(),
   band_id uuid not null,
   set_list_id uuid not null,
-  song_id uuid not null,
+  song_id text not null,
   position integer not null,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
