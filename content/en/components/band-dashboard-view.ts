@@ -35,6 +35,14 @@ export const bandDashboardViewCopy = {
     historySubtitle: '(played and cancelled songs)',
     historyEmpty: 'Played and cancelled songs will appear here.',
   },
+  profile: {
+    title: 'Band profile',
+    eyebrow: 'Public links',
+    messageTitle: 'Custom message',
+    socialsTitle: 'Social links',
+    tipsTitle: 'Tip links',
+    noMessage: 'No custom band message yet.',
+  },
   signupLink: {
     title: 'Singer signup link',
     eyebrow: 'Shareable public flow',

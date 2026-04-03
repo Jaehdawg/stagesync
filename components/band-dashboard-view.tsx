@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import Image from 'next/image'
 import { buildQrCodeImageUrl } from '../lib/public-links'
 import { QueueActionButtons } from './queue-action-buttons'
 import { bandDashboardViewCopy } from '@/content/en/components/band-dashboard-view'
@@ -112,6 +113,37 @@ export function BandDashboardView({
 
       <div className={canManageShow ? 'grid gap-8 xl:grid-cols-[1.15fr_0.85fr]' : 'grid gap-8'}>
         <div className="grid gap-8">
+          <Panel title={bandDashboardViewCopy.profile.title} eyebrow={bandDashboardViewCopy.profile.eyebrow}>
+            <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                <p className="text-xs uppercase tracking-[0.22em] text-slate-400">{bandDashboardViewCopy.profile.messageTitle}</p>
+                <p className="mt-2 text-sm text-slate-200">{customMessage.trim() || bandDashboardViewCopy.profile.noMessage}</p>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.22em] text-slate-400">{bandDashboardViewCopy.profile.socialsTitle}</p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {bandLinks.map((link) => (
+                      <a key={link.label} href={link.href} target="_blank" rel="noreferrer" className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-white hover:border-cyan-400/50">
+                        {link.label}
+                      </a>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <p className="text-xs uppercase tracking-[0.22em] text-slate-400">{bandDashboardViewCopy.profile.tipsTitle}</p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {paymentLinks.map((link) => (
+                      <a key={link.label} href={link.href} target="_blank" rel="noreferrer" className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-white hover:border-cyan-400/50">
+                        {link.label}
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Panel>
+
           {canManageShow ? (
           <Panel title={bandDashboardViewCopy.operations.showControls} eyebrow={bandDashboardViewCopy.operations.operationsEyebrow}>
             {!currentShowId ? (
@@ -409,9 +441,11 @@ export function BandDashboardView({
                   </a>
                 </div>
                 <div className="flex items-center gap-4 rounded-2xl border border-white/10 bg-slate-900/60 p-4">
-                  <img
+                  <Image
                     src={buildQrCodeImageUrl(singerSignupUrl)}
                     alt={bandDashboardViewCopy.signupLink.qrAlt}
+                    width={96}
+                    height={96}
                     className="h-24 w-24 rounded-xl border border-white/10 bg-white p-2"
                   />
                   <p className="text-sm text-slate-300">
