@@ -127,29 +127,29 @@ export default async function AdminBandsPage({
               <input name="bandName" type="text" className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-200">Create mode</label>
+              <label className="text-sm font-medium text-slate-200">{adminCopy.bandsPage.createModeLabel}</label>
               <select name="createMode" className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white">
-                <option value="existing_profile">Associate existing profile</option>
-                <option value="new_user">Create new band admin user</option>
+                <option value="existing_profile">{adminCopy.bandsPage.createModeExisting}</option>
+                <option value="new_user">{adminCopy.bandsPage.createModeNewUser}</option>
               </select>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-200">Band role</label>
+              <label className="text-sm font-medium text-slate-200">{adminCopy.bandsPage.bandRoleLabel}</label>
               <select name="bandRole" className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white">
-                <option value="admin">admin</option>
-                <option value="member">member</option>
+                <option value="admin">{adminCopy.bandsPage.bandRoleAdmin}</option>
+                <option value="member">{adminCopy.bandsPage.bandRoleMember}</option>
               </select>
             </div>
             <div className="space-y-2 md:col-span-2">
-              <label className="text-sm font-medium text-slate-200">Existing profile username</label>
+              <label className="text-sm font-medium text-slate-200">{adminCopy.bandsPage.existingProfileLabel}</label>
               <input list="live-profile-list" name="profileLookup" placeholder="search username" className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-200">First name</label>
+              <label className="text-sm font-medium text-slate-200">{adminCopy.bandsPage.firstNameLabel}</label>
               <input name="firstName" type="text" className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-200">Last name</label>
+              <label className="text-sm font-medium text-slate-200">{adminCopy.bandsPage.lastNameLabel}</label>
               <input name="lastName" type="text" className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
             </div>
             <div className="space-y-2">
@@ -299,8 +299,8 @@ export default async function AdminBandsPage({
                         <input type="hidden" name="action" value="add-role" />
                         <input name="profileLookup" list="live-profile-list" placeholder="Search existing profile username" className="rounded-xl border border-white/10 bg-slate-950/70 px-4 py-3 text-white placeholder:text-slate-500" />
                         <select name="bandRole" className="rounded-xl border border-white/10 bg-slate-950/70 px-4 py-3 text-white">
-                          <option value="member">member</option>
-                          <option value="admin">admin</option>
+                          <option value="member">{adminCopy.bandsPage.bandRoleMember}</option>
+                          <option value="admin">{adminCopy.bandsPage.bandRoleAdmin}</option>
                         </select>
                         <button type="submit" className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-medium text-white">Attach to band</button>
                       </form>
