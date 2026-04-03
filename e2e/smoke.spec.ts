@@ -1,7 +1,10 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '@playwright/test'
 
-test('has title', async ({ page }) => {
-  await page.goto('/');
-  // Basic check for Next.js app
-  await expect(page).toHaveTitle(/Create Next App/);
-});
+test('shows the StageSync homepage', async ({ page }) => {
+  await page.goto('/')
+
+  await expect(page).toHaveTitle(/StageSync/)
+  await expect(page.getByRole('heading', { name: /live band karaoke simplified/i })).toBeVisible()
+  await expect(page.getByRole('link', { name: /band portal/i })).toBeVisible()
+  await expect(page.getByRole('link', { name: /learn more/i })).toBeVisible()
+})
