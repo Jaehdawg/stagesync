@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
+import { bandAccessFormCopy } from '@/content/en/components/band-access-form'
 
 type BandAccessFormProps = {
   role: 'band' | 'admin'
@@ -42,7 +43,7 @@ export function BandAccessForm({
     const payload = (await response.json().catch(() => ({}))) as { message?: string }
 
     if (!response.ok) {
-      setError(payload.message ?? 'Unable to sign in.')
+      setError(payload.message ?? bandAccessFormCopy.signInError)
       setLoading(false)
       return
     }
@@ -60,7 +61,7 @@ export function BandAccessForm({
       <div className="mt-4 space-y-4">
         <div className="space-y-2">
           <label htmlFor={`${role}-username`} className="text-sm font-medium text-slate-200">
-            Username
+            {bandAccessFormCopy.usernameLabel}
           </label>
           <input
             id={`${role}-username`}
@@ -68,13 +69,13 @@ export function BandAccessForm({
             type="text"
             value={username}
             onChange={(event) => setUsername(event.target.value)}
-            placeholder={`${role} username`}
+            placeholder={bandAccessFormCopy.usernamePlaceholder(role)}
             className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none"
           />
         </div>
         <div className="space-y-2">
           <label htmlFor={`${role}-password`} className="text-sm font-medium text-slate-200">
-            Password
+            {bandAccessFormCopy.passwordLabel}
           </label>
           <input
             id={`${role}-password`}
@@ -82,7 +83,7 @@ export function BandAccessForm({
             type="password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
-            placeholder="••••••••"
+            placeholder={bandAccessFormCopy.passwordPlaceholder}
             className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none"
           />
         </div>
@@ -92,7 +93,7 @@ export function BandAccessForm({
         disabled={loading}
         className="mt-4 inline-flex rounded-full bg-cyan-400 px-5 py-3 font-semibold text-slate-950 transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:bg-cyan-200"
       >
-        {loading ? 'Signing in...' : submitLabel}
+        {loading ? bandAccessFormCopy.signingIn : submitLabel}
       </button>
       {message ? <p className="mt-3 text-sm text-emerald-300">{message}</p> : null}
       {error ? <p className="mt-3 text-sm text-rose-300">{error}</p> : null}

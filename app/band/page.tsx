@@ -14,6 +14,8 @@ import { listBandRolesForProfileId } from '@/lib/band-roles'
 import { AutoRefresh } from '@/components/auto-refresh'
 import { headers } from 'next/headers'
 import { buildSingerSignupUrl, slugifyBandName } from '@/lib/public-links'
+import { authCopy } from '@/content/en/auth'
+import { bandCopy } from '@/content/en/band'
 
 async function getBandState(
   supabase: Awaited<ReturnType<typeof createClient>>,
@@ -189,21 +191,21 @@ export default async function BandPage() {
           <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100 sm:px-6 lg:px-8">
             <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
               <header className="rounded-3xl border border-white/10 bg-white/5 p-6">
-                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">Band control</p>
-                <h1 className="mt-2 text-4xl font-semibold text-white">StageSync Band Dashboard</h1>
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">{bandCopy.dashboard.eyebrow}</p>
+                <h1 className="mt-2 text-4xl font-semibold text-white">{bandCopy.dashboard.title}</h1>
                 <p className="mt-3 max-w-2xl text-slate-300">
                   Logged in as <span className="font-semibold">{liveAccess.username}</span>.
                 </p>
                 {liveAccess.bandRole === 'admin' ? (
                   <div className="mt-4 flex flex-wrap gap-3">
-                    <a href="/band/account" className="rounded-full border border-white/10 px-4 py-2 text-sm font-medium text-white hover:border-cyan-400/50">Account</a>
-                    <a href="/band/members" className="rounded-full border border-white/10 px-4 py-2 text-sm font-medium text-white hover:border-cyan-400/50">Members</a>
-                    <a href="/band/songs" className="rounded-full border border-white/10 px-4 py-2 text-sm font-medium text-white hover:border-cyan-400/50">Song library</a>
+                    <a href="/band/account" className="rounded-full border border-white/10 px-4 py-2 text-sm font-medium text-white hover:border-cyan-400/50">{bandCopy.dashboard.links.account}</a>
+                    <a href="/band/members" className="rounded-full border border-white/10 px-4 py-2 text-sm font-medium text-white hover:border-cyan-400/50">{bandCopy.dashboard.links.members}</a>
+                    <a href="/band/songs" className="rounded-full border border-white/10 px-4 py-2 text-sm font-medium text-white hover:border-cyan-400/50">{bandCopy.dashboard.links.songs}</a>
                   </div>
                 ) : null}
                 <form className="mt-4" action="/api/auth/logout" method="post">
                   <button type="submit" className="rounded-full border border-white/10 px-4 py-2 text-sm font-medium text-white hover:border-cyan-400/50">
-                    Log out
+                    {authCopy.logoutLabel}
                   </button>
                 </form>
               </header>
@@ -227,21 +229,21 @@ export default async function BandPage() {
       <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100 sm:px-6 lg:px-8">
         <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
           <header className="rounded-3xl border border-white/10 bg-white/5 p-6">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">Band control</p>
-            <h1 className="mt-2 text-4xl font-semibold text-white">StageSync Band Dashboard</h1>
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">{bandCopy.dashboard.eyebrow}</p>
+            <h1 className="mt-2 text-4xl font-semibold text-white">{bandCopy.dashboard.title}</h1>
             <p className="mt-3 max-w-2xl text-slate-300">
               Logged in as <span className="font-semibold">{testSession.username}</span>.
             </p>
             {isBandAdmin ? (
               <div className="mt-4 flex flex-wrap gap-3">
-                <a href="/band/account" className="rounded-full border border-white/10 px-4 py-2 text-sm font-medium text-white hover:border-cyan-400/50">Account</a>
-                <a href="/band/members" className="rounded-full border border-white/10 px-4 py-2 text-sm font-medium text-white hover:border-cyan-400/50">Members</a>
-                <a href="/band/songs" className="rounded-full border border-white/10 px-4 py-2 text-sm font-medium text-white hover:border-cyan-400/50">Song library</a>
+                <a href="/band/account" className="rounded-full border border-white/10 px-4 py-2 text-sm font-medium text-white hover:border-cyan-400/50">{bandCopy.dashboard.links.account}</a>
+                <a href="/band/members" className="rounded-full border border-white/10 px-4 py-2 text-sm font-medium text-white hover:border-cyan-400/50">{bandCopy.dashboard.links.members}</a>
+                <a href="/band/songs" className="rounded-full border border-white/10 px-4 py-2 text-sm font-medium text-white hover:border-cyan-400/50">{bandCopy.dashboard.links.songs}</a>
               </div>
             ) : null}
             <form className="mt-4" action="/api/auth/logout" method="post">
               <button type="submit" className="rounded-full border border-white/10 px-4 py-2 text-sm font-medium text-white hover:border-cyan-400/50">
-                Log out
+                {authCopy.logoutLabel}
               </button>
             </form>
           </header>
@@ -259,18 +261,18 @@ export default async function BandPage() {
       <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100 sm:px-6 lg:px-8">
         <div className="mx-auto grid w-full max-w-5xl gap-6 lg:grid-cols-[1fr_0.9fr]">
           <header className="rounded-3xl border border-white/10 bg-white/5 p-6">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">Band portal</p>
-            <h1 className="mt-2 text-4xl font-semibold text-white">StageSync Band Login</h1>
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">{authCopy.bandPortal}</p>
+            <h1 className="mt-2 text-4xl font-semibold text-white">{authCopy.bandLogin.pageTitle}</h1>
             <p className="mt-3 max-w-2xl text-slate-300">
-              Band members sign in here with a username and password to manage the show, queue, and profile settings.
+              {authCopy.bandLogin.pageDescription}
             </p>
           </header>
           <BandAccessForm
             role="band"
-            title="Band login"
-            description="Use your band username and password to access show controls."
-            submitLabel="Sign in"
-            successMessage="Band login successful."
+            title={authCopy.bandLogin.title}
+            description={authCopy.bandLogin.description}
+            submitLabel={authCopy.bandLogin.submitLabel}
+            successMessage={authCopy.bandLogin.successMessage}
           />
         </div>
       </main>
@@ -291,18 +293,18 @@ export default async function BandPage() {
       <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100 sm:px-6 lg:px-8">
         <div className="mx-auto grid w-full max-w-5xl gap-6 lg:grid-cols-[1fr_0.9fr]">
           <header className="rounded-3xl border border-white/10 bg-white/5 p-6">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">Band portal</p>
-            <h1 className="mt-2 text-4xl font-semibold text-white">Switch to a band account</h1>
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">{authCopy.bandPortal}</p>
+            <h1 className="mt-2 text-4xl font-semibold text-white">{authCopy.bandLogin.switchTitle}</h1>
             <p className="mt-3 max-w-2xl text-slate-300">
-              You&apos;re currently signed in as a singer. Use a band email to get the band dashboard.
+              {authCopy.bandLogin.switchMessage}
             </p>
           </header>
           <BandAccessForm
             role="band"
-            title="Band login"
-            description="Use your band username and password to switch into the band dashboard."
-            submitLabel="Sign in"
-            successMessage="Band login successful."
+            title={authCopy.bandLogin.title}
+            description={authCopy.bandLogin.description}
+            submitLabel={authCopy.bandLogin.submitLabel}
+            successMessage={authCopy.bandLogin.successMessage}
           />
         </div>
       </main>
@@ -316,14 +318,14 @@ export default async function BandPage() {
     <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100 sm:px-6 lg:px-8">
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
         <header className="rounded-3xl border border-white/10 bg-white/5 p-6">
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">Band control</p>
-          <h1 className="mt-2 text-4xl font-semibold text-white">StageSync Band Dashboard</h1>
+          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">{bandCopy.dashboard.eyebrow}</p>
+          <h1 className="mt-2 text-4xl font-semibold text-white">{bandCopy.dashboard.title}</h1>
           <p className="mt-3 max-w-2xl text-slate-300">
-            Manage the current show, queue, and band profile without exposing those controls to singers.
+            {bandCopy.dashboard.description}
           </p>
           <form className="mt-4" action="/api/auth/logout" method="post">
             <button type="submit" className="rounded-full border border-white/10 px-4 py-2 text-sm font-medium text-white hover:border-cyan-400/50">
-              Log out
+              {authCopy.logoutLabel}
             </button>
           </form>
         </header>

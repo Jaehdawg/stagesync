@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '../utils/supabase/client'
+import { singerRegistrationFormCopy } from '@/content/en/components/singer-registration-form'
 
 type SupabaseAuthClient = {
   auth: {
@@ -42,7 +43,7 @@ export function SingerRegistrationForm({ mode = 'signup', supabaseClient, disabl
     const trimmedEmail = email.trim().toLowerCase()
 
     if (!EMAIL_REGEX.test(trimmedEmail)) {
-      setError('Enter a valid email address.')
+      setError(singerRegistrationFormCopy.errors.invalidEmail)
       return
     }
 
@@ -51,12 +52,12 @@ export function SingerRegistrationForm({ mode = 'signup', supabaseClient, disabl
       const trimmedLastName = lastName.trim()
 
       if (!trimmedFirstName || !trimmedLastName) {
-        setError('First name and last name are required.')
+        setError(singerRegistrationFormCopy.errors.missingNames)
         return
       }
 
       if (!PASSWORD_REGEX.test(password)) {
-        setError('Password must be at least 8 characters and include a letter and a number.')
+        setError(singerRegistrationFormCopy.errors.weakPassword)
         return
       }
 
@@ -78,7 +79,7 @@ export function SingerRegistrationForm({ mode = 'signup', supabaseClient, disabl
       const payload = (await response.json().catch(() => ({}))) as { message?: string }
 
       if (!response.ok && response.status !== 409) {
-        setError(payload.message ?? 'Unable to create your singer account.')
+        setError(payload.message ?? singerRegistrationFormCopy.errors.signupFailed)
         setLoading(false)
         return
       }
@@ -95,14 +96,14 @@ export function SingerRegistrationForm({ mode = 'signup', supabaseClient, disabl
         return
       }
 
-      setMessage(payload.message ?? 'You’re signed up and signed in to StageSync.')
+      setMessage(payload.message ?? singerRegistrationFormCopy.messages.signupSuccess)
       setLoading(false)
       router.refresh()
       return
     }
 
     if (!PASSWORD_REGEX.test(password)) {
-      setError('Password must be at least 8 characters and include a letter and a number.')
+      setError(singerRegistrationFormCopy.errors.weakPassword)
       return
     }
 
@@ -122,23 +123,23 @@ export function SingerRegistrationForm({ mode = 'signup', supabaseClient, disabl
       return
     }
 
-    setMessage('Welcome back! You’re signed in to StageSync.')
+    setMessage(singerRegistrationFormCopy.messages.loginSuccess)
     setLoading(false)
     router.refresh()
   }
 
   return (
     <form className="rounded-2xl border border-white/10 bg-white/5 p-5" onSubmit={handleSubmit}>
-      <h3 className="text-lg font-semibold text-white">{mode === 'signup' ? 'Singer Sign-up' : 'Singer Login'}</h3>
+      <h3 className="text-lg font-semibold text-white">{mode === 'signup' ? singerRegistrationFormCopy.titles.signup : singerRegistrationFormCopy.titles.login}</h3>
       <p className="mt-1 text-slate-400">
-        {mode === 'signup' ? 'Create your singer account with a password so you can join the queue right away.' : 'Welcome back!'}
+        {mode === 'signup' ? singerRegistrationFormCopy.descriptions.signup : singerRegistrationFormCopy.descriptions.login}
       </p>
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
         {mode === 'signup' ? (
           <>
             <div className="space-y-2 sm:col-span-1">
               <label htmlFor="first-name" className="text-sm font-medium text-slate-200">
-                First name
+                {singerRegistrationFormCopy.labels.firstName}
               </label>
               <input
                 id="first-name"
@@ -146,13 +147,13 @@ export function SingerRegistrationForm({ mode = 'signup', supabaseClient, disabl
                 type="text"
                 value={firstName}
                 onChange={(event) => setFirstName(event.target.value)}
-                placeholder="Maya"
+                placeholder={singerRegistrationFormCopy.placeholders.firstName}
                 className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none"
               />
             </div>
             <div className="space-y-2 sm:col-span-1">
               <label htmlFor="last-name" className="text-sm font-medium text-slate-200">
-                Last name
+                {singerRegistrationFormCopy.labels.lastName}
               </label>
               <input
                 id="last-name"
@@ -160,7 +161,7 @@ export function SingerRegistrationForm({ mode = 'signup', supabaseClient, disabl
                 type="text"
                 value={lastName}
                 onChange={(event) => setLastName(event.target.value)}
-                placeholder="Chen"
+                placeholder={singerRegistrationFormCopy.placeholders.lastName}
                 className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none"
               />
             </div>
@@ -168,7 +169,7 @@ export function SingerRegistrationForm({ mode = 'signup', supabaseClient, disabl
         ) : null}
         <div className="space-y-2 sm:col-span-2">
           <label htmlFor="email" className="text-sm font-medium text-slate-200">
-            Email
+            {singerRegistrationFormCopy.labels.email}
           </label>
           <input
             id="email"
@@ -176,13 +177,13 @@ export function SingerRegistrationForm({ mode = 'signup', supabaseClient, disabl
             type="email"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
-            placeholder="maya@example.com"
+            placeholder={singerRegistrationFormCopy.placeholders.email}
             className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none"
           />
         </div>
         <div className="space-y-2 sm:col-span-2">
           <label htmlFor="password" className="text-sm font-medium text-slate-200">
-            Password
+            {singerRegistrationFormCopy.labels.password}
           </label>
           <input
             id="password"
@@ -190,12 +191,12 @@ export function SingerRegistrationForm({ mode = 'signup', supabaseClient, disabl
             type="password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
-            placeholder={mode === 'signup' ? 'At least 8 characters with a number' : 'Your password'}
+            placeholder={mode === 'signup' ? singerRegistrationFormCopy.placeholders.signupPassword : singerRegistrationFormCopy.placeholders.loginPassword}
             minLength={8}
             className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none"
           />
           <p className="text-xs text-slate-500">
-            {mode === 'signup' ? 'Use at least 8 characters with a letter and a number.' : 'Enter the password for your singer account.'}
+            {mode === 'signup' ? singerRegistrationFormCopy.helperText.signup : singerRegistrationFormCopy.helperText.login}
           </p>
         </div>
       </div>
@@ -204,7 +205,7 @@ export function SingerRegistrationForm({ mode = 'signup', supabaseClient, disabl
         disabled={loading || disabled}
         className="mt-4 inline-flex rounded-full bg-cyan-400 px-5 py-3 font-semibold text-slate-950 transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:bg-cyan-200"
       >
-        {disabled ? 'Signups paused' : loading ? 'Signing in...' : mode === 'signup' ? 'Sign-up' : 'Login'}
+        {disabled ? singerRegistrationFormCopy.buttons.paused : loading ? singerRegistrationFormCopy.buttons.signingIn : mode === 'signup' ? singerRegistrationFormCopy.buttons.signup : singerRegistrationFormCopy.buttons.login}
       </button>
       {statusMessage ? <p className="mt-3 text-sm text-slate-300">{statusMessage}</p> : null}
       {message ? <p className="mt-3 text-sm text-emerald-300">{message}</p> : null}

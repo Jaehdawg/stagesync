@@ -5,6 +5,7 @@ import { SingerDashboardView } from '../../components/singer-dashboard-view'
 import { slugifyBandName } from '../../lib/public-links'
 import { getBandProfileForBandId } from '../../lib/band-tenancy'
 import { getShowState, getSignupCapacity } from '../../lib/show-state'
+import { singerCopy } from '@/content/en/singer'
 
 type SearchParams = Record<string, string | string[] | undefined>
 
@@ -37,7 +38,7 @@ export default async function SingerPage({
     return (
       <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-4xl rounded-3xl border border-white/10 bg-white/5 p-6 text-slate-200">
-          We couldn’t find that band’s singer page.
+          {singerCopy.noBandFound}
         </div>
       </main>
     )
@@ -73,14 +74,11 @@ export default async function SingerPage({
     return (
       <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-4xl rounded-3xl border border-white/10 bg-white/5 p-8 text-slate-200">
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">StageSync</p>
-          <h1 className="mt-3 text-3xl font-semibold text-white">No active show yet</h1>
-          <p className="mt-3 text-slate-300">
-            {fallbackBandProfile.band_name} doesn’t have an active show linked to this singer page yet.
-            Ask the band to start a show, then use the generated singer link again.
-          </p>
+          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">{singerCopy.eyebrow}</p>
+          <h1 className="mt-3 text-3xl font-semibold text-white">{singerCopy.noActiveShow.title}</h1>
+          <p className="mt-3 text-slate-300">{singerCopy.noActiveShow.body(fallbackBandProfile.band_name)}</p>
           <a href="/band" className="mt-6 inline-flex rounded-full border border-white/10 px-4 py-2 text-sm font-medium text-white hover:border-cyan-400/50">
-            Back to band portal
+            {singerCopy.noActiveShow.backToBandPortal}
           </a>
         </div>
       </main>
@@ -191,10 +189,10 @@ export default async function SingerPage({
       signupEnabled={signupEnabled}
       signupStatusMessage={
         signupEnabled
-          ? `Signups are open. Singer Slots: ${signupCapacity}`
+          ? singerCopy.signupStatus.open(signupCapacity)
           : showState === 'paused'
-            ? 'Signups are paused by the band.'
-            : 'This show has ended and singer signups are closed.'
+            ? singerCopy.signupStatus.paused
+            : singerCopy.signupStatus.ended
       }
       songSourceMode={settingsResult.data?.song_source_mode === 'tidal_playlist' ? 'tidal_playlist' : 'uploaded'}
       tidalPlaylistUrl={settingsResult.data?.tidal_playlist_url ?? null}
@@ -205,7 +203,7 @@ export default async function SingerPage({
       liveQueueItems={liveQueueItems}
       historyItems={historyItems}
       lyricsTrack={liveQueueItems[0] ? { artist: liveQueueItems[0].artist, title: liveQueueItems[0].title } : currentSingerRequest ? { artist: currentSingerRequest.artist, title: currentSingerRequest.title } : null}
-      currentShowName={currentShow?.name ?? activeShow?.name ?? 'StageSync Show'}
+      currentShowName={currentShow?.name ?? activeShow?.name ?? singerCopy.currentShowNameFallback}
     />
   )
 }
