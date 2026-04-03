@@ -10,6 +10,7 @@ const deactivateBandSetListMock = vi.fn()
 const deleteBandSetListMock = vi.fn()
 const moveBandSetListSongMock = vi.fn()
 const removeBandSetListSongMock = vi.fn()
+const replaceBandSetListSongsMock = vi.fn()
 const updateBandSetListMock = vi.fn()
 const createServerClientMock = vi.fn(() => ({
   auth: { getUser: vi.fn() },
@@ -43,6 +44,7 @@ vi.mock('../../../../../lib/set-lists', () => ({
   deleteBandSetList: deleteBandSetListMock,
   moveBandSetListSong: moveBandSetListSongMock,
   removeBandSetListSong: removeBandSetListSongMock,
+  replaceBandSetListSongs: replaceBandSetListSongsMock,
   updateBandSetList: updateBandSetListMock,
 }))
 
@@ -67,6 +69,7 @@ beforeEach(() => {
   deleteBandSetListMock.mockReset()
   moveBandSetListSongMock.mockReset()
   removeBandSetListSongMock.mockReset()
+  replaceBandSetListSongsMock.mockReset()
   updateBandSetListMock.mockReset()
   createServerClientMock.mockReset()
   createServiceClientMock.mockReset()
@@ -170,6 +173,22 @@ describe('band set-lists [id] api route', () => {
 
     expect(response.status).toBe(303)
     expect(removeBandSetListSongMock).toHaveBeenCalledWith('band-1', 'set-1', 'song-3')
+  })
+
+  it('reorders songs in a set list after drag and drop', async () => {
+    getTestSessionMock.mockResolvedValue({ role: 'band', username: 'stagesync-band', activeBandId: 'band-1' })
+    getTestLoginMock.mockResolvedValue({ role: 'band', band_access_level: 'admin', active_band_id: 'band-1' })
+    replaceBandSetListSongsMock.mockResolvedValue([{ id: 'row-1' }])
+
+    const { POST } = await loadRoute()
+    const formData = new FormData()
+    formData.set('action', 'reorder')
+    formData.set('songIds', 'song-2, song-1, song-3')
+
+    const response = await POST(makeRequest(formData), { params: Promise.resolve({ id: 'set-1' }) })
+
+    expect(response.status).toBe(303)
+    expect(replaceBandSetListSongsMock).toHaveBeenCalledWith('band-1', 'set-1', ['song-2', 'song-1', 'song-3'])
   })
 
   it('moves a song up or down in a set list', async () => {

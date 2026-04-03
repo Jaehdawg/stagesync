@@ -4,7 +4,7 @@ import { createServiceClient } from '../../../../../utils/supabase/service'
 import { getTestSession } from '../../../../../lib/test-session'
 import { getTestLogin } from '../../../../../lib/test-login-list'
 import { getLiveBandAccessContext } from '../../../../../lib/band-access'
-import { activateBandSetList, copyBandSetList, deactivateBandSetList, deleteBandSetList, moveBandSetListSong, removeBandSetListSong, updateBandSetList } from '../../../../../lib/set-lists'
+import { activateBandSetList, copyBandSetList, deactivateBandSetList, deleteBandSetList, moveBandSetListSong, removeBandSetListSong, replaceBandSetListSongs, updateBandSetList } from '../../../../../lib/set-lists'
 
 function getSupabase(request: NextRequest) {
   return createServerClient(
@@ -77,6 +77,12 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
       await removeBandSetListSong(access.bandId, id, songId)
     } else if (action === 'move-up' || action === 'move-down') {
       await moveBandSetListSong(access.bandId, id, songId, action === 'move-up' ? 'up' : 'down')
+    } else if (action === 'reorder') {
+      const orderedSongIds = String(formData.get('songIds') ?? '')
+        .split(/[\n,]/)
+        .map((value) => value.trim())
+        .filter(Boolean)
+      await replaceBandSetListSongs(access.bandId, id, orderedSongIds)
     } else {
       if (!name) {
         return NextResponse.json({ message: 'Set list name is required.' }, { status: 400 })
