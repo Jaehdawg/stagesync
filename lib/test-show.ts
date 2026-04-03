@@ -1,6 +1,23 @@
+type SupabaseError = { message: string; code?: string }
+
+type QueryResult = Promise<{ data: unknown; error: SupabaseError | null }>
+
+type SupabaseQuery = {
+  select: (columns?: string) => SupabaseQuery
+  eq: (column: string, value: unknown) => SupabaseQuery
+  order: (column: string, options?: { ascending?: boolean }) => SupabaseQuery
+  limit: (count: number) => SupabaseQuery
+  insert: (values: unknown) => SupabaseQuery
+  update: (values: unknown) => SupabaseQuery
+  upsert: (values: unknown, options?: unknown) => SupabaseQuery
+  delete: () => SupabaseQuery
+  maybeSingle: () => QueryResult
+  single: () => QueryResult
+}
+
 type SupabaseLike = {
-  from: (table: string) => any
-  rpc?: (fn: string, args?: Record<string, unknown>) => any
+  from: (table: string) => SupabaseQuery
+  rpc?: (fn: string, args?: Record<string, unknown>) => Promise<unknown>
 }
 
 export type TestShowRow = {
@@ -26,7 +43,7 @@ export type TestShowSettingsRow = {
   playlist_only?: boolean | null
   lyrics_enabled?: boolean | null
   allow_tips?: boolean | null
-  song_source_mode?: 'uploaded' | 'tidal_playlist' | 'tidal_catalog' | null
+  song_source_mode?: 'uploaded' | 'tidal_playlist' | 'tidal_catalog' | 'set_list' | null
   tidal_playlist_url?: string | null
   created_at?: string | null
 }
@@ -37,7 +54,7 @@ function normalizeBandId(value: unknown) {
 
 function isMissingTableError(error: unknown, tableName: string) {
   const message = error instanceof Error ? error.message : typeof error === 'string' ? error : ''
-  return message.includes(`public.${tableName}`) || message.includes(tableName) || (error as any)?.code === 'PGRST205'
+  return message.includes(`public.${tableName}`) || message.includes(tableName) || (typeof error === 'object' && error !== null && 'code' in error && String((error as { code?: unknown }).code) === 'PGRST205')
 }
 
 async function listShowsByBandId(supabase: SupabaseLike, bandId: string) {
@@ -115,7 +132,7 @@ export async function updateTestShowSettings(
       eventId?: string | null
       showDurationMinutes?: number | null
       signupBufferMinutes?: number | null
-      songSourceMode?: 'uploaded' | 'tidal_playlist' | 'tidal_catalog' | string | null
+      songSourceMode?: 'uploaded' | 'tidal_playlist' | 'tidal_catalog' | 'set_list' | string | null
       tidalPlaylistUrl?: string | null
     }
 ) {

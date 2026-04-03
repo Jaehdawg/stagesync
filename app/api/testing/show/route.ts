@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
       const { data: band } = await supabase.from('bands').select('band_name').eq('id', testSession.activeBandId).maybeSingle()
       await createTestShow(supabase, { band_id: testSession.activeBandId, band_name: band?.band_name ?? null, name, description })
     } else if (action === 'settings') {
-      const mode = songSourceMode === 'tidal_playlist' ? songSourceMode : 'uploaded'
+      const mode = songSourceMode === 'set_list' || songSourceMode === 'tidal_playlist' ? songSourceMode : 'uploaded'
       const { data: currentSettings } = await supabase
         .from('test_show_settings')
         .select('tidal_playlist_url')
