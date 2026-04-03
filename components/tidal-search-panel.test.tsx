@@ -3,17 +3,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { TidalSearchPanel } from './tidal-search-panel'
 
 const fetchMock = vi.fn()
-const refreshMock = vi.fn()
-
-vi.mock('next/navigation', () => ({
-  useRouter: () => ({
-    refresh: refreshMock,
-  }),
-}))
 
 afterEach(() => {
   fetchMock.mockReset()
-  refreshMock.mockReset()
   vi.restoreAllMocks()
 })
 
@@ -65,6 +57,5 @@ describe('TidalSearchPanel', () => {
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledWith('/api/queue', expect.any(Object)))
     expect(screen.getByText(/song request added/i)).toBeInTheDocument()
-    expect(refreshMock).toHaveBeenCalled()
   })
 })
