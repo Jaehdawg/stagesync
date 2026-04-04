@@ -54,6 +54,30 @@ describe('tidal helpers', () => {
     ])
   })
 
+  it('reads artist names from track attributes when the artist relationship is absent', () => {
+    expect(
+      extractTidalTracks({
+        data: [
+          {
+            id: '42',
+            type: 'tracks',
+            attributes: {
+              title: 'Semi-Charmed Life',
+              artistName: 'Third Eye Blind',
+            },
+          },
+        ],
+      })
+    ).toEqual([
+      {
+        id: '42',
+        title: 'Semi-Charmed Life',
+        artist: 'Third Eye Blind',
+        album: null,
+      },
+    ])
+  })
+
   it('fetches the f1abe534 playlist end to end through the relationships/items cursor flow', async () => {
     const originalClientId = process.env.TIDAL_CLIENT_ID
     const originalClientSecret = process.env.TIDAL_CLIENT_SECRET
@@ -239,6 +263,6 @@ describe('tidal helpers', () => {
 
   it('returns empty results when no token is configured', async () => {
     const result = await searchTidalTracks('Dreams')
-    expect(result).toEqual([])
+    expect(result).toEqual({ tracks: [], nextCursor: null })
   })
 })

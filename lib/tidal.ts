@@ -183,7 +183,14 @@ function collectIncludedResources(payload: unknown) {
 
 function normalizeArtistFromResource(resource: TidalJson): string {
   const attrs = (resource.attributes as TidalJson | undefined) ?? {}
-  const directName = readString(attrs.name) || readString(resource.name)
+  const directName =
+    readString(attrs.name) ||
+    readString(attrs.artistName) ||
+    readString(attrs.artist) ||
+    readString(attrs.artist_name) ||
+    readString(resource.name) ||
+    readString(resource.artistName) ||
+    readString(resource.artist)
   if (directName) return directName
 
   const title = readString(attrs.title)
@@ -207,8 +214,19 @@ async function fetchArtistName(artistId: string, token: string) {
 }
 
 function resolveArtistsFromRelationship(resource: TidalJson, included: Map<string, TidalJson>) {
-  const relationshipArtists = (resource.relationships as TidalJson | undefined)?.artists as TidalJson | undefined
-  const refs = Array.isArray(relationshipArtists?.data) ? relationshipArtists.data : []
+  const relationships = (resource.relationships as TidalJson | undefined) ?? {}
+  const refs: unknown[] = []
+
+  for (const relationName of ['artists', 'artist', 'primaryArtist', 'mainArtist']) {
+    const relation = relationships[relationName] as TidalJson | undefined
+    const data = relation?.data
+    if (Array.isArray(data)) {
+      refs.push(...data)
+    } else if (data) {
+      refs.push(data)
+    }
+  }
+
   const names: string[] = []
 
   for (const ref of refs) {
@@ -238,7 +256,8 @@ function normalizeTrack(resource: TidalJson, included: Map<string, TidalJson>): 
   const duration = parseDurationSeconds(durationValue)
   let artist =
     readNestedString(source.artist, 'name') ||
-    readString(source.artistName ?? source.artist ?? source.performer ?? source.artist_name)
+    readString(source.artistName ?? source.artist ?? source.performer ?? source.artist_name) ||
+    readString(attrs.artistName ?? attrs.artist ?? attrs.artist_name ?? attrs.performer)
   const album =
     readNestedString(source.album, 'title') ||
     readString(attrs.albumTitle ?? attrs.album ?? source.albumTitle ?? source.album) ||
