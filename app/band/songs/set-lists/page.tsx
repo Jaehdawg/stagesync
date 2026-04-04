@@ -116,7 +116,7 @@ export default async function BandSetListsPage() {
                     {setList.notes ? <p className="mt-2 text-xs text-slate-400">{setList.notes}</p> : null}
                     <p className="mt-2 text-xs uppercase tracking-[0.2em] text-slate-500">{songs.length} songs</p>
                   </div>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-2" onClickCapture={(event) => event.stopPropagation()}>
                     <form action={`/api/band/set-lists/${setList.id}`} method="post">
                       <input type="hidden" name="action" value={setList.is_active ? 'deactivate' : 'activate'} />
                       <button type="submit" className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-medium text-white">{setList.is_active ? bandSetListsCopy.deactivate : bandSetListsCopy.activate}</button>
@@ -136,7 +136,9 @@ export default async function BandSetListsPage() {
                     </AdminRowDialog>
                   </div>
                 </div>
-                <SetListSongEditor setListId={setList.id} songs={songs} />
+                <div onClickCapture={(event) => event.stopPropagation()}>
+                  <SetListSongEditor setListId={setList.id} songs={songs} />
+                </div>
               </div>
             )) : <p className="text-sm text-slate-400">{bandSetListsCopy.empty}</p>}
           </div>

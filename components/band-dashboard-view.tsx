@@ -3,6 +3,7 @@ import Image from 'next/image'
 import { buildQrCodeImageUrl } from '../lib/public-links'
 import { AdminRowDialog } from './admin-row-dialog'
 import { QueueActionButtons } from './queue-action-buttons'
+import { UltimateGuitarSongLink } from './ultimate-guitar-song-link'
 import { bandDashboardViewCopy } from '../content/en/components/band-dashboard-view'
 import { bandSetListsCopy } from '../content/en/components/band-set-lists'
 
@@ -49,6 +50,17 @@ function Panel({
       <div className="mt-4 text-sm leading-6 text-slate-300">{children}</div>
     </section>
   )
+}
+
+function parseQueueSong(song: string) {
+  const parts = song.split(' - ')
+  if (parts.length >= 2) {
+    const artist = parts.pop()?.trim() ?? song
+    const title = parts.join(' - ').trim()
+    return { artist, title }
+  }
+
+  return { artist: '', title: song }
 }
 
 export function BandDashboardView({
@@ -314,26 +326,32 @@ export function BandDashboardView({
           <Panel title={bandDashboardViewCopy.queue.title} eyebrow={bandDashboardViewCopy.queue.eyebrow}>
             {liveQueueItems.length ? (
               <div className="space-y-3">
-                {liveQueueItems.map((item) => (
-                  <div key={item.id ?? `${item.position}-${item.name}`} className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div>
-                        <p className="text-xs uppercase tracking-[0.22em] text-slate-400">{bandDashboardViewCopy.queue.positionPrefix} {item.position}</p>
-                        <h3 className="mt-1 text-base font-semibold text-white">{item.song}</h3>
-                        <p className="text-sm text-slate-400">{item.name}</p>
-                      </div>
-                      <span className="rounded-full bg-emerald-400/15 px-3 py-1 text-xs font-semibold text-emerald-300">
-                        {item.status}
-                      </span>
+                {liveQueueItems.map((item) => {
+                  const song = parseQueueSong(item.song)
+
+                  return (
+                    <div key={item.id ?? `${item.position}-${item.name}`} className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                      <UltimateGuitarSongLink artist={song.artist} title={song.title} className="block rounded-2xl focus:outline-none focus:ring-2 focus:ring-cyan-400/50">
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div>
+                            <p className="text-xs uppercase tracking-[0.22em] text-slate-400">{bandDashboardViewCopy.queue.positionPrefix} {item.position}</p>
+                            <h3 className="mt-1 text-base font-semibold text-white">{item.song}</h3>
+                            <p className="text-sm text-slate-400">{item.name}</p>
+                          </div>
+                          <span className="rounded-full bg-emerald-400/15 px-3 py-1 text-xs font-semibold text-emerald-300">
+                            {item.status}
+                          </span>
+                        </div>
+                        <div className="mt-4 flex flex-wrap gap-2 text-xs font-medium text-slate-200" onClickCapture={(event) => event.stopPropagation()}>
+                          <QueueActionButtons queueItemId={item.id} action="played" label={bandDashboardViewCopy.queue.played} />
+                          <QueueActionButtons queueItemId={item.id} action="remove" label={bandDashboardViewCopy.queue.remove} />
+                          <QueueActionButtons queueItemId={item.id} action="up" label={bandDashboardViewCopy.queue.moveUp} />
+                          <QueueActionButtons queueItemId={item.id} action="down" label={bandDashboardViewCopy.queue.moveDown} />
+                        </div>
+                      </UltimateGuitarSongLink>
                     </div>
-                    <div className="mt-4 flex flex-wrap gap-2 text-xs font-medium text-slate-200">
-                      <QueueActionButtons queueItemId={item.id} action="played" label={bandDashboardViewCopy.queue.played} />
-                      <QueueActionButtons queueItemId={item.id} action="remove" label={bandDashboardViewCopy.queue.remove} />
-                      <QueueActionButtons queueItemId={item.id} action="up" label={bandDashboardViewCopy.queue.moveUp} />
-                      <QueueActionButtons queueItemId={item.id} action="down" label={bandDashboardViewCopy.queue.moveDown} />
-                    </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             ) : (
               <p className="rounded-2xl border border-dashed border-white/10 bg-white/5 px-4 py-6 text-slate-400">
