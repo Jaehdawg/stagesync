@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { createServiceClient } from '@/utils/supabase/service'
 import { getTestSession } from '@/lib/test-session'
 import { getLiveBandAccessContext } from '@/lib/band-access'
+import { encryptTidalCredential } from '@/lib/tidal-credentials'
 
 function getSupabase(request: NextRequest) {
   return createServerClient(
@@ -70,7 +71,7 @@ export async function POST(request: NextRequest) {
           profile_id: profileId,
           band_name: bandName,
           ...fields,
-          tidal_client_secret: fields.tidal_client_secret ?? existingProfile?.tidal_client_secret ?? null,
+          tidal_client_secret: fields.tidal_client_secret ? encryptTidalCredential(fields.tidal_client_secret) : existingProfile?.tidal_client_secret ?? null,
         },
         { onConflict: 'band_id' }
       )
@@ -106,7 +107,7 @@ export async function POST(request: NextRequest) {
         profile_id: liveAccess.userId,
         band_name: bandName,
         ...fields,
-        tidal_client_secret: fields.tidal_client_secret ?? existingProfile?.tidal_client_secret ?? null,
+        tidal_client_secret: fields.tidal_client_secret ? encryptTidalCredential(fields.tidal_client_secret) : existingProfile?.tidal_client_secret ?? null,
       },
       { onConflict: 'band_id' }
     )

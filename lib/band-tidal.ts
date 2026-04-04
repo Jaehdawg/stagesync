@@ -1,3 +1,5 @@
+import { decryptTidalCredential } from './tidal-credentials'
+
 type QueryResult = {
   data: Record<string, unknown> | null
   error: { message: string } | null
@@ -41,7 +43,7 @@ async function readCredentialsFromTable(supabase: BandTidalSupabase, table: stri
 
   return {
     clientId: normalizeCredential(data.tidal_client_id),
-    clientSecret: normalizeCredential(data.tidal_client_secret),
+    clientSecret: normalizeCredential(decryptTidalCredential(data.tidal_client_secret as string | null | undefined)),
   }
 }
 

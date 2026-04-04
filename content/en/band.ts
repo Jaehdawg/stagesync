@@ -105,7 +105,7 @@ export const bandCopy = {
     tidalCredentialsLabel: 'Tidal credentials',
     tidalClientIdLabel: 'Tidal developer key',
     tidalClientSecretLabel: 'Tidal secret',
-    tidalCredentialsNote: 'Used when a show is set to Tidal Catalog. Leave the secret blank to keep the current value.',
+    tidalCredentialsNote: 'Used when a show is set to Tidal Catalog. The secret is stored encrypted at rest; leave it blank to keep the current value.',
     bandFallbackName: 'Band',
   },
   membersPage: {

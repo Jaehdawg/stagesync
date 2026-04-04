@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { createServiceClient } from '@/utils/supabase/service'
-import { searchTidalTracks } from '@/lib/tidal'
+import { getTidalAccessToken, searchTidalTracks } from '@/lib/tidal'
 import { getBandTidalCredentials } from '@/lib/band-tidal'
 
 export async function GET(request: NextRequest) {
@@ -21,7 +21,12 @@ export async function GET(request: NextRequest) {
     }
 
     const credentials = await getBandTidalCredentials(supabase, bandId)
-    const { tracks, nextCursor } = await searchTidalTracks(query, { limit: 30, credentials: credentials ?? undefined, cursor })
+    const token = await getTidalAccessToken(credentials ?? undefined)
+    if (!token) {
+      return NextResponse.json({ message: 'Tidal Catalog is unavailable right now. Check the band credentials and try again.' }, { status: 503 })
+    }
+
+    const { tracks, nextCursor } = await searchTidalTracks(query, { limit: 30, credentials: credentials ?? undefined, cursor, accessToken: token })
     return NextResponse.json({ songs: tracks, nextCursor })
   }
 

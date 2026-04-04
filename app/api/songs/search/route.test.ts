@@ -38,6 +38,7 @@ const createServiceClientMock = vi.fn(() => {
 })
 
 const getBandTidalCredentialsMock = vi.fn()
+const getTidalAccessTokenMock = vi.fn()
 const searchTidalTracksMock = vi.fn()
 
 vi.mock('../../../../utils/supabase/service', () => ({
@@ -49,6 +50,7 @@ vi.mock('../../../../lib/band-tidal', () => ({
 }))
 
 vi.mock('../../../../lib/tidal', () => ({
+  getTidalAccessToken: getTidalAccessTokenMock,
   searchTidalTracks: searchTidalTracksMock,
 }))
 
@@ -63,12 +65,14 @@ function makeRequest(url: string) {
 beforeEach(() => {
   createServiceClientMock.mockClear()
   getBandTidalCredentialsMock.mockClear()
+  getTidalAccessTokenMock.mockClear()
   searchTidalTracksMock.mockClear()
 })
 
 describe('songs search api route', () => {
   it('returns catalog search results with a next cursor', async () => {
     getBandTidalCredentialsMock.mockResolvedValue({ clientId: 'client', clientSecret: 'secret' })
+    getTidalAccessTokenMock.mockResolvedValue('tidal-token')
     searchTidalTracksMock.mockResolvedValue({ tracks: [{ id: 't1', title: 'Catalog Song', artist: 'Artist' }], nextCursor: 'cursor-2' })
 
     const { GET } = await loadRoute()
@@ -89,5 +93,31 @@ describe('songs search api route', () => {
 
     expect(response.status).toBe(200)
     expect(payload.songs).toHaveLength(1)
+  })
+
+  it('returns a retryable error when tidal credentials are missing or invalid', async () => {
+    getBandTidalCredentialsMock.mockResolvedValue(null)
+    getTidalAccessTokenMock.mockResolvedValue(null)
+
+    const { GET } = await loadRoute()
+    const response = await GET(makeRequest('https://example.com/api/songs/search?bandId=band-1&sourceMode=tidal_catalog&query=hello'))
+    const payload = (await response.json()) as { message?: string }
+
+    expect(response.status).toBe(503)
+    expect(payload.message).toContain('Tidal Catalog is unavailable')
+    expect(searchTidalTracksMock).not.toHaveBeenCalled()
+  })
+
+  it('returns a retryable error when tidal auth cannot exchange a token', async () => {
+    getBandTidalCredentialsMock.mockResolvedValue({ clientId: 'client', clientSecret: 'secret' })
+    getTidalAccessTokenMock.mockResolvedValue(null)
+
+    const { GET } = await loadRoute()
+    const response = await GET(makeRequest('https://example.com/api/songs/search?bandId=band-1&sourceMode=tidal_catalog&query=hello'))
+    const payload = (await response.json()) as { message?: string }
+
+    expect(response.status).toBe(503)
+    expect(payload.message).toContain('Tidal Catalog is unavailable')
+    expect(searchTidalTracksMock).not.toHaveBeenCalled()
   })
 })

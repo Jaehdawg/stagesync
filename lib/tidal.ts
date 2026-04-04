@@ -19,7 +19,7 @@ function getTidalBaseUrl() {
   return base.endsWith('/') ? base : `${base}/`
 }
 
-async function getTidalAccessToken(credentials?: TidalCredentials) {
+export async function getTidalAccessToken(credentials?: TidalCredentials) {
   const clientId = credentials?.clientId?.trim() || process.env.TIDAL_CLIENT_ID?.trim()
   const clientSecret = credentials?.clientSecret?.trim() || process.env.TIDAL_CLIENT_SECRET?.trim()
 
@@ -490,8 +490,8 @@ function extractNextSearchCursor(payload: unknown): string | null {
   return null
 }
 
-export async function searchTidalTracks(query: string, options: { limit?: number; playlistOnly?: boolean; credentials?: TidalCredentials; cursor?: string | null } = {}): Promise<TidalSearchResult> {
-  const token = await getTidalAccessToken(options.credentials)
+export async function searchTidalTracks(query: string, options: { limit?: number; playlistOnly?: boolean; credentials?: TidalCredentials; cursor?: string | null; accessToken?: string | null } = {}): Promise<TidalSearchResult> {
+  const token = options.accessToken ?? await getTidalAccessToken(options.credentials)
   if (!token) {
     return { tracks: [], nextCursor: null }
   }
