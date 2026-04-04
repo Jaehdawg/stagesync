@@ -213,6 +213,25 @@ async function fetchArtistName(artistId: string, token: string) {
   return readString((data.attributes as TidalJson | undefined)?.name ?? data.name)
 }
 
+async function fetchTrackArtistName(trackId: string, token: string) {
+  const payload = await fetchTidalJson([
+    `/tracks/${trackId}/relationships/artists`,
+  ], token, { limit: 1 })
+
+  if (!payload) {
+    return ''
+  }
+
+  const record = payload as TidalJson
+  const related = Array.isArray(record.data) ? record.data[0] : record.data
+  const artistId = readText((related as TidalJson | undefined)?.id)
+  if (!artistId) {
+    return ''
+  }
+
+  return fetchArtistName(artistId, token)
+}
+
 function resolveArtistsFromRelationship(resource: TidalJson, included: Map<string, TidalJson>) {
   const relationships = (resource.relationships as TidalJson | undefined) ?? {}
   const refs: unknown[] = []
@@ -446,7 +465,7 @@ async function enrichTrackArtists(tracks: TidalTrack[], token: string) {
       return { ...track, artist: cached }
     }
 
-    const artist = (await fetchArtistName(track.id, token)) || track.artist || 'Unknown artist'
+    const artist = (await fetchTrackArtistName(track.id, token)) || track.artist || 'Unknown artist'
     cache.set(track.id, artist)
     return { ...track, artist }
   }))
