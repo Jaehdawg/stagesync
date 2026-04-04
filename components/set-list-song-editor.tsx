@@ -61,44 +61,44 @@ export function SetListSongEditor({ setListId, songs }: SetListSongEditorProps) 
             onDragEnd={() => setDraggedSongId(null)}
             className={`rounded-xl border px-3 py-2 text-sm ${draggedSongId === song.id ? 'border-cyan-400/60 bg-cyan-400/10' : 'border-white/10 bg-slate-950/40 text-slate-200'}`}
           >
-            <UltimateGuitarSongLink artist={song.artist} title={song.title} className="block rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-400/50">
-              <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <UltimateGuitarSongLink artist={song.artist} title={song.title} className="block rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-400/50">
                 <div>
                   <span className="mr-2 text-xs uppercase tracking-[0.2em] text-slate-500">{index + 1}</span>
                   <span className="font-medium text-white">{song.artist} — {song.title}</span>
                 </div>
-                <div className="flex flex-wrap gap-2" onClickCapture={(event) => event.stopPropagation()}>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (index === 0) return
-                      const nextSongs = [...orderedSongs]
-                      const [moved] = nextSongs.splice(index, 1)
-                      nextSongs.splice(index - 1, 0, moved)
-                      submitReorder(nextSongs)
-                    }}
-                    disabled={index === 0}
-                    className="rounded-lg border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-white disabled:cursor-not-allowed disabled:opacity-40"
-                  >
-                    {bandSetListsCopy.moveUp}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (index === orderedSongs.length - 1) return
-                      const nextSongs = [...orderedSongs]
-                      const [moved] = nextSongs.splice(index, 1)
-                      nextSongs.splice(index + 1, 0, moved)
-                      submitReorder(nextSongs)
-                    }}
-                    disabled={index === orderedSongs.length - 1}
-                    className="rounded-lg border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-white disabled:cursor-not-allowed disabled:opacity-40"
-                  >
-                    {bandSetListsCopy.moveDown}
-                  </button>
-                </div>
+              </UltimateGuitarSongLink>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (index === 0) return
+                    const nextSongs = [...orderedSongs]
+                    const [moved] = nextSongs.splice(index, 1)
+                    nextSongs.splice(index - 1, 0, moved)
+                    submitReorder(nextSongs)
+                  }}
+                  disabled={index === 0}
+                  className="rounded-lg border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-white disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  {bandSetListsCopy.moveUp}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (index === orderedSongs.length - 1) return
+                    const nextSongs = [...orderedSongs]
+                    const [moved] = nextSongs.splice(index, 1)
+                    nextSongs.splice(index + 1, 0, moved)
+                    submitReorder(nextSongs)
+                  }}
+                  disabled={index === orderedSongs.length - 1}
+                  className="rounded-lg border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-white disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  {bandSetListsCopy.moveDown}
+                </button>
               </div>
-            </UltimateGuitarSongLink>
+            </div>
           </li>
         )) : <li className="text-sm text-slate-400">No songs in this set list yet.</li>}
       </ol>
