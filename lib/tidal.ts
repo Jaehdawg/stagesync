@@ -268,6 +268,11 @@ function normalizeTrack(resource: TidalJson, included: Map<string, TidalJson>): 
       ? { ...(resource.track as TidalJson), ...resource }
       : resource
 
+  const type = readString(source.type ?? resource.type).toLowerCase()
+  if (type && type !== 'tracks' && type !== 'track') {
+    return null
+  }
+
   const id = readText(source.id ?? source.trackId ?? source.tidalId ?? source.itemId)
   const attrs = (source.attributes as TidalJson | undefined) ?? {}
   const title = readString(attrs.title ?? source.title ?? source.name)
