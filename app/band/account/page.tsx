@@ -41,6 +41,8 @@ function AccountForm({
   username,
   bandName,
   bandProfile,
+  tidalClientId,
+  hasTidalClientSecret,
 }: {
   username: string
   bandName: string
@@ -55,6 +57,8 @@ function AccountForm({
     custom_message: string | null
     logo_url?: string | null
   } | null
+  tidalClientId: string | null
+  hasTidalClientSecret: boolean
 }) {
   return (
     <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100 sm:px-6 lg:px-8">
@@ -113,6 +117,18 @@ function AccountForm({
               <label className="text-sm font-medium text-slate-200" htmlFor="customMessage">{bandCopy.accountPage.customMessageLabel}</label>
               <textarea id="customMessage" name="customMessage" defaultValue={bandProfile?.custom_message ?? ''} rows={3} className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
             </div>
+            <div className="space-y-2 md:col-span-2">
+              <h3 className="text-sm font-semibold uppercase tracking-[0.22em] text-cyan-300">{bandCopy.accountPage.tidalCredentialsLabel}</h3>
+              <p className="text-xs text-slate-400">{bandCopy.accountPage.tidalCredentialsNote}</p>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-200" htmlFor="tidalClientId">{bandCopy.accountPage.tidalClientIdLabel}</label>
+              <input id="tidalClientId" name="tidalClientId" defaultValue={tidalClientId ?? ""} className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-200" htmlFor="tidalClientSecret">{bandCopy.accountPage.tidalClientSecretLabel}</label>
+              <input id="tidalClientSecret" name="tidalClientSecret" type="password" placeholder={hasTidalClientSecret ? '••••••••' : ''} className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
+            </div>
             <div className="md:col-span-2">
               <button type="submit" className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-medium text-white">{bandCopy.accountPage.saveBandProfileButton}</button>
             </div>
@@ -131,11 +147,19 @@ export default async function BandAccountPage() {
   const liveAccess = await getLiveBandAccessContext(supabase, serviceSupabase, { requireAdmin: true })
   if (liveAccess) {
     const bandProfile = await getBandProfileForBandId(serviceSupabase, liveAccess.bandId)
+    const { data: tidalSettings } = await serviceSupabase
+      .from('band_profiles')
+      .select('tidal_client_id, tidal_client_secret')
+      .eq('band_id', liveAccess.bandId)
+      .maybeSingle()
+
     return (
       <AccountForm
         username={liveAccess.username}
         bandName={liveAccess.bandName}
         bandProfile={bandProfile}
+        tidalClientId={tidalSettings?.tidal_client_id ?? null}
+        hasTidalClientSecret={Boolean(tidalSettings?.tidal_client_secret)}
       />
     )
   }
@@ -143,7 +167,13 @@ export default async function BandAccountPage() {
   if (testSession?.role === 'band') {
     const current = await getTestLogin(supabase, testSession.username)
     if (current?.band_access_level === 'admin') {
-      return <AccountForm username={current.username} bandName={current.band_name ?? bandCopy.accountPage.bandFallbackName} bandProfile={null} />
+      const { data: tidalSettings } = await serviceSupabase
+        .from('band_profiles')
+        .select('tidal_client_id, tidal_client_secret')
+        .eq('band_id', testSession.activeBandId)
+        .maybeSingle()
+
+      return <AccountForm username={current.username} bandName={current.band_name ?? bandCopy.accountPage.bandFallbackName} bandProfile={null} tidalClientId={tidalSettings?.tidal_client_id ?? null} hasTidalClientSecret={Boolean(tidalSettings?.tidal_client_secret)} />
     }
     return <AccessDenied message={bandCopy.login.accessDenied} />
   }

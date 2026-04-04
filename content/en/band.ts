@@ -102,6 +102,10 @@ export const bandCopy = {
     venmoUrlLabel: 'Venmo',
     cashappUrlLabel: 'Cash App',
     customMessageLabel: 'Custom message',
+    tidalCredentialsLabel: 'Tidal credentials',
+    tidalClientIdLabel: 'Tidal developer key',
+    tidalClientSecretLabel: 'Tidal secret',
+    tidalCredentialsNote: 'Used when a show is set to Tidal Catalog. Leave the secret blank to keep the current value.',
     bandFallbackName: 'Band',
   },
   membersPage: {

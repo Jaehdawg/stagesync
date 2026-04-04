@@ -40,6 +40,8 @@ export async function POST(request: NextRequest) {
     venmo_url: String(formData.get('venmoUrl') ?? '').trim() || null,
     cashapp_url: String(formData.get('cashappUrl') ?? '').trim() || null,
     custom_message: String(formData.get('customMessage') ?? '').trim() || null,
+    tidal_client_id: String(formData.get('tidalClientId') ?? '').trim() || null,
+    tidal_client_secret: String(formData.get('tidalClientSecret') ?? '').trim() || null,
   }
 
   if (testSession?.role === 'band') {
@@ -54,6 +56,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: bandError.message }, { status: 500 })
     }
 
+    const { data: existingProfile } = await serviceSupabase
+      .from('band_profiles')
+      .select('tidal_client_secret')
+      .eq('band_id', bandId)
+      .maybeSingle()
+
     const { error: profileError } = await serviceSupabase
       .from('band_profiles')
       .upsert(
@@ -62,6 +70,7 @@ export async function POST(request: NextRequest) {
           profile_id: profileId,
           band_name: bandName,
           ...fields,
+          tidal_client_secret: fields.tidal_client_secret ?? existingProfile?.tidal_client_secret ?? null,
         },
         { onConflict: 'band_id' }
       )
@@ -83,6 +92,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: bandError.message }, { status: 500 })
   }
 
+  const { data: existingProfile } = await serviceSupabase
+    .from('band_profiles')
+    .select('tidal_client_secret')
+    .eq('band_id', liveAccess.bandId)
+    .maybeSingle()
+
   const { error: profileError } = await serviceSupabase
     .from('band_profiles')
     .upsert(
@@ -91,6 +106,7 @@ export async function POST(request: NextRequest) {
         profile_id: liveAccess.userId,
         band_name: bandName,
         ...fields,
+        tidal_client_secret: fields.tidal_client_secret ?? existingProfile?.tidal_client_secret ?? null,
       },
       { onConflict: 'band_id' }
     )

@@ -28,10 +28,11 @@ export function TidalSearchPanel({ disabled = false, statusMessage, sourceMode =
   const [message, setMessage] = useState<string | null>(null)
   const [queueingId, setQueueingId] = useState<string | null>(null)
   const [pendingTrack, setPendingTrack] = useState<TidalTrack | null>(null)
+  const [retryToken, setRetryToken] = useState(0)
 
   const searchUrl = useMemo(
-    () => `/api/songs/search?bandId=${encodeURIComponent(bandId)}${query.trim() ? `&query=${encodeURIComponent(query.trim())}` : ''}`,
-    [bandId, query]
+    () => `/api/songs/search?bandId=${encodeURIComponent(bandId)}&sourceMode=${encodeURIComponent(sourceMode)}${query.trim() ? `&query=${encodeURIComponent(query.trim())}` : ''}`,
+    [bandId, sourceMode, query]
   )
 
   async function queueTrack(track: TidalTrack) {
@@ -87,7 +88,7 @@ export function TidalSearchPanel({ disabled = false, statusMessage, sourceMode =
     return () => {
       cancelled = true
     }
-  }, [searchUrl])
+  }, [searchUrl, retryToken])
 
   return (
     <section className="rounded-2xl border border-white/10 bg-white/5 p-5">
@@ -105,7 +106,7 @@ export function TidalSearchPanel({ disabled = false, statusMessage, sourceMode =
       />
       {statusMessage ? <p className="mt-3 text-sm text-slate-300">{statusMessage}</p> : null}
       {message ? <p className="mt-3 text-sm text-emerald-300">{message}</p> : null}
-      {error ? <p className="mt-3 text-sm text-rose-300">{error}</p> : null}
+      {error ? <div className="mt-3 flex items-center justify-between gap-3 rounded-xl border border-rose-400/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200"><p>{error}</p><button type="button" onClick={() => { setError(null); setRetryToken((value) => value + 1) }} className="rounded-full border border-rose-300/30 px-3 py-1 text-xs font-semibold text-rose-100 hover:bg-rose-400/10">{tidalSearchPanelCopy.retry}</button></div> : null}
       <div className="mt-4 max-h-96 space-y-3 overflow-y-auto pr-1">
         {loading ? <p className="text-sm text-slate-400">{tidalSearchPanelCopy.searching}</p> : null}
         {tracks.length ? tracks.map((track) => (

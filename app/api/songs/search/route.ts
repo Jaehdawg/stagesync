@@ -1,15 +1,29 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { createServiceClient } from '@/utils/supabase/service'
+import { searchTidalTracks } from '@/lib/tidal'
+import { getBandTidalCredentials } from '@/lib/band-tidal'
 
 export async function GET(request: NextRequest) {
   const query = request.nextUrl.searchParams.get('query')?.trim() || ''
   const bandId = request.nextUrl.searchParams.get('bandId')?.trim() || ''
+  const sourceMode = request.nextUrl.searchParams.get('sourceMode')?.trim() || 'uploaded'
 
   if (!bandId) {
     return NextResponse.json({ songs: [] })
   }
 
   const supabase = createServiceClient()
+
+  if (sourceMode === 'tidal_catalog') {
+    if (!query) {
+      return NextResponse.json({ songs: [] })
+    }
+
+    const credentials = await getBandTidalCredentials(supabase, bandId)
+    const songs = await searchTidalTracks(query, { limit: 30, credentials: credentials ?? undefined })
+    return NextResponse.json({ songs })
+  }
+
   let builder = supabase
     .from('songs')
     .select('id, title, artist, duration_ms')

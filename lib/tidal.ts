@@ -7,15 +7,16 @@ export type TidalTrack = {
 }
 
 type TidalJson = Record<string, unknown>
+type TidalCredentials = { clientId?: string | null; clientSecret?: string | null }
 
 function getTidalBaseUrl() {
   const base = process.env.TIDAL_API_BASE_URL?.trim() || 'https://openapi.tidal.com/v2/'
   return base.endsWith('/') ? base : `${base}/`
 }
 
-async function getTidalAccessToken() {
-  const clientId = process.env.TIDAL_CLIENT_ID?.trim()
-  const clientSecret = process.env.TIDAL_CLIENT_SECRET?.trim()
+async function getTidalAccessToken(credentials?: TidalCredentials) {
+  const clientId = credentials?.clientId?.trim() || process.env.TIDAL_CLIENT_ID?.trim()
+  const clientSecret = credentials?.clientSecret?.trim() || process.env.TIDAL_CLIENT_SECRET?.trim()
 
   if (!clientId || !clientSecret) {
     return null
@@ -462,8 +463,8 @@ function extractArtistNames(payload: unknown, included = collectIncludedResource
   return [...new Set(names)]
 }
 
-export async function searchTidalTracks(query: string, options: { limit?: number; playlistOnly?: boolean } = {}) {
-  const token = await getTidalAccessToken()
+export async function searchTidalTracks(query: string, options: { limit?: number; playlistOnly?: boolean; credentials?: TidalCredentials } = {}) {
+  const token = await getTidalAccessToken(options.credentials)
   if (!token) {
     return []
   }
@@ -519,7 +520,7 @@ function extractNextPlaylistCursor(payload: unknown): string | null {
   return null
 }
 
-export async function fetchTidalPlaylistTracks(playlistUrl: string, options: { limit?: number } = {}) {
+export async function fetchTidalPlaylistTracks(playlistUrl: string, options: { limit?: number; credentials?: TidalCredentials } = {}) {
   const playlistId = extractPlaylistId(playlistUrl)
   if (!playlistId) {
     return []
@@ -527,7 +528,7 @@ export async function fetchTidalPlaylistTracks(playlistUrl: string, options: { l
 
   const limit = Math.min(Math.max(options.limit ?? 200, 1), 500)
 
-  const token = await getTidalAccessToken()
+  const token = await getTidalAccessToken(options.credentials)
   if (!token) {
     return []
   }
