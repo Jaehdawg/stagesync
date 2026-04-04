@@ -44,6 +44,8 @@ export function TidalSearchPanel({ disabled = false, statusMessage, sourceMode =
     [bandId, sourceMode, query]
   )
 
+  const placeholder = sourceMode === 'tidal_catalog' ? tidalSearchPanelCopy.catalogPlaceholder : tidalSearchPanelCopy.placeholder
+
   async function loadPage(cursor: string | null, append: boolean) {
     if (disabled) return
     if (append && (!cursor || loadingMore)) return
@@ -130,11 +132,12 @@ export function TidalSearchPanel({ disabled = false, statusMessage, sourceMode =
       {sourceMode === 'tidal_playlist' && playlistUrl ? (
         <p className="mt-2 text-sm text-cyan-200">{tidalSearchPanelCopy.importedPlaylist}</p>
       ) : null}
+      {sourceMode === 'tidal_catalog' ? <p className="mt-2 text-sm text-cyan-200">{tidalSearchPanelCopy.catalogMode}</p> : null}
       <input
         type="search"
         value={query}
         onChange={(event) => setQuery(event.target.value)}
-        placeholder={tidalSearchPanelCopy.placeholder}
+        placeholder={placeholder}
         className="mt-4 w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none"
         disabled={disabled}
       />

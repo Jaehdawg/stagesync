@@ -24,6 +24,31 @@ describe('TidalSearchPanel', () => {
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalled())
     await screen.findByText('Pick a Song')
+    expect(screen.getByPlaceholderText('Search the band song list')).toBeInTheDocument()
+  })
+
+  it('shows the catalog mode hint and requests catalog paging', async () => {
+    fetchMock.mockImplementation(async (input: RequestInfo | URL) => {
+      const url = String(input)
+      if (url.startsWith('/api/songs/search')) {
+        const searchUrl = new URL(url, 'http://localhost')
+        if (!searchUrl.searchParams.get('cursor')) {
+          return new Response(JSON.stringify({ songs: [{ id: '1', title: 'First', artist: 'Artist' }], nextCursor: 'cursor-2' }), { status: 200 })
+        }
+        return new Response(JSON.stringify({ songs: [{ id: '2', title: 'Second', artist: 'Artist' }], nextCursor: null }), { status: 200 })
+      }
+      return new Response(JSON.stringify({ message: 'ok' }), { status: 200 })
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    render(<TidalSearchPanel sourceMode="tidal_catalog" bandId="band-1" showId="show-1" />)
+
+    await screen.findByText('Searching the live Tidal catalog.')
+    expect(screen.getByPlaceholderText('Search the Tidal catalog')).toBeInTheDocument()
+    fireEvent.change(screen.getByPlaceholderText('Search the Tidal catalog'), { target: { value: 'first' } })
+    await screen.findByText('First')
+    fireEvent.click(screen.getByRole('button', { name: /load more/i }))
+    await screen.findByText('Second')
   })
 
   it('queues a song with the active band and show ids', async () => {
@@ -52,7 +77,7 @@ describe('TidalSearchPanel', () => {
 
     await screen.findByText('My Song')
     fireEvent.click(screen.getByRole('button', { name: /queue song/i }))
-    await screen.findByRole('heading', { name: /are you ready rock/i })
+    await screen.findByRole('heading', { name: /are you ready to rock/i })
     fireEvent.click(screen.getByRole('button', { name: '👍' }))
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledWith('/api/queue', expect.any(Object)))

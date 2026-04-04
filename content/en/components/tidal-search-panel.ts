@@ -1,7 +1,9 @@
 export const tidalSearchPanelCopy = {
   title: 'Pick a Song',
   importedPlaylist: 'Imported Tidal playlist available.',
+  catalogMode: 'Searching the live Tidal catalog.',
   placeholder: 'Search the band song list',
+  catalogPlaceholder: 'Search the Tidal catalog',
   searching: 'Searching…',
   queueing: 'Queueing…',
   queueSong: 'Queue song',
