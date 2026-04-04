@@ -7,6 +7,7 @@ export async function GET(request: NextRequest) {
   const query = request.nextUrl.searchParams.get('query')?.trim() || ''
   const bandId = request.nextUrl.searchParams.get('bandId')?.trim() || ''
   const sourceMode = request.nextUrl.searchParams.get('sourceMode')?.trim() || 'uploaded'
+  const cursor = request.nextUrl.searchParams.get('cursor')?.trim() || null
 
   if (!bandId) {
     return NextResponse.json({ songs: [] })
@@ -20,8 +21,8 @@ export async function GET(request: NextRequest) {
     }
 
     const credentials = await getBandTidalCredentials(supabase, bandId)
-    const songs = await searchTidalTracks(query, { limit: 30, credentials: credentials ?? undefined })
-    return NextResponse.json({ songs })
+    const { tracks, nextCursor } = await searchTidalTracks(query, { limit: 30, credentials: credentials ?? undefined, cursor })
+    return NextResponse.json({ songs: tracks, nextCursor })
   }
 
   let builder = supabase

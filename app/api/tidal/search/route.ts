@@ -9,6 +9,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ tracks: [] })
   }
 
-  const tracks = await searchTidalTracks(query, { limit: 10, playlistOnly })
-  return NextResponse.json({ tracks })
+  const { tracks, nextCursor } = await searchTidalTracks(query, { limit: 10, playlistOnly })
+  return NextResponse.json({ tracks, nextCursor })
 }

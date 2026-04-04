@@ -6,6 +6,11 @@ export type TidalTrack = {
   duration?: number | null
 }
 
+export type TidalSearchResult = {
+  tracks: TidalTrack[]
+  nextCursor: string | null
+}
+
 type TidalJson = Record<string, unknown>
 type TidalCredentials = { clientId?: string | null; clientSecret?: string | null }
 
@@ -428,59 +433,6 @@ async function enrichTrackArtists(tracks: TidalTrack[], token: string) {
   }))
 }
 
-function extractArtistNames(payload: unknown, included = collectIncludedResources(payload)) {
-  const names: string[] = []
-
-  const addFromResource = (resource: unknown) => {
-    if (!resource || typeof resource !== 'object') return
-    const record = resource as TidalJson
-    const type = readString(record.type)
-    if (type && type !== 'artists') return
-    const name = normalizeArtistFromResource(record)
-    if (name) names.push(name)
-  }
-
-  if (payload && typeof payload === 'object') {
-    const record = payload as TidalJson
-
-    if (Array.isArray(record.data)) {
-      for (const item of record.data) addFromResource(item)
-    } else {
-      addFromResource(record.data)
-    }
-
-    if (Array.isArray(record.included)) {
-      for (const item of record.included) addFromResource(item)
-    }
-  }
-
-  if (!names.length) {
-    for (const resource of included.values()) {
-      addFromResource(resource)
-    }
-  }
-
-  return [...new Set(names)]
-}
-
-export async function searchTidalTracks(query: string, options: { limit?: number; playlistOnly?: boolean; credentials?: TidalCredentials } = {}) {
-  const token = await getTidalAccessToken(options.credentials)
-  if (!token) {
-    return []
-  }
-
-  const trimmed = query.trim()
-  const limit = Math.min(Math.max(options.limit ?? 20, 1), 100)
-  const paths = [
-    `/searchSuggestions/${encodeURIComponent(trimmed)}`,
-  ]
-
-  const payload = await fetchTidalJson(paths, token, { query: trimmed, limit })
-  if (!payload) return []
-
-  return enrichTrackArtists(extractTidalTracks(payload), token)
-}
-
 function extractPlaylistId(url: string) {
   const trimmed = url.trim()
   if (!trimmed) return null
@@ -518,6 +470,45 @@ function extractNextPlaylistCursor(payload: unknown): string | null {
   }
 
   return null
+}
+
+function extractNextSearchCursor(payload: unknown): string | null {
+  if (!payload || typeof payload !== 'object') return null
+
+  const record = payload as TidalJson
+  const candidates: unknown[] = [record.links, record.meta, record.data && typeof record.data === 'object' ? (record.data as TidalJson).links : null, record.data && typeof record.data === 'object' ? (record.data as TidalJson).meta : null]
+
+  for (const candidate of candidates) {
+    if (!candidate || typeof candidate !== 'object') continue
+    const linkRecord = candidate as TidalJson
+    const next = linkRecord.next
+    if (typeof next === 'string' && next.trim()) {
+      return next.trim()
+    }
+  }
+
+  return null
+}
+
+export async function searchTidalTracks(query: string, options: { limit?: number; playlistOnly?: boolean; credentials?: TidalCredentials; cursor?: string | null } = {}): Promise<TidalSearchResult> {
+  const token = await getTidalAccessToken(options.credentials)
+  if (!token) {
+    return { tracks: [], nextCursor: null }
+  }
+
+  const trimmed = query.trim()
+  const limit = Math.min(Math.max(options.limit ?? 20, 1), 100)
+  const paths = [`/searchSuggestions/${encodeURIComponent(trimmed)}`]
+
+  const payload = await fetchTidalJson(paths, token, {
+    query: trimmed,
+    limit,
+    params: options.cursor ? { 'page[cursor]': options.cursor } : undefined,
+  })
+  if (!payload) return { tracks: [], nextCursor: null }
+
+  const tracks = await enrichTrackArtists(extractTidalTracks(payload), token)
+  return { tracks, nextCursor: extractNextSearchCursor(payload) }
 }
 
 export async function fetchTidalPlaylistTracks(playlistUrl: string, options: { limit?: number; credentials?: TidalCredentials } = {}) {

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { tidalSearchPanelCopy } from '@/content/en/components/tidal-search-panel'
 
 type TidalTrack = {
@@ -8,6 +8,12 @@ type TidalTrack = {
   title: string
   artist: string
   album?: string | null
+}
+
+type SearchResponse = {
+  songs?: TidalTrack[]
+  nextCursor?: string | null
+  message?: string
 }
 
 type TidalSearchPanelProps = {
@@ -24,16 +30,58 @@ export function TidalSearchPanel({ disabled = false, statusMessage, sourceMode =
   const [query, setQuery] = useState('')
   const [tracks, setTracks] = useState<TidalTrack[]>([])
   const [loading, setLoading] = useState(false)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [nextCursor, setNextCursor] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
   const [queueingId, setQueueingId] = useState<string | null>(null)
   const [pendingTrack, setPendingTrack] = useState<TidalTrack | null>(null)
   const [retryToken, setRetryToken] = useState(0)
+  const listRef = useRef<HTMLDivElement>(null)
 
   const searchUrl = useMemo(
     () => `/api/songs/search?bandId=${encodeURIComponent(bandId)}&sourceMode=${encodeURIComponent(sourceMode)}${query.trim() ? `&query=${encodeURIComponent(query.trim())}` : ''}`,
     [bandId, sourceMode, query]
   )
+
+  async function loadPage(cursor: string | null, append: boolean) {
+    if (disabled) return
+    if (append && (!cursor || loadingMore)) return
+    if (!append && loading) return
+
+    if (append) {
+      setLoadingMore(true)
+    } else {
+      setLoading(true)
+      setTracks([])
+      setNextCursor(null)
+    }
+    setError(null)
+
+    try {
+      const url = new URL(searchUrl, 'http://localhost')
+      if (cursor) {
+        url.searchParams.set('cursor', cursor)
+      }
+
+      const response = await fetch(`${url.pathname}${url.search}`)
+      const data = (await response.json().catch(() => ({}))) as SearchResponse
+      if (!response.ok) {
+        throw new Error(data.message ?? tidalSearchPanelCopy.unableToSearch)
+      }
+
+      setTracks((current) => (append ? [...current, ...(data.songs ?? [])] : (data.songs ?? [])))
+      setNextCursor(data.nextCursor ?? null)
+    } catch (fetchError) {
+      setError(fetchError instanceof Error ? fetchError.message : tidalSearchPanelCopy.unableToSearch)
+    } finally {
+      if (append) {
+        setLoadingMore(false)
+      } else {
+        setLoading(false)
+      }
+    }
+  }
 
   async function queueTrack(track: TidalTrack) {
     if (disabled) return
@@ -63,32 +111,18 @@ export function TidalSearchPanel({ disabled = false, statusMessage, sourceMode =
   }
 
   useEffect(() => {
-    let cancelled = false
-    async function loadTracks() {
-      setLoading(true)
-      setError(null)
+    void loadPage(null, false)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchUrl, retryToken, disabled])
 
-      try {
-        const response = await fetch(searchUrl)
-        const data = (await response.json().catch(() => ({}))) as { songs?: TidalTrack[]; message?: string }
-        if (cancelled) return
-        if (!response.ok) {
-          throw new Error(data.message ?? tidalSearchPanelCopy.unableToSearch)
-        }
-        setTracks(data.songs ?? [])
-      } catch (fetchError) {
-        if (cancelled) return
-        setError(fetchError instanceof Error ? fetchError.message : tidalSearchPanelCopy.unableToSearch)
-      } finally {
-        if (!cancelled) setLoading(false)
-      }
+  function maybeLoadMore() {
+    const node = listRef.current
+    if (!node || loading || loadingMore || !nextCursor || disabled) return
+    const nearBottom = node.scrollTop + node.clientHeight >= node.scrollHeight - 120
+    if (nearBottom) {
+      void loadPage(nextCursor, true)
     }
-
-    void loadTracks()
-    return () => {
-      cancelled = true
-    }
-  }, [searchUrl, retryToken])
+  }
 
   return (
     <section className="rounded-2xl border border-white/10 bg-white/5 p-5">
@@ -106,8 +140,22 @@ export function TidalSearchPanel({ disabled = false, statusMessage, sourceMode =
       />
       {statusMessage ? <p className="mt-3 text-sm text-slate-300">{statusMessage}</p> : null}
       {message ? <p className="mt-3 text-sm text-emerald-300">{message}</p> : null}
-      {error ? <div className="mt-3 flex items-center justify-between gap-3 rounded-xl border border-rose-400/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200"><p>{error}</p><button type="button" onClick={() => { setError(null); setRetryToken((value) => value + 1) }} className="rounded-full border border-rose-300/30 px-3 py-1 text-xs font-semibold text-rose-100 hover:bg-rose-400/10">{tidalSearchPanelCopy.retry}</button></div> : null}
-      <div className="mt-4 max-h-96 space-y-3 overflow-y-auto pr-1">
+      {error ? (
+        <div className="mt-3 flex items-center justify-between gap-3 rounded-xl border border-rose-400/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
+          <p>{error}</p>
+          <button
+            type="button"
+            onClick={() => {
+              setError(null)
+              setRetryToken((value) => value + 1)
+            }}
+            className="rounded-full border border-rose-300/30 px-3 py-1 text-xs font-semibold text-rose-100 hover:bg-rose-400/10"
+          >
+            {tidalSearchPanelCopy.retry}
+          </button>
+        </div>
+      ) : null}
+      <div ref={listRef} onScroll={maybeLoadMore} className="mt-4 max-h-96 space-y-3 overflow-y-auto pr-1">
         {loading ? <p className="text-sm text-slate-400">{tidalSearchPanelCopy.searching}</p> : null}
         {tracks.length ? tracks.map((track) => (
           <div key={track.id} className="flex w-full items-center justify-between gap-3 rounded-xl border border-white/10 bg-slate-900/60 p-4">
@@ -125,6 +173,8 @@ export function TidalSearchPanel({ disabled = false, statusMessage, sourceMode =
             </button>
           </div>
         )) : !loading ? <p className="text-sm text-slate-400">{tidalSearchPanelCopy.noMatches}</p> : null}
+        {loadingMore ? <p className="text-sm text-slate-400">{tidalSearchPanelCopy.searching}</p> : null}
+        {nextCursor && !loadingMore ? <button type="button" onClick={() => void loadPage(nextCursor, true)} className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-white hover:border-cyan-400/50">Load more</button> : null}
       </div>
 
       {pendingTrack ? (
