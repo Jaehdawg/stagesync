@@ -3,6 +3,8 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { createServiceClient } from '../../../utils/supabase/service'
 import { getShowState } from '../../../lib/show-state'
 
+type SongSourceType = 'uploaded' | 'google_sheet' | 'tidal_playlist' | 'tidal_catalog' | 'manual'
+
 function normalizeSongId(title: string, artist: string) {
   return `${title}-${artist}`
     .toLowerCase()
@@ -49,6 +51,8 @@ export async function POST(request: NextRequest) {
     bandId?: string
     showId?: string
     action?: 'upsert' | 'cancel'
+    sourceType?: SongSourceType
+    sourceRef?: string | null
   }
 
   const action = body.action ?? 'upsert'
@@ -102,6 +106,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: 'Song title and artist are required.' }, { status: 400 })
   }
 
+  const sourceType: SongSourceType = body.sourceType ?? 'uploaded'
+  const sourceRef = body.sourceRef?.trim() || null
+
   if (showState !== 'active' || !currentShow?.id) {
     if (!currentSingerRequest?.id) {
       return NextResponse.json({ message: 'The show is not currently accepting new songs.' }, { status: 409 })
@@ -115,6 +122,8 @@ export async function POST(request: NextRequest) {
       title,
       artist,
       archived_at: null,
+      source_type: sourceType,
+      source_ref: sourceRef,
       band_id: bandId,
     },
     { onConflict: 'band_id,id' }

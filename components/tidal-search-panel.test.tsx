@@ -51,6 +51,40 @@ describe('TidalSearchPanel', () => {
     await screen.findByText('Second')
   })
 
+  it('queues catalog selections with catalog source metadata', async () => {
+    fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input)
+      if (url.startsWith('/api/songs/search')) {
+        return new Response(JSON.stringify({ songs: [{ id: 'catalog-track-1', title: 'Catalog Song', artist: 'Artist' }] }), { status: 200 })
+      }
+      if (url.startsWith('/api/queue')) {
+        expect(JSON.parse(String(init?.body))).toEqual({
+          title: 'Catalog Song',
+          artist: 'Artist',
+          bandId: 'band-1',
+          showId: 'show-1',
+          action: 'upsert',
+          sourceType: 'tidal_catalog',
+          sourceRef: 'catalog-track-1',
+        })
+        return new Response(JSON.stringify({ message: 'Song request added.' }), { status: 200 })
+      }
+      return new Response(JSON.stringify({ message: 'ok' }), { status: 200 })
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    render(<TidalSearchPanel sourceMode="tidal_catalog" bandId="band-1" showId="show-1" />)
+
+    fireEvent.change(screen.getByPlaceholderText('Search the Tidal catalog'), { target: { value: 'catalog' } })
+    await screen.findByText('Catalog Song')
+    fireEvent.click(screen.getByRole('button', { name: /queue song/i }))
+    await screen.findByRole('heading', { name: /are you ready to rock/i })
+    fireEvent.click(screen.getByRole('button', { name: '👍' }))
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith('/api/queue', expect.any(Object)))
+    expect(screen.getByText(/song request added/i)).toBeInTheDocument()
+  })
+
   it('queues a song with the active band and show ids', async () => {
     fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input)

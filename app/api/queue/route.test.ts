@@ -10,8 +10,17 @@ const songUpsertMock = vi.fn()
 const queueInsertMock = vi.fn()
 const queueUpdateEqMock = vi.fn()
 
-function makeQueryChain(maybeSingle: () => Promise<any>) {
-  const chain: any = {
+type QueryChain = {
+  select: () => QueryChain
+  eq: () => QueryChain
+  in: () => QueryChain
+  order: () => QueryChain
+  limit: () => QueryChain
+  maybeSingle: () => Promise<unknown>
+}
+
+function makeQueryChain(maybeSingle: () => Promise<unknown>): QueryChain {
+  const chain: QueryChain = {
     select: () => chain,
     eq: () => chain,
     in: () => chain,
@@ -149,6 +158,8 @@ describe('queue route', () => {
         artist: 'The Band',
         band_id: 'band-1',
         archived_at: null,
+        source_type: 'uploaded',
+        source_ref: null,
       }),
       { onConflict: 'band_id,id' }
     )
@@ -161,6 +172,51 @@ describe('queue route', () => {
         status: 'queued',
         position: 1,
       })
+    )
+  })
+
+  it('preserves tidal catalog source metadata on the queued song record', async () => {
+    authGetUserMock.mockResolvedValue({
+      data: { user: { id: 'user-1', user_metadata: { role: 'singer' } } },
+    })
+    profileMaybeSingleMock.mockResolvedValue({ data: { role: null }, error: null })
+    showMaybeSingleMock.mockResolvedValue({
+      data: { id: 'show-1', band_id: 'band-1', is_active: true, allow_signups: true },
+      error: null,
+    })
+    currentSingerMaybeSingleMock.mockResolvedValue({ data: null, error: null })
+    existingMaybeSingleMock.mockResolvedValue({ data: null, error: null })
+    songUpsertMock.mockResolvedValue({ error: null })
+    queueInsertMock.mockResolvedValue({ error: null })
+
+    const { POST } = await loadRoute()
+    const request = {
+      json: async () => ({
+        title: 'Catalog Song',
+        artist: 'Artist',
+        bandId: 'band-1',
+        showId: 'show-1',
+        sourceType: 'tidal_catalog',
+        sourceRef: 'catalog-track-1',
+      }),
+      cookies: {
+        getAll: () => [],
+        set: vi.fn(),
+      },
+    } as unknown as NextRequest
+
+    const response = await POST(request)
+
+    expect(response.status).toBe(200)
+    expect(songUpsertMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'catalog-song-artist',
+        title: 'Catalog Song',
+        artist: 'Artist',
+        source_type: 'tidal_catalog',
+        source_ref: 'catalog-track-1',
+      }),
+      { onConflict: 'band_id,id' }
     )
   })
 })

@@ -1,6 +1,6 @@
 import { fetchTidalPlaylistTracks } from './tidal'
 
-export type SongSourceType = 'uploaded' | 'google_sheet' | 'tidal_playlist' | 'manual'
+export type SongSourceType = 'uploaded' | 'google_sheet' | 'tidal_playlist' | 'tidal_catalog' | 'manual'
 
 export type SongImportRecord = {
   id: string

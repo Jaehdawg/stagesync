@@ -91,11 +91,20 @@ export function TidalSearchPanel({ disabled = false, statusMessage, sourceMode =
     setQueueingId(track.id)
     setError(null)
 
+    const isCatalogMode = sourceMode === 'tidal_catalog'
+
     try {
       const response = await fetch('/api/queue', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: track.title, artist: track.artist, bandId, showId, action: 'upsert' }),
+        body: JSON.stringify({
+          title: track.title,
+          artist: track.artist,
+          bandId,
+          showId,
+          action: 'upsert',
+          ...(isCatalogMode ? { sourceType: 'tidal_catalog', sourceRef: track.id } : {}),
+        }),
       })
 
       const payload = (await response.json().catch(() => ({}))) as { message?: string }
