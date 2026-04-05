@@ -37,15 +37,19 @@ export const homeCopy = {
   },
   audiences: {
     eyebrow: 'Who it is for',
-    title: 'Bands first, venues second.',
+    title: 'Bands, singers, and venues all win.',
     items: [
+      {
+        title: 'Singers',
+        body: 'Make sign-up feel fast and fair, keep the queue easy to follow, and give singers a better night so they stay engaged and come back.',
+      },
       {
         title: 'Bands',
         body: 'Keep singers moving, build set lists quickly, and run the night without juggling spreadsheets or side chats.',
       },
       {
         title: 'Venues',
-        body: 'Give staff a clearer operating picture for the room, the queue, and the show state with less back-and-forth.',
+        body: 'Give staff a clearer operating picture for the room, the queue, and the show state with less back-and-forth — which helps the room move faster and sell more drinks.',
       },
     ],
   },
@@ -56,11 +60,11 @@ export const homeCopy = {
       'One live show page for singers, bands, and staff',
       'Set lists, song library, and queue tools in one place',
       'Built for mobile-first crowd interaction',
-      'No stock-photo fluff — just the product flow',
+      'Built to keep singers happy, the room moving, and the night more profitable',
     ],
   },
   pricing: {
-    eyebrow: 'Pricing preview',
+    eyebrow: 'Pricing',
     title: 'Simple pricing that maps to how live nights are actually run.',
     items: [
       { label: 'Band SaaS', value: '$29/mo', note: 'For regular weekly rooms and working bands.' },
@@ -74,7 +78,6 @@ export const homeCopy = {
     body: 'Jump into the band portal, create a show, and see the full workflow in a few minutes.',
     cta: 'Start a free trial',
     secondaryCta: 'See pricing',
-    note: 'Primary path: bands. Venues can still use the same workflow once they are set up.',
   },
   authAlerts: {
     success: 'Magic link confirmed. You’re signed in.',

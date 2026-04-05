@@ -108,13 +108,6 @@ export function HomepageLanding() {
             </div>
             <p className="mt-5 max-w-2xl text-sm text-slate-600 dark:text-slate-400">{homeCopy.hero.footnote}</p>
 
-            <div className="mt-10 flex flex-wrap gap-3">
-              {homeCopy.proof.items.map((item) => (
-                <span key={item} className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 dark:border-white/10 dark:bg-white/5 dark:text-slate-200">
-                  {item}
-                </span>
-              ))}
-            </div>
           </div>
 
           <VisualMockup />
@@ -174,7 +167,6 @@ export function HomepageLanding() {
                   {homeCopy.trial.secondaryCta}
                 </Link>
               </div>
-              <p className="mt-4 text-sm text-slate-600 dark:text-slate-400">{homeCopy.trial.note}</p>
             </div>
           </div>
         </section>
