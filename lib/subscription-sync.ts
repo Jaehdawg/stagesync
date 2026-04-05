@@ -71,6 +71,28 @@ function formatSubscriptionStatusLabel(status: string) {
   }
 }
 
+function formatSubscriptionRenewalLabel(plan: SubscriptionState['plan'], status: SubscriptionState['status']) {
+  if (plan === FREE_PLAN) {
+    return 'No renewal while free'
+  }
+
+  switch (status) {
+    case 'active':
+    case 'trialing':
+    case 'grace':
+    case 'past_due':
+      return 'Renews monthly'
+    case 'canceled':
+      return 'Canceled at provider'
+    case 'paused':
+      return 'Paused at provider'
+    case 'suspended':
+      return 'Suspended by provider'
+    default:
+      return 'Not renewing'
+  }
+}
+
 export function resolveSubscriptionControlState(row: BillingAccountSubscriptionRow | null | undefined): SubscriptionControlState {
   const current = resolveSubscriptionStateFromBillingAccount(row)
   const isProfessional = current.plan === 'professional'
@@ -92,6 +114,7 @@ export function resolveSubscriptionControlState(row: BillingAccountSubscriptionR
       { label: 'Plan', value: current.label },
       { label: 'Access', value: formatSubscriptionStatusLabel(current.status) },
       { label: 'Billing period', value: 'Monthly' },
+      { label: 'Renewal', value: formatSubscriptionRenewalLabel(current.plan, current.status) },
       { label: 'Free shows', value: freeShowsAllocated > 0 ? `${freeShowsRemaining} of ${freeShowsAllocated} remaining` : 'None configured' },
     ],
   }

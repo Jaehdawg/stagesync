@@ -134,6 +134,7 @@ describe('subscription sync helpers', () => {
         { label: 'Plan', value: 'Professional' },
         { label: 'Access', value: 'Active' },
         { label: 'Billing period', value: 'Monthly' },
+        { label: 'Renewal', value: 'Renews monthly' },
         { label: 'Free shows', value: '2 of 3 remaining' },
       ],
     })
@@ -164,6 +165,7 @@ describe('subscription sync helpers', () => {
         { label: 'Plan', value: 'Free' },
         { label: 'Access', value: 'Not active' },
         { label: 'Billing period', value: 'Monthly' },
+        { label: 'Renewal', value: 'No renewal while free' },
         { label: 'Free shows', value: '3 of 3 remaining' },
       ],
     })
