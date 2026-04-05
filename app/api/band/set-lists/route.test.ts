@@ -85,7 +85,7 @@ describe('band set-lists api route', () => {
     expect(listBandSetListsMock).toHaveBeenCalledWith('band-1')
   })
 
-  it('creates a new set list with metadata', async () => {
+  it('creates a new set list with metadata and selected songs', async () => {
     getTestSessionMock.mockResolvedValue({ role: 'band', username: 'stagesync-band', activeBandId: 'band-1' })
     getTestLoginMock.mockResolvedValue({ role: 'band', band_access_level: 'admin', active_band_id: 'band-1' })
     createBandSetListMock.mockResolvedValue({ id: 'set-1' })
@@ -95,6 +95,9 @@ describe('band set-lists api route', () => {
     formData.set('name', 'Friday Set')
     formData.set('description', 'Best songs')
     formData.set('notes', 'Bring the energy')
+    formData.append('songIds', 'song-1')
+    formData.append('songIds', 'song-2')
+    formData.append('songIds', 'song-2')
 
     const response = await POST(makeRequest(formData))
 
@@ -104,10 +107,11 @@ describe('band set-lists api route', () => {
       description: 'Best songs',
       notes: 'Bring the energy',
       is_active: false,
+      songIds: ['song-1', 'song-2'],
     })
   })
 
-  it('appends a song to an existing set list', async () => {
+  it('appends multiple selected songs to an existing set list', async () => {
     getTestSessionMock.mockResolvedValue({ role: 'band', username: 'stagesync-band', activeBandId: 'band-1' })
     getTestLoginMock.mockResolvedValue({ role: 'band', band_access_level: 'admin', active_band_id: 'band-1' })
     appendBandSetListSongsMock.mockResolvedValue([{ id: 'row-1' }])
@@ -115,12 +119,13 @@ describe('band set-lists api route', () => {
     const { POST } = await loadRoute()
     const formData = new FormData()
     formData.set('action', 'append')
-    formData.set('songId', 'song-3')
     formData.set('setListId', 'set-1')
+    formData.append('songIds', 'song-3')
+    formData.append('songIds', 'song-4')
 
     const response = await POST(makeRequest(formData))
 
     expect(response.status).toBe(303)
-    expect(appendBandSetListSongsMock).toHaveBeenCalledWith('band-1', 'set-1', ['song-3'])
+    expect(appendBandSetListSongsMock).toHaveBeenCalledWith('band-1', 'set-1', ['song-3', 'song-4'])
   })
 })

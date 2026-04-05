@@ -6,6 +6,19 @@ import { getTestLogin } from '../../../../lib/test-login-list'
 import { getLiveBandAccessContext } from '../../../../lib/band-access'
 import { listBandSetLists, createBandSetList, appendBandSetListSongs } from '../../../../lib/set-lists'
 
+function normalizeSongIds(formData: FormData) {
+  return Array.from(
+    new Set(
+      [
+        ...formData.getAll('songIds'),
+        ...(formData.get('songId') ? [formData.get('songId')] : []),
+      ]
+        .map((value) => String(value ?? '').trim())
+        .filter(Boolean)
+    )
+  )
+}
+
 function getSupabase(request: NextRequest) {
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -65,8 +78,8 @@ export async function POST(request: NextRequest) {
   const description = String(formData.get('description') ?? '').trim() || null
   const notes = String(formData.get('notes') ?? '').trim() || null
   const action = String(formData.get('action') ?? 'create')
-  const songId = String(formData.get('songId') ?? '').trim()
   const setListId = String(formData.get('setListId') ?? '').trim()
+  const songIds = normalizeSongIds(formData)
 
   try {
     if (action === 'append') {
@@ -74,11 +87,11 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ message: 'Set list is required.' }, { status: 400 })
       }
 
-      if (!songId) {
+      if (!songIds.length) {
         return NextResponse.json({ message: 'Song is required.' }, { status: 400 })
       }
 
-      await appendBandSetListSongs(access.bandId, setListId, [songId])
+      await appendBandSetListSongs(access.bandId, setListId, songIds)
       return NextResponse.redirect(new URL('/band/songs/set-lists', request.url), { status: 303 })
     }
 
@@ -86,7 +99,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'Set list name is required.' }, { status: 400 })
     }
 
-    await createBandSetList(access.bandId, { name, description, notes, is_active: false })
+    await createBandSetList(access.bandId, { name, description, notes, is_active: false, songIds })
   } catch (error) {
     return NextResponse.json({ message: error instanceof Error ? error.message : 'Unable to create set list.' }, { status: 500 })
   }

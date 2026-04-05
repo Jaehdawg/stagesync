@@ -2,10 +2,9 @@ import Link from 'next/link'
 import { createClient } from '@/utils/supabase/server'
 import { createServiceClient } from '@/utils/supabase/service'
 import { BandAccessForm } from '@/components/band-access-form'
-import { AdminRowDialog } from '@/components/admin-row-dialog'
 import { AutoRefresh } from '@/components/auto-refresh'
 import { DeleteAllSongsButton } from '@/components/delete-all-songs-button'
-import { SongSetListDialog } from '@/components/song-set-list-dialog'
+import { SongLibrarySongList } from '@/components/song-library-song-list'
 import { getTestSession } from '@/lib/test-session'
 import { getLiveBandAccessContext } from '@/lib/band-access'
 import { bandCopy } from '@/content/en/band'
@@ -14,17 +13,6 @@ import { sharedCopy } from '@/content/en/shared'
 import { listBandSetLists } from '@/lib/set-lists'
 
 type SearchParams = Record<string, string | string[] | undefined>
-
-function formatDuration(durationMs: number | null) {
-  if (typeof durationMs !== 'number' || !Number.isFinite(durationMs) || durationMs <= 0) {
-    return '—'
-  }
-
-  const totalSeconds = Math.floor(durationMs / 1000)
-  const minutes = Math.floor(totalSeconds / 60)
-  const seconds = totalSeconds % 60
-  return `${minutes}:${String(seconds).padStart(2, '0')}`
-}
 
 function buildHref(base: string, params: { page?: number; q?: string }) {
   const search = new URLSearchParams()
@@ -225,30 +213,7 @@ export default async function BandSongsPage({
             {deletedAll ? <p className="text-sm text-emerald-300">{bandCopy.songsPage.deleteAllSongsArchivedMessage}</p> : null}
           </div>
 
-          <div className="mt-6 overflow-hidden rounded-2xl border border-white/10">
-            <div className="divide-y divide-white/10">
-              {songs?.length ? songs.map((song) => (
-                <div key={song.id} className="grid gap-4 bg-slate-950/50 p-4 lg:grid-cols-[1.2fr_1.2fr_0.6fr_auto] lg:items-center">
-                  <div><p className="text-xs uppercase tracking-[0.22em] text-slate-400">{bandCopy.songsPage.rowArtistLabel}</p><p className="mt-1 text-base font-semibold text-white">{song.artist}</p><p className="mt-2 text-xs uppercase tracking-[0.18em] text-slate-500">{song.source_type ?? bandCopy.songsPage.sourceUploaded}</p></div>
-                  <div><p className="text-xs uppercase tracking-[0.22em] text-slate-400">{bandCopy.songsPage.rowSongTitleLabel}</p><p className="mt-1 text-base font-semibold text-white">{song.title}</p>{song.source_ref ? <p className="mt-2 text-xs text-slate-500">{bandCopy.songsPage.sourceRefPrefix} {song.source_ref}</p> : null}</div>
-                  <div><p className="text-xs uppercase tracking-[0.22em] text-slate-400">{bandCopy.songsPage.rowDurationLabel}</p><p className="mt-1 text-base font-semibold text-white">{formatDuration(song.duration_ms)}</p></div>
-                  <div className="flex flex-wrap gap-2 lg:justify-end">
-                    {bandRole === 'admin' ? <SongSetListDialog songId={song.id} songTitle={song.title} songArtist={song.artist} setLists={setLists} /> : null}
-                    <AdminRowDialog triggerLabel={bandCopy.songsPage.editButton} title={`Edit ${song.title}`}>
-                      <form className="grid gap-4 rounded-2xl border border-white/10 bg-slate-950/50 p-5" action={`/api/band/songs/${song.id}`} method="post">
-                        <input type="hidden" name="action" value="update" />
-                        <div className="space-y-2"><label className="text-sm font-medium text-slate-200" htmlFor={`song-title-${song.id}`}>{bandCopy.songsPage.songTitleLabel}</label><input id={`song-title-${song.id}`} name="title" defaultValue={song.title} className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" /></div>
-                        <div className="space-y-2"><label className="text-sm font-medium text-slate-200" htmlFor={`song-artist-${song.id}`}>{bandCopy.songsPage.artistLabel}</label><input id={`song-artist-${song.id}`} name="artist" defaultValue={song.artist} className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" /></div>
-                        <div className="space-y-2"><label className="text-sm font-medium text-slate-200" htmlFor={`song-duration-${song.id}`}>{bandCopy.songsPage.durationLabel}</label><input id={`song-duration-${song.id}`} name="durationMs" type="number" min={0} defaultValue={song.duration_ms ?? ''} className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" /></div>
-                        <div className="flex justify-end"><button type="submit" className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-medium text-white">{bandCopy.songsPage.saveButton}</button></div>
-                      </form>
-                    </AdminRowDialog>
-                    <form action={`/api/band/songs/${song.id}`} method="post"><input type="hidden" name="action" value="archive" /><button type="submit" className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white">{bandCopy.songsPage.archiveButton}</button></form>
-                  </div>
-                </div>
-              )) : <div className="bg-slate-950/50 p-6 text-slate-400">{bandCopy.songsPage.noSongs}</div>}
-            </div>
-          </div>
+          <SongLibrarySongList songs={songs ?? []} setLists={setLists} />
 
           <div className="mt-6 flex items-center justify-between text-sm text-slate-300"><p>{bandCopy.songsPage.pageLabel} {currentPage} of {totalPages}</p><div className="flex gap-2">{currentPage > 1 ? <Link href={buildHref('/band/songs', { page: currentPage - 1, q })} className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-white">{bandCopy.songsPage.previousButton}</Link> : null}{currentPage < totalPages ? <Link href={buildHref('/band/songs', { page: currentPage + 1, q })} className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-white">{bandCopy.songsPage.nextButton}</Link> : null}</div></div>
         </section>

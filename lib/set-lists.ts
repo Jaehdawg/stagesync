@@ -77,7 +77,7 @@ export async function getBandSetListSongs(bandId: string, setListId: string) {
 
 export async function createBandSetList(
   bandIdInput: unknown,
-  payload: { name: string; description?: string | null; notes?: string | null; is_active?: boolean | null }
+  payload: { name: string; description?: string | null; notes?: string | null; is_active?: boolean | null; songIds?: string[] }
 ) {
   const bandId = assertBandId(bandIdInput)
   const supabase = createServiceClient()
@@ -96,6 +96,10 @@ export async function createBandSetList(
 
   if (error) throw new Error(error.message)
   if (!created) throw new Error('Unable to create set list.')
+
+  if (payload.songIds?.length) {
+    await replaceBandSetListSongs(bandId, created.id, payload.songIds)
+  }
 
   if (created.is_active) {
     await activateBandSetList(bandId, created.id)
