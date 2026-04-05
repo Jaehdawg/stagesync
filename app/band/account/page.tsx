@@ -9,6 +9,15 @@ import { getBandProfileForBandId } from '@/lib/band-tenancy'
 import { resolveSubscriptionControlState } from '@/lib/subscription-sync'
 import { bandCopy } from '@/content/en/band'
 
+function getSubscriptionNoticeMessage(notice?: string | null) {
+  switch (notice) {
+    case 'provider-pending':
+      return 'Billing actions are still waiting on hosted checkout or portal wiring.'
+    default:
+      return null
+  }
+}
+
 function LoginCard({ title, description }: { title: string; description: string }) {
   return (
     <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100 sm:px-6 lg:px-8">
@@ -116,9 +125,9 @@ function AccountForm({
             </div>
           </div>
           <p className="mt-4 text-sm text-slate-400">{subscriptionControlState.helperText}</p>
-          {subscriptionNotice ? (
+          {getSubscriptionNoticeMessage(subscriptionNotice) ? (
             <p className="mt-3 rounded-2xl border border-amber-400/20 bg-amber-400/10 px-4 py-3 text-sm text-amber-100">
-              Billing actions are still waiting on hosted checkout/portal wiring.
+              {getSubscriptionNoticeMessage(subscriptionNotice)}
             </p>
           ) : null}
         </section>
@@ -188,7 +197,15 @@ function AccountForm({
   )
 }
 
-export default async function BandAccountPage({ searchParams }: { searchParams?: { subscriptionNotice?: string } }) {
+type SearchParams = Record<string, string | string[] | undefined>
+
+function firstSearchParam(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value
+}
+
+export default async function BandAccountPage({ searchParams }: { searchParams?: Promise<SearchParams> }) {
+  const params = await searchParams
+  const subscriptionNotice = firstSearchParam(params?.subscriptionNotice) ?? null
   const testSession = await getTestSession()
   const supabase = await createClient()
   const serviceSupabase = createServiceClient()
@@ -196,11 +213,11 @@ export default async function BandAccountPage({ searchParams }: { searchParams?:
   const liveAccess = await getLiveBandAccessContext(supabase, serviceSupabase, { requireAdmin: true })
   if (liveAccess) {
     const bandProfile = await getBandProfileForBandId(serviceSupabase, liveAccess.bandId)
-      const { data: tidalSettings } = await serviceSupabase
-        .from('band_profiles')
-        .select('tidal_client_id, tidal_client_secret')
-        .eq('band_id', liveAccess.bandId)
-        .maybeSingle()
+    const { data: tidalSettings } = await serviceSupabase
+      .from('band_profiles')
+      .select('tidal_client_id, tidal_client_secret')
+      .eq('band_id', liveAccess.bandId)
+      .maybeSingle()
     const { data: billingAccount } = await serviceSupabase
       .from('billing_accounts')
       .select('status, payment_provider, payment_subscription_id, free_shows_allocated, free_shows_used')
@@ -215,7 +232,7 @@ export default async function BandAccountPage({ searchParams }: { searchParams?:
         tidalClientId={tidalSettings?.tidal_client_id ?? null}
         hasTidalClientSecret={Boolean(tidalSettings?.tidal_client_secret)}
         subscriptionControlState={resolveSubscriptionControlState(billingAccount)}
-        subscriptionNotice={searchParams?.subscriptionNotice ?? null}
+        subscriptionNotice={subscriptionNotice}
       />
     )
   }
@@ -234,7 +251,17 @@ export default async function BandAccountPage({ searchParams }: { searchParams?:
         .eq('band_id', testSession.activeBandId)
         .maybeSingle()
 
-      return <AccountForm username={current.username} bandName={current.band_name ?? bandCopy.accountPage.bandFallbackName} bandProfile={null} tidalClientId={tidalSettings?.tidal_client_id ?? null} hasTidalClientSecret={Boolean(tidalSettings?.tidal_client_secret)} subscriptionControlState={resolveSubscriptionControlState(billingAccount)} subscriptionNotice={searchParams?.subscriptionNotice ?? null} />
+      return (
+        <AccountForm
+          username={current.username}
+          bandName={current.band_name ?? bandCopy.accountPage.bandFallbackName}
+          bandProfile={null}
+          tidalClientId={tidalSettings?.tidal_client_id ?? null}
+          hasTidalClientSecret={Boolean(tidalSettings?.tidal_client_secret)}
+          subscriptionControlState={resolveSubscriptionControlState(billingAccount)}
+          subscriptionNotice={subscriptionNotice}
+        />
+      )
     }
     return <AccessDenied message={bandCopy.login.accessDenied} />
   }

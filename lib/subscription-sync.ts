@@ -1,4 +1,4 @@
-import { resolveSubscriptionState, type SubscriptionState } from './subscription'
+import { FREE_PLAN, PROFESSIONAL_PLAN, resolveSubscriptionState, type SubscriptionState } from './subscription'
 
 export type BillingAccountSubscriptionRow = {
   status: string | null
@@ -17,11 +17,13 @@ export type SubscriptionControlState = {
 }
 
 export function resolveSubscriptionStateFromBillingAccount(row: BillingAccountSubscriptionRow | null | undefined): SubscriptionState {
-  const plan = row?.payment_subscription_id ? 'professional' : 'free'
+  const rawStatus = row?.status ?? null
+  const hasSubscriptionRecord = Boolean(row?.payment_provider || row?.payment_subscription_id)
+  const plan = rawStatus && rawStatus !== 'free' ? PROFESSIONAL_PLAN : hasSubscriptionRecord ? PROFESSIONAL_PLAN : FREE_PLAN
 
   return resolveSubscriptionState({
     plan,
-    status: row?.status,
+    status: plan === PROFESSIONAL_PLAN ? rawStatus ?? 'active' : 'none',
   })
 }
 
@@ -32,10 +34,10 @@ export function resolveSubscriptionControlState(row: BillingAccountSubscriptionR
   return {
     current,
     billingCycleLabel: 'Monthly only',
-    primaryActionLabel: isProfessional ? 'Manage Professional' : 'Upgrade to Professional',
+    primaryActionLabel: isProfessional ? 'Open billing portal' : 'Start Professional checkout',
     secondaryActionLabel: isProfessional ? 'Downgrade to Free' : 'Stay on Free',
     helperText: isProfessional
-      ? 'Subscription state is synced from hosted checkout data.'
-      : 'Professional subscription is available through hosted checkout when enabled.',
+      ? 'Hosted checkout keeps payment data outside StageSync.'
+      : 'Professional is delivered through hosted checkout when enabled.',
   }
 }

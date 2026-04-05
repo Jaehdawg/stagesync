@@ -21,6 +21,22 @@ describe('subscription sync helpers', () => {
 
     expect(
       resolveSubscriptionStateFromBillingAccount({
+        status: 'active',
+        payment_provider: 'stripe',
+        payment_subscription_id: null,
+        free_shows_allocated: 3,
+        free_shows_used: 1,
+      })
+    ).toEqual({
+      plan: 'professional',
+      status: 'active',
+      billingCycle: 'monthly',
+      label: 'Professional',
+      summary: 'Professional access is active.',
+    })
+
+    expect(
+      resolveSubscriptionStateFromBillingAccount({
         status: 'past_due',
         payment_provider: 'stripe',
         payment_subscription_id: 'sub_123',
@@ -102,9 +118,9 @@ describe('subscription sync helpers', () => {
         summary: 'Professional access is active.',
       },
       billingCycleLabel: 'Monthly only',
-      primaryActionLabel: 'Manage Professional',
+      primaryActionLabel: 'Open billing portal',
       secondaryActionLabel: 'Downgrade to Free',
-      helperText: 'Subscription state is synced from hosted checkout data.',
+      helperText: 'Hosted checkout keeps payment data outside StageSync.',
     })
 
     expect(
@@ -124,9 +140,9 @@ describe('subscription sync helpers', () => {
         summary: 'Free access is active.',
       },
       billingCycleLabel: 'Monthly only',
-      primaryActionLabel: 'Upgrade to Professional',
+      primaryActionLabel: 'Start Professional checkout',
       secondaryActionLabel: 'Stay on Free',
-      helperText: 'Professional subscription is available through hosted checkout when enabled.',
+      helperText: 'Professional is delivered through hosted checkout when enabled.',
     })
   })
 })
