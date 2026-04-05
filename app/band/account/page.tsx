@@ -45,6 +45,7 @@ function AccountForm({
   tidalClientId,
   hasTidalClientSecret,
   subscriptionControlState,
+  subscriptionNotice,
 }: {
   username: string
   bandName: string
@@ -74,6 +75,7 @@ function AccountForm({
     secondaryActionLabel: string
     helperText: string
   }
+  subscriptionNotice?: string | null
 }) {
   return (
     <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100 sm:px-6 lg:px-8">
@@ -99,15 +101,26 @@ function AccountForm({
               <p className="mt-2 text-xs uppercase tracking-[0.22em] text-slate-400">Status: {subscriptionControlState.current.status}</p>
             </div>
             <div className="flex flex-wrap gap-3">
-              <button type="button" className="rounded-xl border border-cyan-400/30 bg-cyan-400/10 px-4 py-3 text-sm font-medium text-cyan-100">
-                {subscriptionControlState.primaryActionLabel}
-              </button>
-              <button type="button" className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-white">
-                {subscriptionControlState.secondaryActionLabel}
-              </button>
+              <form action="/api/billing/subscription" method="post">
+                <input type="hidden" name="intent" value={subscriptionControlState.current.plan === 'professional' ? 'manage' : 'upgrade'} />
+                <button type="submit" className="rounded-xl border border-cyan-400/30 bg-cyan-400/10 px-4 py-3 text-sm font-medium text-cyan-100">
+                  {subscriptionControlState.primaryActionLabel}
+                </button>
+              </form>
+              <form action="/api/billing/subscription" method="post">
+                <input type="hidden" name="intent" value={subscriptionControlState.current.plan === 'professional' ? 'downgrade' : 'stay'} />
+                <button type="submit" className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-white">
+                  {subscriptionControlState.secondaryActionLabel}
+                </button>
+              </form>
             </div>
           </div>
           <p className="mt-4 text-sm text-slate-400">{subscriptionControlState.helperText}</p>
+          {subscriptionNotice ? (
+            <p className="mt-3 rounded-2xl border border-amber-400/20 bg-amber-400/10 px-4 py-3 text-sm text-amber-100">
+              Billing actions are still waiting on hosted checkout/portal wiring.
+            </p>
+          ) : null}
         </section>
 
         <section className="rounded-3xl border border-white/10 bg-white/5 p-6">
@@ -175,7 +188,7 @@ function AccountForm({
   )
 }
 
-export default async function BandAccountPage() {
+export default async function BandAccountPage({ searchParams }: { searchParams?: { subscriptionNotice?: string } }) {
   const testSession = await getTestSession()
   const supabase = await createClient()
   const serviceSupabase = createServiceClient()
@@ -202,6 +215,7 @@ export default async function BandAccountPage() {
         tidalClientId={tidalSettings?.tidal_client_id ?? null}
         hasTidalClientSecret={Boolean(tidalSettings?.tidal_client_secret)}
         subscriptionControlState={resolveSubscriptionControlState(billingAccount)}
+        subscriptionNotice={searchParams?.subscriptionNotice ?? null}
       />
     )
   }
@@ -220,7 +234,7 @@ export default async function BandAccountPage() {
         .eq('band_id', testSession.activeBandId)
         .maybeSingle()
 
-      return <AccountForm username={current.username} bandName={current.band_name ?? bandCopy.accountPage.bandFallbackName} bandProfile={null} tidalClientId={tidalSettings?.tidal_client_id ?? null} hasTidalClientSecret={Boolean(tidalSettings?.tidal_client_secret)} subscriptionControlState={resolveSubscriptionControlState(billingAccount)} />
+      return <AccountForm username={current.username} bandName={current.band_name ?? bandCopy.accountPage.bandFallbackName} bandProfile={null} tidalClientId={tidalSettings?.tidal_client_id ?? null} hasTidalClientSecret={Boolean(tidalSettings?.tidal_client_secret)} subscriptionControlState={resolveSubscriptionControlState(billingAccount)} subscriptionNotice={searchParams?.subscriptionNotice ?? null} />
     }
     return <AccessDenied message={bandCopy.login.accessDenied} />
   }
