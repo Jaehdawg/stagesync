@@ -20,6 +20,8 @@ describe('subscription helpers', () => {
     expect(normalizeSubscriptionStatus('active')).toBe('active')
     expect(normalizeSubscriptionStatus('trialing')).toBe('trialing')
     expect(normalizeSubscriptionStatus('past_due')).toBe('past_due')
+    expect(normalizeSubscriptionStatus('grace')).toBe('grace')
+    expect(normalizeSubscriptionStatus('suspended')).toBe('suspended')
     expect(normalizeSubscriptionStatus('unexpected')).toBe('none')
   })
 
@@ -37,6 +39,22 @@ describe('subscription helpers', () => {
       status: 'past_due',
       hasProfessionalAccess: true,
       canPurchaseCredits: true,
+      needsAttention: true,
+    })
+
+    expect(resolveSubscriptionEntitlement({ plan: 'professional', status: 'grace' })).toEqual({
+      plan: 'professional',
+      status: 'grace',
+      hasProfessionalAccess: true,
+      canPurchaseCredits: true,
+      needsAttention: true,
+    })
+
+    expect(resolveSubscriptionEntitlement({ plan: 'professional', status: 'suspended' })).toEqual({
+      plan: 'professional',
+      status: 'suspended',
+      hasProfessionalAccess: false,
+      canPurchaseCredits: false,
       needsAttention: true,
     })
 
@@ -64,6 +82,22 @@ describe('subscription helpers', () => {
       billingCycle: 'monthly',
       label: 'Professional',
       summary: 'Professional access needs attention.',
+    })
+
+    expect(resolveSubscriptionState({ plan: 'professional', status: 'grace' })).toEqual({
+      plan: 'professional',
+      status: 'grace',
+      billingCycle: 'monthly',
+      label: 'Professional',
+      summary: 'Professional access needs attention.',
+    })
+
+    expect(resolveSubscriptionState({ plan: 'professional', status: 'suspended' })).toEqual({
+      plan: 'professional',
+      status: 'suspended',
+      billingCycle: 'monthly',
+      label: 'Professional',
+      summary: 'Professional access is inactive.',
     })
 
     expect(resolveSubscriptionState({ plan: 'free', status: 'none' })).toEqual({

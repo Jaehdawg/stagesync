@@ -37,6 +37,38 @@ describe('subscription sync helpers', () => {
 
     expect(
       resolveSubscriptionStateFromBillingAccount({
+        status: 'grace',
+        payment_provider: 'stripe',
+        payment_subscription_id: 'sub_123',
+        free_shows_allocated: 3,
+        free_shows_used: 1,
+      })
+    ).toEqual({
+      plan: 'professional',
+      status: 'grace',
+      billingCycle: 'monthly',
+      label: 'Professional',
+      summary: 'Professional access needs attention.',
+    })
+
+    expect(
+      resolveSubscriptionStateFromBillingAccount({
+        status: 'suspended',
+        payment_provider: 'stripe',
+        payment_subscription_id: 'sub_123',
+        free_shows_allocated: 3,
+        free_shows_used: 1,
+      })
+    ).toEqual({
+      plan: 'professional',
+      status: 'suspended',
+      billingCycle: 'monthly',
+      label: 'Professional',
+      summary: 'Professional access is inactive.',
+    })
+
+    expect(
+      resolveSubscriptionStateFromBillingAccount({
         status: 'free',
         payment_provider: null,
         payment_subscription_id: null,

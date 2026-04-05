@@ -7,9 +7,11 @@ export type SubscriptionProviderStatus =
   | 'none'
   | 'trialing'
   | 'active'
+  | 'grace'
   | 'past_due'
   | 'canceled'
   | 'paused'
+  | 'suspended'
 
 export type SubscriptionEntitlement = {
   plan: SubscriptionPlan
@@ -32,7 +34,7 @@ export function normalizeSubscriptionPlan(plan: string | null | undefined): Subs
 }
 
 export function normalizeSubscriptionStatus(status: string | null | undefined): SubscriptionProviderStatus {
-  if (status === 'trialing' || status === 'active' || status === 'past_due' || status === 'canceled' || status === 'paused') {
+  if (status === 'trialing' || status === 'active' || status === 'grace' || status === 'past_due' || status === 'canceled' || status === 'paused' || status === 'suspended') {
     return status
   }
 
@@ -46,14 +48,14 @@ export function resolveSubscriptionEntitlement(input: {
   const plan = normalizeSubscriptionPlan(input.plan)
   const status = normalizeSubscriptionStatus(input.status)
 
-  const hasProfessionalAccess = plan === PROFESSIONAL_PLAN && (status === 'active' || status === 'trialing' || status === 'past_due')
+  const hasProfessionalAccess = plan === PROFESSIONAL_PLAN && (status === 'active' || status === 'trialing' || status === 'past_due' || status === 'grace')
 
   return {
     plan,
     status,
     hasProfessionalAccess,
     canPurchaseCredits: plan === FREE_PLAN || hasProfessionalAccess,
-    needsAttention: plan === PROFESSIONAL_PLAN && (status === 'past_due' || status === 'canceled' || status === 'paused'),
+    needsAttention: plan === PROFESSIONAL_PLAN && (status === 'grace' || status === 'past_due' || status === 'canceled' || status === 'paused' || status === 'suspended'),
   }
 }
 
