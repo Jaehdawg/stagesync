@@ -85,7 +85,6 @@ export const bandCopy = {
     previousButton: 'Previous',
     nextButton: 'Next',
     sourceUploaded: 'uploaded',
-    sourceRefPrefix: 'Ref:',
   },
   accountPage: {
     saveAccountButton: 'Save account',

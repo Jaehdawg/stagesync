@@ -95,7 +95,7 @@ export default async function BandSongsPage({
 
   let query = serviceSupabase
     .from('songs')
-    .select('id, title, artist, duration_ms, source_type, source_ref', { count: 'exact' })
+    .select('id, title, artist, duration_ms, source_type', { count: 'exact' })
     .is('archived_at', null)
     .eq('band_id', activeBandId)
     .order('artist', { ascending: true })

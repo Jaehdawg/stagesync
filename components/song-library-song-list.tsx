@@ -13,7 +13,6 @@ type Song = {
   title: string
   duration_ms: number | null
   source_type?: string | null
-  source_ref?: string | null
 }
 
 type SetListOption = {
@@ -199,7 +198,6 @@ export function SongLibrarySongList({ songs, setLists }: SongLibrarySongListProp
               <div>
                 <p className="text-xs uppercase tracking-[0.22em] text-slate-400">{bandCopy.songsPage.rowSongTitleLabel}</p>
                 <p className="mt-1 text-base font-semibold text-white">{song.title}</p>
-                {song.source_ref ? <p className="mt-2 text-xs text-slate-500">{bandCopy.songsPage.sourceRefPrefix} {song.source_ref}</p> : null}
               </div>
               <div>
                 <p className="text-xs uppercase tracking-[0.22em] text-slate-400">{bandCopy.songsPage.rowDurationLabel}</p>
