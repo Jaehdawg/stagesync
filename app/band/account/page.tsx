@@ -65,9 +65,11 @@ function AccountForm({
     current: {
       plan: string
       status: string
+      billingCycle: string
       label: string
       summary: string
     }
+    billingCycleLabel: string
     primaryActionLabel: string
     secondaryActionLabel: string
     helperText: string
@@ -93,6 +95,7 @@ function AccountForm({
               <p className="text-xs font-semibold uppercase tracking-[0.28em] text-cyan-300">Subscription</p>
               <h2 className="mt-2 text-2xl font-semibold text-white">{subscriptionControlState.current.label}</h2>
               <p className="mt-2 max-w-2xl text-slate-300">{subscriptionControlState.current.summary}</p>
+              <p className="mt-2 text-xs uppercase tracking-[0.22em] text-slate-400">{subscriptionControlState.billingCycleLabel}</p>
               <p className="mt-2 text-xs uppercase tracking-[0.22em] text-slate-400">Status: {subscriptionControlState.current.status}</p>
             </div>
             <div className="flex flex-wrap gap-3">

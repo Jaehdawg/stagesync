@@ -53,6 +53,7 @@ describe('subscription helpers', () => {
     expect(resolveSubscriptionState({ plan: 'professional', status: 'active' })).toEqual({
       plan: 'professional',
       status: 'active',
+      billingCycle: 'monthly',
       label: 'Professional',
       summary: 'Professional access is active.',
     })
@@ -60,6 +61,7 @@ describe('subscription helpers', () => {
     expect(resolveSubscriptionState({ plan: 'professional', status: 'past_due' })).toEqual({
       plan: 'professional',
       status: 'past_due',
+      billingCycle: 'monthly',
       label: 'Professional',
       summary: 'Professional access needs attention.',
     })
@@ -67,6 +69,7 @@ describe('subscription helpers', () => {
     expect(resolveSubscriptionState({ plan: 'free', status: 'none' })).toEqual({
       plan: 'free',
       status: 'none',
+      billingCycle: 'monthly',
       label: 'Free',
       summary: 'Free access is active.',
     })
@@ -74,6 +77,7 @@ describe('subscription helpers', () => {
     expect(resolveSubscriptionState({ plan: 'professional', status: 'canceled' })).toEqual({
       plan: 'professional',
       status: 'canceled',
+      billingCycle: 'monthly',
       label: 'Professional',
       summary: 'Professional access is inactive.',
     })

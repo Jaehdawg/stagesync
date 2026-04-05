@@ -14,6 +14,7 @@ describe('subscription sync helpers', () => {
     ).toEqual({
       plan: 'professional',
       status: 'active',
+      billingCycle: 'monthly',
       label: 'Professional',
       summary: 'Professional access is active.',
     })
@@ -29,6 +30,7 @@ describe('subscription sync helpers', () => {
     ).toEqual({
       plan: 'professional',
       status: 'past_due',
+      billingCycle: 'monthly',
       label: 'Professional',
       summary: 'Professional access needs attention.',
     })
@@ -44,6 +46,7 @@ describe('subscription sync helpers', () => {
     ).toEqual({
       plan: 'free',
       status: 'none',
+      billingCycle: 'monthly',
       label: 'Free',
       summary: 'Free access is active.',
     })
@@ -62,9 +65,11 @@ describe('subscription sync helpers', () => {
       current: {
         plan: 'professional',
         status: 'active',
+        billingCycle: 'monthly',
         label: 'Professional',
         summary: 'Professional access is active.',
       },
+      billingCycleLabel: 'Monthly only',
       primaryActionLabel: 'Manage Professional',
       secondaryActionLabel: 'Downgrade to Free',
       helperText: 'Subscription state is synced from hosted checkout data.',
@@ -82,9 +87,11 @@ describe('subscription sync helpers', () => {
       current: {
         plan: 'free',
         status: 'none',
+        billingCycle: 'monthly',
         label: 'Free',
         summary: 'Free access is active.',
       },
+      billingCycleLabel: 'Monthly only',
       primaryActionLabel: 'Upgrade to Professional',
       secondaryActionLabel: 'Stay on Free',
       helperText: 'Professional subscription is available through hosted checkout when enabled.',

@@ -22,6 +22,7 @@ export type SubscriptionEntitlement = {
 export type SubscriptionState = {
   plan: SubscriptionPlan
   status: SubscriptionProviderStatus
+  billingCycle: 'monthly'
   label: string
   summary: string
 }
@@ -74,6 +75,7 @@ export function resolveSubscriptionState(input: {
   return {
     plan: entitlement.plan,
     status: entitlement.status,
+    billingCycle: 'monthly',
     label,
     summary,
   }

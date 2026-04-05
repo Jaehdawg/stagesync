@@ -10,6 +10,7 @@ export type BillingAccountSubscriptionRow = {
 
 export type SubscriptionControlState = {
   current: SubscriptionState
+  billingCycleLabel: string
   primaryActionLabel: string
   secondaryActionLabel: string
   helperText: string
@@ -30,6 +31,7 @@ export function resolveSubscriptionControlState(row: BillingAccountSubscriptionR
 
   return {
     current,
+    billingCycleLabel: 'Monthly only',
     primaryActionLabel: isProfessional ? 'Manage Professional' : 'Upgrade to Professional',
     secondaryActionLabel: isProfessional ? 'Downgrade to Free' : 'Stay on Free',
     helperText: isProfessional
