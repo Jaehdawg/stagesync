@@ -63,7 +63,7 @@ export const homeCopy = {
   },
   pricing: {
     eyebrow: 'Pricing',
-    title: 'Simple pricing that maps to how live nights are actually run.',
+    title: 'Pricing that fits how live nights actually run.',
     items: [
       { label: 'Per-event', value: '$10/night', note: 'For one-off shows, pop-ups, and trial runs.' },
       { label: 'Professional', value: '$29/mo', note: 'For regular weekly rooms and working bands.' },
