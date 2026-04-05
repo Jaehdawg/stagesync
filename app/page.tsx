@@ -1,10 +1,10 @@
-import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { headers } from 'next/headers'
 import { createClient } from '@/utils/supabase/server'
 import { getRoleHomePath } from '@/lib/roles'
 import { buildRootAuthRedirect } from '@/lib/root-auth'
 import { homeCopy } from '@/content/en/home'
+import { HomepageLanding } from '@/components/homepage-landing'
 
 type SearchParams = Record<string, string | string[] | undefined>
 
@@ -63,47 +63,16 @@ export default async function Home({
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100 sm:px-6 lg:px-8">
+    <>
       {auth ? (
-        <div className="mx-auto mb-6 max-w-5xl rounded-2xl border border-cyan-400/20 bg-cyan-400/10 px-4 py-3 text-center text-sm text-cyan-100">
+        <div className="mx-auto mt-6 max-w-7xl rounded-2xl border border-cyan-400/20 bg-cyan-400/10 px-4 py-3 text-center text-sm text-cyan-100">
           {auth === 'success' ? homeCopy.authAlerts.success : null}
           {auth === 'missing-code' ? homeCopy.authAlerts.missingCode : null}
           {auth === 'error' ? `${homeCopy.authAlerts.errorPrefix} ${message ?? homeCopy.authAlerts.errorFallback}` : null}
         </div>
       ) : null}
 
-      <section className="mx-auto flex min-h-[calc(100vh-8rem)] w-full max-w-5xl items-center">
-        <div className="w-full rounded-[2rem] border border-white/10 bg-white/5 p-8 shadow-2xl shadow-cyan-950/20 sm:p-10 lg:p-14">
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">{homeCopy.eyebrow}</p>
-          <h1 className="mt-4 text-5xl font-semibold tracking-tight text-white sm:text-6xl">{homeCopy.headline}</h1>
-          <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-300">{homeCopy.subhead}</p>
-
-          <ul className="mt-8 grid gap-3 text-sm text-slate-200 sm:grid-cols-2">
-            {homeCopy.featureBullets.map((bullet) => (
-              <li key={bullet} className="rounded-2xl border border-white/10 bg-slate-950/30 px-4 py-3">
-                {bullet}
-              </li>
-            ))}
-          </ul>
-
-          <div className="mt-8 flex flex-wrap gap-4">
-            <Link
-              href="/band"
-              className="rounded-full bg-cyan-400 px-6 py-3 font-semibold text-slate-950 transition hover:bg-cyan-300"
-            >
-              {homeCopy.primaryCta}
-            </Link>
-            <a
-              href="/band"
-              className="rounded-full border border-white/10 bg-white/5 px-6 py-3 font-semibold text-white transition hover:border-cyan-400/50 hover:bg-white/10"
-            >
-              {homeCopy.secondaryCta}
-            </a>
-          </div>
-
-          <p className="mt-6 text-sm text-slate-400">{homeCopy.footerNote}</p>
-        </div>
-      </section>
-    </main>
+      <HomepageLanding />
+    </>
   )
 }

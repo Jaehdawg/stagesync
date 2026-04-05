@@ -1,17 +1,81 @@
 export const homeCopy = {
   eyebrow: 'StageSync',
-  headline: 'Live band karaoke simplified.',
-  subhead:
-    'StageSync makes it easy for bands to manage the room while giving singers the thrill of being in the spotlight.',
-  featureBullets: [
-    'Stage-friendly tools for fast, simple control',
-    'Live singer queue management',
-    'Less back-and-forth, more time performing',
-    'A better experience for both the band and the crowd',
-  ],
-  primaryCta: 'Learn more',
-  secondaryCta: 'Band portal',
-  footerNote: 'Need a singer sign-up link? Your band can generate one from the band dashboard.',
+  topNav: {
+    learnMore: 'Learn more',
+    startFreeTrial: 'Start a free trial',
+  },
+  hero: {
+    badge: 'Bands first. Venues too.',
+    headline: 'Run the room, keep the queue moving, and make the night feel effortless.',
+    subhead:
+      'StageSync turns singer sign-ups, show controls, and set lists into one clean workflow so bands can focus on the room and venues can keep the night on rails.',
+    primaryCta: 'Start a free trial',
+    secondaryCta: 'Learn more',
+    footnote: 'Fast enough for a packed room. Clear enough for the staff running it.',
+  },
+  proof: {
+    title: 'Built for the people running live nights',
+    items: ['Bands', 'Venues', 'Hosts', 'Crowds'],
+  },
+  howItWorks: {
+    eyebrow: 'How it works',
+    title: 'Three steps from doors open to last song.',
+    steps: [
+      {
+        title: '1. Set up the show',
+        body: 'Create the show, publish the singer link, and choose the band workflow that fits the room.',
+      },
+      {
+        title: '2. Keep the queue clean',
+        body: 'Manage requests, queue order, and song lists from one fast band dashboard.',
+      },
+      {
+        title: '3. Stay in sync',
+        body: 'Bands and venues see the same live state, so nobody is guessing what happens next.',
+      },
+    ],
+  },
+  audiences: {
+    eyebrow: 'Who it is for',
+    title: 'Bands first, venues second.',
+    items: [
+      {
+        title: 'Bands',
+        body: 'Keep singers moving, build set lists quickly, and run the night without juggling spreadsheets or side chats.',
+      },
+      {
+        title: 'Venues',
+        body: 'Give staff a clearer operating picture for the room, the queue, and the show state with less back-and-forth.',
+      },
+    ],
+  },
+  benefits: {
+    eyebrow: 'Why StageSync',
+    title: 'Less chaos, more time performing.',
+    items: [
+      'One live show page for singers, bands, and staff',
+      'Set lists, song library, and queue tools in one place',
+      'Built for mobile-first crowd interaction',
+      'No stock-photo fluff — just the product flow',
+    ],
+  },
+  pricing: {
+    eyebrow: 'Pricing preview',
+    title: 'Simple pricing that maps to how live nights are actually run.',
+    items: [
+      { label: 'Band SaaS', value: '$29/mo', note: 'For regular weekly rooms and working bands.' },
+      { label: 'Venue license', value: 'Custom', note: 'For multi-room venues and larger operators.' },
+      { label: 'Per-event', value: '$10/night', note: 'For one-off shows, pop-ups, and trial runs.' },
+    ],
+  },
+  trial: {
+    eyebrow: 'Start a free trial',
+    title: 'Want to try it tonight?',
+    body: 'Jump into the band portal, create a show, and see the full workflow in a few minutes.',
+    cta: 'Start a free trial',
+    secondaryCta: 'See pricing',
+    note: 'Primary path: bands. Venues can still use the same workflow once they are set up.',
+  },
   authAlerts: {
     success: 'Magic link confirmed. You’re signed in.',
     missingCode: 'Missing auth code in the callback URL.',
