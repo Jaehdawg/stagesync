@@ -11,6 +11,14 @@ import { bandCopy } from '@/content/en/band'
 
 function getSubscriptionNoticeMessage(notice?: string | null) {
   switch (notice) {
+    case 'checkout-pending':
+      return 'Hosted checkout is not wired yet.'
+    case 'portal-pending':
+      return 'Hosted billing portal is not wired yet.'
+    case 'downgrade-pending':
+      return 'Hosted downgrade flow is not wired yet.'
+    case 'no-change':
+      return 'No billing change was made.'
     case 'provider-pending':
       return 'Billing actions are still waiting on hosted checkout or portal wiring.'
     default:

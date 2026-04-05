@@ -46,7 +46,7 @@ beforeEach(() => {
 })
 
 describe('billing subscription route', () => {
-  it('redirects band admins back to the account page with a provider-pending notice', async () => {
+  it('redirects band admins back to the account page with an upgrade notice placeholder', async () => {
     getTestSessionMock.mockResolvedValue({ role: 'band', username: 'northside' })
     getTestLoginMock.mockResolvedValue({ role: 'band', band_access_level: 'admin' })
 
@@ -63,7 +63,27 @@ describe('billing subscription route', () => {
     const response = await POST(request)
 
     expect(response.status).toBe(303)
-    expect(response.headers.get('location')).toBe('https://example.com/band/account?subscriptionNotice=provider-pending')
+    expect(response.headers.get('location')).toBe('https://example.com/band/account?subscriptionNotice=checkout-pending')
+  })
+
+  it('redirects downgrade intents with a portal placeholder notice', async () => {
+    getTestSessionMock.mockResolvedValue({ role: 'band', username: 'northside' })
+    getTestLoginMock.mockResolvedValue({ role: 'band', band_access_level: 'admin' })
+
+    const { POST } = await loadRoute()
+    const formData = new FormData()
+    formData.set('intent', 'downgrade')
+
+    const request = {
+      formData: async () => formData,
+      url: 'https://example.com/api/billing/subscription',
+      cookies: { getAll: () => [], set: vi.fn() },
+    } as unknown as NextRequest
+
+    const response = await POST(request)
+
+    expect(response.status).toBe(303)
+    expect(response.headers.get('location')).toBe('https://example.com/band/account?subscriptionNotice=downgrade-pending')
   })
 
   it('rejects unknown billing intents', async () => {

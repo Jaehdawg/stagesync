@@ -28,6 +28,21 @@ function redirectWithNotice(request: NextRequest, notice: string) {
   return NextResponse.redirect(new URL(`/band/account?subscriptionNotice=${encodeURIComponent(notice)}`, request.url), 303)
 }
 
+function noticeForIntent(intent: string) {
+  switch (intent) {
+    case 'upgrade':
+      return 'checkout-pending'
+    case 'manage':
+      return 'portal-pending'
+    case 'downgrade':
+      return 'downgrade-pending'
+    case 'stay':
+      return 'no-change'
+    default:
+      return 'provider-pending'
+  }
+}
+
 export async function POST(request: NextRequest) {
   const testSession = await getTestSession()
   const testSupabase = getSupabase(request)
@@ -45,7 +60,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'Band admin access required.' }, { status: 403 })
     }
 
-    return redirectWithNotice(request, 'provider-pending')
+    return redirectWithNotice(request, noticeForIntent(intent))
   }
 
   const liveAccess = await getLiveBandAccessContext(testSupabase, serviceSupabase, { requireAdmin: true })
@@ -53,5 +68,5 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: 'Band admin access required.' }, { status: 403 })
   }
 
-  return redirectWithNotice(request, 'provider-pending')
+  return redirectWithNotice(request, noticeForIntent(intent))
 }
