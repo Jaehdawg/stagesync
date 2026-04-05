@@ -65,9 +65,9 @@ export const homeCopy = {
     eyebrow: 'Pricing',
     title: 'Simple pricing that maps to how live nights are actually run.',
     items: [
-      { label: 'Band SaaS', value: '$29/mo', note: 'For regular weekly rooms and working bands.' },
-      { label: 'Venue license', value: 'Custom', note: 'For multi-room venues and larger operators.' },
       { label: 'Per-event', value: '$10/night', note: 'For one-off shows, pop-ups, and trial runs.' },
+      { label: 'Professional', value: '$29/mo', note: 'For regular weekly rooms and working bands.' },
+      { label: 'Venue license', value: 'Custom', note: 'For multi-room venues and larger operators.' },
     ],
   },
   trial: {
