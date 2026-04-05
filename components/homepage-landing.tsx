@@ -89,9 +89,6 @@ export function HomepageLanding() {
 
         <section className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
           <div className="max-w-3xl">
-            <p className="inline-flex rounded-full border border-cyan-200 bg-cyan-50 px-4 py-2 text-sm font-semibold text-cyan-900 dark:border-cyan-400/20 dark:bg-cyan-400/10 dark:text-cyan-100">
-              {homeCopy.hero.badge}
-            </p>
             <h1 className="mt-5 text-5xl font-semibold tracking-tight text-slate-950 sm:text-6xl lg:text-7xl dark:text-white">
               {homeCopy.hero.headline}
             </h1>
@@ -106,8 +103,6 @@ export function HomepageLanding() {
                 {homeCopy.hero.secondaryCta}
               </Link>
             </div>
-            <p className="mt-5 max-w-2xl text-sm text-slate-600 dark:text-slate-400">{homeCopy.hero.footnote}</p>
-
           </div>
 
           <VisualMockup />

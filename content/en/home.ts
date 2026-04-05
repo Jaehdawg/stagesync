@@ -5,13 +5,11 @@ export const homeCopy = {
     startFreeTrial: 'Start a free trial',
   },
   hero: {
-    badge: 'Bands first. Venues too.',
     headline: 'Run the room, keep the queue moving, and make the night feel effortless.',
     subhead:
       'StageSync turns singer sign-ups, show controls, and set lists into one clean workflow so bands can focus on the room and venues can keep the night on rails.',
     primaryCta: 'Start a free trial',
     secondaryCta: 'Learn more',
-    footnote: 'Fast enough for a packed room. Clear enough for the staff running it.',
   },
   proof: {
     title: 'Built for the people running live nights',
