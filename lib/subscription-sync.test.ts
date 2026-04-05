@@ -131,6 +131,7 @@ describe('subscription sync helpers', () => {
       secondaryActionIntent: 'downgrade',
       helperText: 'Hosted checkout keeps payment data outside StageSync.',
       summaryLines: [
+        { label: 'Product', value: 'Professional ($29/mo)' },
         { label: 'Plan', value: 'Professional' },
         { label: 'Access', value: 'Active' },
         { label: 'Billing period', value: 'Monthly' },
@@ -162,6 +163,7 @@ describe('subscription sync helpers', () => {
       secondaryActionIntent: 'stay',
       helperText: 'Professional is delivered through hosted checkout when enabled.',
       summaryLines: [
+        { label: 'Product', value: 'Professional ($29/mo)' },
         { label: 'Plan', value: 'Free' },
         { label: 'Access', value: 'Not active' },
         { label: 'Billing period', value: 'Monthly' },

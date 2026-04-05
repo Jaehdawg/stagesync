@@ -1,4 +1,5 @@
 import { FREE_PLAN, PROFESSIONAL_PLAN, resolveSubscriptionState, type SubscriptionState } from './subscription'
+import { PROFESSIONAL_BILLING_CYCLE, getProfessionalProductLabel } from './professional-plan'
 
 export type BillingAccountSubscriptionRow = {
   status: string | null
@@ -111,9 +112,10 @@ export function resolveSubscriptionControlState(row: BillingAccountSubscriptionR
       ? 'Hosted checkout keeps payment data outside StageSync.'
       : 'Professional is delivered through hosted checkout when enabled.',
     summaryLines: [
+      { label: 'Product', value: getProfessionalProductLabel() },
       { label: 'Plan', value: current.label },
       { label: 'Access', value: formatSubscriptionStatusLabel(current.status) },
-      { label: 'Billing period', value: 'Monthly' },
+      { label: 'Billing period', value: PROFESSIONAL_BILLING_CYCLE === 'monthly' ? 'Monthly' : PROFESSIONAL_BILLING_CYCLE },
       { label: 'Renewal', value: formatSubscriptionRenewalLabel(current.plan, current.status) },
       { label: 'Free shows', value: freeShowsAllocated > 0 ? `${freeShowsRemaining} of ${freeShowsAllocated} remaining` : 'None configured' },
     ],
