@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
   const formData = await request.formData()
   const intent = String(formData.get('intent') ?? '').trim()
 
-  if (!['upgrade', 'manage', 'downgrade', 'stay'].includes(intent)) {
+  if (!['upgrade', 'manage', 'downgrade', 'stay', 'invoices'].includes(intent)) {
     return NextResponse.json({ message: 'Unknown billing intent.' }, { status: 400 })
   }
 
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'Band admin access required.' }, { status: 403 })
     }
 
-    return redirectWithNotice(request, resolveSubscriptionNoticeForIntent(intent as 'upgrade' | 'manage' | 'downgrade' | 'stay'))
+    return redirectWithNotice(request, resolveSubscriptionNoticeForIntent(intent as 'upgrade' | 'manage' | 'downgrade' | 'stay' | 'invoices'))
   }
 
   const liveAccess = await getLiveBandAccessContext(testSupabase, serviceSupabase, { requireAdmin: true })
@@ -54,5 +54,5 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: 'Band admin access required.' }, { status: 403 })
   }
 
-  return redirectWithNotice(request, resolveSubscriptionNoticeForIntent(intent as 'upgrade' | 'manage' | 'downgrade' | 'stay'))
+  return redirectWithNotice(request, resolveSubscriptionNoticeForIntent(intent as 'upgrade' | 'manage' | 'downgrade' | 'stay' | 'invoices'))
 }

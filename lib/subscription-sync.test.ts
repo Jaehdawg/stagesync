@@ -105,6 +105,7 @@ describe('subscription sync helpers', () => {
     expect(resolveSubscriptionNoticeForIntent('manage')).toBe('portal-pending')
     expect(resolveSubscriptionNoticeForIntent('downgrade')).toBe('downgrade-pending')
     expect(resolveSubscriptionNoticeForIntent('stay')).toBe('no-change')
+    expect(resolveSubscriptionNoticeForIntent('invoices')).toBe('invoices-pending')
   })
 
   it('provides upgrade and downgrade control labels from the current subscription state', () => {

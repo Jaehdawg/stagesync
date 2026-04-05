@@ -86,6 +86,27 @@ describe('billing subscription route', () => {
     expect(response.headers.get('location')).toBe('https://example.com/band/account?subscriptionNotice=downgrade-pending')
   })
 
+
+  it('redirects invoice access with a hosted invoices placeholder notice', async () => {
+    getTestSessionMock.mockResolvedValue({ role: 'band', username: 'northside' })
+    getTestLoginMock.mockResolvedValue({ role: 'band', band_access_level: 'admin' })
+
+    const { POST } = await loadRoute()
+    const formData = new FormData()
+    formData.set('intent', 'invoices')
+
+    const request = {
+      formData: async () => formData,
+      url: 'https://example.com/api/billing/subscription',
+      cookies: { getAll: () => [], set: vi.fn() },
+    } as unknown as NextRequest
+
+    const response = await POST(request)
+
+    expect(response.status).toBe(303)
+    expect(response.headers.get('location')).toBe('https://example.com/band/account?subscriptionNotice=invoices-pending')
+  })
+
   it('rejects unknown billing intents', async () => {
     getTestSessionMock.mockResolvedValue(null)
     getLiveBandAccessContextMock.mockResolvedValue({})

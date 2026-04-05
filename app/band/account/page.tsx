@@ -19,6 +19,8 @@ function getSubscriptionNoticeMessage(notice?: string | null) {
       return 'Hosted downgrade flow is not wired yet.'
     case 'no-change':
       return 'No billing change was made.'
+    case 'invoices-pending':
+      return 'Hosted invoices and receipts are not wired yet.'
     case 'provider-pending':
       return 'Billing actions are still waiting on hosted checkout or portal wiring.'
     default:
@@ -143,6 +145,36 @@ function AccountForm({
             </div>
           </div>
           <p className="mt-4 text-sm text-slate-400">{subscriptionControlState.helperText}</p>
+          {getSubscriptionNoticeMessage(subscriptionNotice) ? (
+            <p className="mt-3 rounded-2xl border border-amber-400/20 bg-amber-400/10 px-4 py-3 text-sm text-amber-100">
+              {getSubscriptionNoticeMessage(subscriptionNotice)}
+            </p>
+          ) : null}
+        </section>
+
+        <section className="rounded-3xl border border-white/10 bg-white/5 p-6">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-cyan-300">Billing portal</p>
+              <h2 className="mt-2 text-2xl font-semibold text-white">Payment methods and invoices</h2>
+              <p className="mt-2 max-w-2xl text-slate-300">Hosted billing keeps card data, receipts, and plan management outside StageSync.</p>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <form action="/api/billing/subscription" method="post">
+                <input type="hidden" name="intent" value="manage" />
+                <button type="submit" className="rounded-xl border border-cyan-400/30 bg-cyan-400/10 px-4 py-3 text-sm font-medium text-cyan-100">Manage payment methods</button>
+              </form>
+              <form action="/api/billing/subscription" method="post">
+                <input type="hidden" name="intent" value="invoices" />
+                <button type="submit" className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-white">View invoices</button>
+              </form>
+              <form action="/api/billing/subscription" method="post">
+                <input type="hidden" name="intent" value={subscriptionControlState.primaryActionIntent} />
+                <button type="submit" className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-white">{subscriptionControlState.primaryActionLabel}</button>
+              </form>
+            </div>
+          </div>
+          <p className="mt-4 text-sm text-slate-400">Payment methods, invoices, and plan management are intentionally routed through hosted billing flows.</p>
           {getSubscriptionNoticeMessage(subscriptionNotice) ? (
             <p className="mt-3 rounded-2xl border border-amber-400/20 bg-amber-400/10 px-4 py-3 text-sm text-amber-100">
               {getSubscriptionNoticeMessage(subscriptionNotice)}

@@ -9,7 +9,7 @@ export type BillingAccountSubscriptionRow = {
   free_shows_used: number
 }
 
-export type SubscriptionBillingIntent = 'upgrade' | 'manage' | 'downgrade' | 'stay'
+export type SubscriptionBillingIntent = 'upgrade' | 'manage' | 'downgrade' | 'stay' | 'invoices'
 
 export type SubscriptionSummaryLine = {
   label: string
@@ -48,6 +48,8 @@ export function resolveSubscriptionNoticeForIntent(intent: SubscriptionBillingIn
       return 'downgrade-pending'
     case 'stay':
       return 'no-change'
+    case 'invoices':
+      return 'invoices-pending'
   }
 }
 
