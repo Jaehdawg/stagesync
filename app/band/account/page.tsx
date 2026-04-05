@@ -93,6 +93,7 @@ function AccountForm({
     secondaryActionLabel: string
     secondaryActionIntent: string
     helperText: string
+    summaryLines: { label: string; value: string }[]
   }
   subscriptionNotice?: string | null
 }) {
@@ -117,7 +118,14 @@ function AccountForm({
               <h2 className="mt-2 text-2xl font-semibold text-white">{subscriptionControlState.current.label}</h2>
               <p className="mt-2 max-w-2xl text-slate-300">{subscriptionControlState.current.summary}</p>
               <p className="mt-2 text-xs uppercase tracking-[0.22em] text-slate-400">{subscriptionControlState.billingCycleLabel}</p>
-              <p className="mt-2 text-xs uppercase tracking-[0.22em] text-slate-400">Status: {subscriptionControlState.current.status}</p>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {subscriptionControlState.summaryLines.map((line) => (
+                <div key={line.label} className="rounded-2xl border border-white/10 bg-slate-950/50 px-4 py-3">
+                  <p className="text-[11px] uppercase tracking-[0.22em] text-slate-400">{line.label}</p>
+                  <p className="mt-2 text-sm font-medium text-white">{line.value}</p>
+                </div>
+              ))}
             </div>
             <div className="flex flex-wrap gap-3">
               <form action="/api/billing/subscription" method="post">

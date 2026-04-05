@@ -130,6 +130,12 @@ describe('subscription sync helpers', () => {
       secondaryActionLabel: 'Downgrade to Free',
       secondaryActionIntent: 'downgrade',
       helperText: 'Hosted checkout keeps payment data outside StageSync.',
+      summaryLines: [
+        { label: 'Plan', value: 'Professional' },
+        { label: 'Access', value: 'Active' },
+        { label: 'Billing period', value: 'Monthly' },
+        { label: 'Free shows', value: '2 of 3 remaining' },
+      ],
     })
 
     expect(
@@ -154,6 +160,12 @@ describe('subscription sync helpers', () => {
       secondaryActionLabel: 'Stay on Free',
       secondaryActionIntent: 'stay',
       helperText: 'Professional is delivered through hosted checkout when enabled.',
+      summaryLines: [
+        { label: 'Plan', value: 'Free' },
+        { label: 'Access', value: 'Not active' },
+        { label: 'Billing period', value: 'Monthly' },
+        { label: 'Free shows', value: '3 of 3 remaining' },
+      ],
     })
   })
 })

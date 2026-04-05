@@ -10,6 +10,11 @@ export type BillingAccountSubscriptionRow = {
 
 export type SubscriptionBillingIntent = 'upgrade' | 'manage' | 'downgrade' | 'stay'
 
+export type SubscriptionSummaryLine = {
+  label: string
+  value: string
+}
+
 export type SubscriptionControlState = {
   current: SubscriptionState
   billingCycleLabel: string
@@ -18,6 +23,7 @@ export type SubscriptionControlState = {
   secondaryActionLabel: string
   secondaryActionIntent: SubscriptionBillingIntent
   helperText: string
+  summaryLines: SubscriptionSummaryLine[]
 }
 
 export function resolveSubscriptionStateFromBillingAccount(row: BillingAccountSubscriptionRow | null | undefined): SubscriptionState {
@@ -44,9 +50,33 @@ export function resolveSubscriptionNoticeForIntent(intent: SubscriptionBillingIn
   }
 }
 
+function formatSubscriptionStatusLabel(status: string) {
+  switch (status) {
+    case 'active':
+      return 'Active'
+    case 'trialing':
+      return 'Trialing'
+    case 'grace':
+      return 'Grace period'
+    case 'past_due':
+      return 'Past due'
+    case 'canceled':
+      return 'Canceled'
+    case 'paused':
+      return 'Paused'
+    case 'suspended':
+      return 'Suspended'
+    default:
+      return 'Not active'
+  }
+}
+
 export function resolveSubscriptionControlState(row: BillingAccountSubscriptionRow | null | undefined): SubscriptionControlState {
   const current = resolveSubscriptionStateFromBillingAccount(row)
   const isProfessional = current.plan === 'professional'
+  const freeShowsAllocated = row?.free_shows_allocated ?? 0
+  const freeShowsUsed = row?.free_shows_used ?? 0
+  const freeShowsRemaining = Math.max(freeShowsAllocated - freeShowsUsed, 0)
 
   return {
     current,
@@ -58,5 +88,11 @@ export function resolveSubscriptionControlState(row: BillingAccountSubscriptionR
     helperText: isProfessional
       ? 'Hosted checkout keeps payment data outside StageSync.'
       : 'Professional is delivered through hosted checkout when enabled.',
+    summaryLines: [
+      { label: 'Plan', value: current.label },
+      { label: 'Access', value: formatSubscriptionStatusLabel(current.status) },
+      { label: 'Billing period', value: 'Monthly' },
+      { label: 'Free shows', value: freeShowsAllocated > 0 ? `${freeShowsRemaining} of ${freeShowsAllocated} remaining` : 'None configured' },
+    ],
   }
 }
