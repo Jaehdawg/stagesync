@@ -6,6 +6,7 @@ import { getTestSession } from '@/lib/test-session'
 import { getTestLogin } from '@/lib/test-login-list'
 import { getLiveBandAccessContext } from '@/lib/band-access'
 import { getBandProfileForBandId } from '@/lib/band-tenancy'
+import { resolveSubscriptionControlState } from '@/lib/subscription-sync'
 import { bandCopy } from '@/content/en/band'
 
 function LoginCard({ title, description }: { title: string; description: string }) {
@@ -43,6 +44,7 @@ function AccountForm({
   bandProfile,
   tidalClientId,
   hasTidalClientSecret,
+  subscriptionControlState,
 }: {
   username: string
   bandName: string
@@ -59,6 +61,17 @@ function AccountForm({
   } | null
   tidalClientId: string | null
   hasTidalClientSecret: boolean
+  subscriptionControlState: {
+    current: {
+      plan: string
+      status: string
+      label: string
+      summary: string
+    }
+    primaryActionLabel: string
+    secondaryActionLabel: string
+    helperText: string
+  }
 }) {
   return (
     <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100 sm:px-6 lg:px-8">
@@ -73,6 +86,26 @@ function AccountForm({
             <Link href="/band" className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-white hover:border-cyan-400/50">{bandCopy.login.backToDashboard}</Link>
           </div>
         </header>
+
+        <section className="rounded-3xl border border-white/10 bg-white/5 p-6">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-cyan-300">Subscription</p>
+              <h2 className="mt-2 text-2xl font-semibold text-white">{subscriptionControlState.current.label}</h2>
+              <p className="mt-2 max-w-2xl text-slate-300">{subscriptionControlState.current.summary}</p>
+              <p className="mt-2 text-xs uppercase tracking-[0.22em] text-slate-400">Status: {subscriptionControlState.current.status}</p>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <button type="button" className="rounded-xl border border-cyan-400/30 bg-cyan-400/10 px-4 py-3 text-sm font-medium text-cyan-100">
+                {subscriptionControlState.primaryActionLabel}
+              </button>
+              <button type="button" className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-white">
+                {subscriptionControlState.secondaryActionLabel}
+              </button>
+            </div>
+          </div>
+          <p className="mt-4 text-sm text-slate-400">{subscriptionControlState.helperText}</p>
+        </section>
 
         <section className="rounded-3xl border border-white/10 bg-white/5 p-6">
           <h2 className="text-2xl font-semibold text-white">{bandCopy.login.editBandAdmin}</h2>
@@ -147,9 +180,14 @@ export default async function BandAccountPage() {
   const liveAccess = await getLiveBandAccessContext(supabase, serviceSupabase, { requireAdmin: true })
   if (liveAccess) {
     const bandProfile = await getBandProfileForBandId(serviceSupabase, liveAccess.bandId)
-    const { data: tidalSettings } = await serviceSupabase
-      .from('band_profiles')
-      .select('tidal_client_id, tidal_client_secret')
+      const { data: tidalSettings } = await serviceSupabase
+        .from('band_profiles')
+        .select('tidal_client_id, tidal_client_secret')
+        .eq('band_id', liveAccess.bandId)
+        .maybeSingle()
+    const { data: billingAccount } = await serviceSupabase
+      .from('billing_accounts')
+      .select('status, payment_provider, payment_subscription_id, free_shows_allocated, free_shows_used')
       .eq('band_id', liveAccess.bandId)
       .maybeSingle()
 
@@ -160,6 +198,7 @@ export default async function BandAccountPage() {
         bandProfile={bandProfile}
         tidalClientId={tidalSettings?.tidal_client_id ?? null}
         hasTidalClientSecret={Boolean(tidalSettings?.tidal_client_secret)}
+        subscriptionControlState={resolveSubscriptionControlState(billingAccount)}
       />
     )
   }
@@ -172,8 +211,13 @@ export default async function BandAccountPage() {
         .select('tidal_client_id, tidal_client_secret')
         .eq('band_id', testSession.activeBandId)
         .maybeSingle()
+      const { data: billingAccount } = await serviceSupabase
+        .from('billing_accounts')
+        .select('status, payment_provider, payment_subscription_id, free_shows_allocated, free_shows_used')
+        .eq('band_id', testSession.activeBandId)
+        .maybeSingle()
 
-      return <AccountForm username={current.username} bandName={current.band_name ?? bandCopy.accountPage.bandFallbackName} bandProfile={null} tidalClientId={tidalSettings?.tidal_client_id ?? null} hasTidalClientSecret={Boolean(tidalSettings?.tidal_client_secret)} />
+      return <AccountForm username={current.username} bandName={current.band_name ?? bandCopy.accountPage.bandFallbackName} bandProfile={null} tidalClientId={tidalSettings?.tidal_client_id ?? null} hasTidalClientSecret={Boolean(tidalSettings?.tidal_client_secret)} subscriptionControlState={resolveSubscriptionControlState(billingAccount)} />
     }
     return <AccessDenied message={bandCopy.login.accessDenied} />
   }

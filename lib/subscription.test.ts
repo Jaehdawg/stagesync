@@ -5,6 +5,7 @@ import {
   normalizeSubscriptionPlan,
   normalizeSubscriptionStatus,
   resolveSubscriptionEntitlement,
+  resolveSubscriptionState,
 } from './subscription'
 
 describe('subscription helpers', () => {
@@ -45,6 +46,36 @@ describe('subscription helpers', () => {
       hasProfessionalAccess: false,
       canPurchaseCredits: true,
       needsAttention: false,
+    })
+  })
+
+  it('resolves a displayable subscription state summary', () => {
+    expect(resolveSubscriptionState({ plan: 'professional', status: 'active' })).toEqual({
+      plan: 'professional',
+      status: 'active',
+      label: 'Professional',
+      summary: 'Professional access is active.',
+    })
+
+    expect(resolveSubscriptionState({ plan: 'professional', status: 'past_due' })).toEqual({
+      plan: 'professional',
+      status: 'past_due',
+      label: 'Professional',
+      summary: 'Professional access needs attention.',
+    })
+
+    expect(resolveSubscriptionState({ plan: 'free', status: 'none' })).toEqual({
+      plan: 'free',
+      status: 'none',
+      label: 'Free',
+      summary: 'Free access is active.',
+    })
+
+    expect(resolveSubscriptionState({ plan: 'professional', status: 'canceled' })).toEqual({
+      plan: 'professional',
+      status: 'canceled',
+      label: 'Professional',
+      summary: 'Professional access is inactive.',
     })
   })
 })
