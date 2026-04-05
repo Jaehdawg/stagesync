@@ -8,10 +8,6 @@ const createServerClientMock = vi.fn(() => ({
     setAll: vi.fn(),
   },
 }))
-const updateMock = vi.fn()
-const eqMock = vi.fn(() => ({
-  select: vi.fn(() => ({ maybeSingle: vi.fn().mockResolvedValue({ error: null }) })),
-}))
 
 vi.mock('@supabase/ssr', () => ({
   createServerClient: createServerClientMock,
@@ -21,11 +17,6 @@ vi.mock('../../../../utils/supabase/service', () => ({
   createServiceClient: createServiceClientMock,
 }))
 
-vi.mock('../../../../lib/billing-lifecycle', async () => {
-  const actual = await vi.importActual<typeof import('../../../../lib/billing-lifecycle')>('../../../../lib/billing-lifecycle')
-  return actual
-})
-
 async function loadRoute() {
   return await import('./route')
 }
@@ -33,12 +24,10 @@ async function loadRoute() {
 beforeEach(() => {
   createServiceClientMock.mockReset()
   createServerClientMock.mockClear()
-  updateMock.mockClear()
-  eqMock.mockClear()
   createServiceClientMock.mockReturnValue({
     from: () => ({
       update: () => ({
-        eq: (...args: any[]) => ({
+        eq: () => ({
           select: () => ({ maybeSingle: async () => ({ error: null }) }),
         }),
       }),
@@ -52,7 +41,7 @@ describe('billing webhook route', () => {
     const request = {
       json: async () => ({
         billingAccountId: 'account-1',
-        status: 'past_due',
+        status: 'trialing',
         paymentProvider: 'stripe',
         paymentCustomerId: 'cus_123',
         paymentSubscriptionId: 'sub_123',
@@ -64,10 +53,26 @@ describe('billing webhook route', () => {
     expect(response.status).toBe(200)
   })
 
+  it('applies a lifecycle update by band id', async () => {
+    const { POST } = await loadRoute()
+    const request = {
+      json: async () => ({
+        bandId: 'band-1',
+        status: 'canceled',
+        paymentProvider: 'stripe',
+        paymentSubscriptionId: 'sub_999',
+      }),
+      cookies: { getAll: () => [], set: vi.fn() },
+    } as unknown as NextRequest
+
+    const response = await POST(request)
+    expect(response.status).toBe(200)
+  })
+
   it('rejects payloads with no lifecycle update', async () => {
     const { POST } = await loadRoute()
     const request = {
-      json: async () => ({ status: 'trialing' }),
+      json: async () => ({ status: 'trial' }),
       cookies: { getAll: () => [], set: vi.fn() },
     } as unknown as NextRequest
 

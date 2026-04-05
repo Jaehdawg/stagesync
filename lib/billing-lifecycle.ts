@@ -1,4 +1,4 @@
-export const BILLING_LIFECYCLE_STATUSES = ['free', 'active', 'grace', 'past_due', 'suspended'] as const
+export const BILLING_LIFECYCLE_STATUSES = ['free', 'trialing', 'active', 'grace', 'past_due', 'canceled', 'suspended'] as const
 
 export type BillingLifecycleStatus = (typeof BILLING_LIFECYCLE_STATUSES)[number]
 
@@ -19,7 +19,7 @@ export type BillingLifecycleUpdate = {
 }
 
 export function normalizeBillingLifecycleStatus(status: string | null | undefined): BillingLifecycleStatus | null {
-  if (status === 'free' || status === 'active' || status === 'grace' || status === 'past_due' || status === 'suspended') {
+  if (status === 'free' || status === 'trialing' || status === 'active' || status === 'grace' || status === 'past_due' || status === 'canceled' || status === 'suspended') {
     return status
   }
 
