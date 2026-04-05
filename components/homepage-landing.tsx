@@ -77,7 +77,7 @@ export function HomepageLanding() {
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.35em] text-cyan-700 dark:text-cyan-300">{homeCopy.eyebrow}</p>
           </div>
-          <nav className="flex flex-wrap gap-3 text-sm font-medium">
+          <nav className="hidden gap-3 text-sm font-medium md:flex">
             <Link href="#learn-more" className="rounded-full border border-slate-300 bg-white px-4 py-2 text-slate-900 hover:border-cyan-400/50 hover:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10">
               {homeCopy.topNav.learnMore}
             </Link>
