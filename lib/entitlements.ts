@@ -1,5 +1,7 @@
 import { FREE_SHOWS_PER_BAND, PAID_SHOW_WINDOW_HOURS, getFreeShowsRemaining } from './billing'
 
+export const UNDO_GRACE_MINUTES = 5
+
 export type PaidShowWindow = {
   showId: string
   startedAt: string
@@ -32,6 +34,18 @@ export function buildPaidShowWindow(showId: string, startedAt: Date = new Date()
     undoGraceUntil: null,
     restartCount: 0,
   } satisfies PaidShowWindow
+}
+
+export function buildUndoGraceWindow(startedAt: Date = new Date(), graceMinutes = UNDO_GRACE_MINUTES) {
+  return new Date(startedAt.getTime() + graceMinutes * 60 * 1000).toISOString()
+}
+
+export function applyCreditConsumption(showWindow: PaidShowWindow, consumedAt: Date = new Date()): PaidShowWindow {
+  return {
+    ...showWindow,
+    consumedCreditAt: consumedAt.toISOString(),
+    restartCount: showWindow.restartCount + 1,
+  }
 }
 
 export function shouldConsumeAnotherCreditForRestart(

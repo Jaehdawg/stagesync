@@ -33,6 +33,16 @@ export type BillingCreditLedgerEntry = {
   createdAt: string
 }
 
+export type BillingCreditPurchaseInput = {
+  bandId: string
+  billingAccountId: string
+  amount: number
+  provider?: string | null
+  providerReference?: string | null
+  note?: string | null
+  createdAt?: Date
+}
+
 export type HostedPaymentBoundary = {
   provider: 'hosted'
   providerName: string
@@ -56,6 +66,47 @@ export function buildBillingAccount(partial: Partial<BillingAccount> & { bandId:
 
 export function getFreeShowsRemaining(account: Pick<BillingAccount, 'freeShowsAllocated' | 'freeShowsUsed'>) {
   return Math.max(account.freeShowsAllocated - account.freeShowsUsed, 0)
+}
+
+export function buildCreditPurchaseEntry(input: BillingCreditPurchaseInput): BillingCreditLedgerEntry {
+  const createdAt = input.createdAt ?? new Date()
+
+  return {
+    bandId: input.bandId,
+    eventId: null,
+    billingAccountId: input.billingAccountId,
+    entryType: 'credit_purchase',
+    amount: input.amount,
+    provider: input.provider ?? null,
+    providerReference: input.providerReference ?? null,
+    note: input.note ?? null,
+    createdAt: createdAt.toISOString(),
+  }
+}
+
+export function buildCreditConsumptionEntry(input: {
+  bandId: string
+  eventId: string
+  billingAccountId: string
+  amount?: number
+  provider?: string | null
+  providerReference?: string | null
+  note?: string | null
+  createdAt?: Date
+}): BillingCreditLedgerEntry {
+  const createdAt = input.createdAt ?? new Date()
+
+  return {
+    bandId: input.bandId,
+    eventId: input.eventId,
+    billingAccountId: input.billingAccountId,
+    entryType: 'credit_consumed',
+    amount: input.amount ?? 1,
+    provider: input.provider ?? null,
+    providerReference: input.providerReference ?? null,
+    note: input.note ?? null,
+    createdAt: createdAt.toISOString(),
+  }
 }
 
 export function makeHostedPaymentBoundary(input: {

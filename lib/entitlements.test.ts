@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
+  applyCreditConsumption,
   buildPaidShowWindow,
+  buildUndoGraceWindow,
   canUseFreeShows,
   getAccountFreeShowRemaining,
   getDefaultFreeShowAllowance,
@@ -38,6 +40,23 @@ describe('entitlement helpers', () => {
     expect(shouldConsumeAnotherCreditForRestart(window, new Date('2026-04-05T15:00:00.000Z'))).toBe(false)
     expect(shouldConsumeAnotherCreditForRestart({ ...window, consumedCreditAt: null }, new Date('2026-04-05T15:00:00.000Z'))).toBe(true)
     expect(shouldConsumeAnotherCreditForRestart(window, new Date('2026-04-06T15:00:00.000Z'))).toBe(true)
+  })
+
+  it('tracks undo grace and consumption updates for the show lifecycle', () => {
+    const startedAt = new Date('2026-04-05T14:00:00.000Z')
+    const window = buildPaidShowWindow('show-1', startedAt)
+    const updatedWindow = {
+      ...window,
+      undoGraceUntil: buildUndoGraceWindow(startedAt),
+    }
+
+    expect(isWithinUndoGrace(updatedWindow, new Date('2026-04-05T14:04:59.000Z'))).toBe(true)
+    expect(isWithinUndoGrace(updatedWindow, new Date('2026-04-05T14:05:01.000Z'))).toBe(false)
+
+    const consumedWindow = applyCreditConsumption(updatedWindow, new Date('2026-04-05T14:00:10.000Z'))
+
+    expect(consumedWindow.consumedCreditAt).toBe('2026-04-05T14:00:10.000Z')
+    expect(consumedWindow.restartCount).toBe(1)
   })
 
   it('treats undo grace as active only until the grace deadline', () => {
