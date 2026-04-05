@@ -67,12 +67,6 @@ export async function POST(request: NextRequest) {
   const action = String(formData.get('action') ?? 'create')
   const songId = String(formData.get('songId') ?? '').trim()
   const setListId = String(formData.get('setListId') ?? '').trim()
-  const songIds = String(formData.get('songIds') ?? '')
-    .split(/[\n,]/)
-    .map((value) => value.trim())
-    .filter(Boolean)
-
-  const uniqueSongIds = Array.from(new Set(songIds))
 
   try {
     if (action === 'append') {
@@ -80,12 +74,11 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ message: 'Set list is required.' }, { status: 400 })
       }
 
-      const ids = songId ? [songId] : uniqueSongIds
-      if (!ids.length) {
+      if (!songId) {
         return NextResponse.json({ message: 'Song is required.' }, { status: 400 })
       }
 
-      await appendBandSetListSongs(access.bandId, setListId, ids)
+      await appendBandSetListSongs(access.bandId, setListId, [songId])
       return NextResponse.redirect(new URL('/band/songs/set-lists', request.url), { status: 303 })
     }
 
@@ -93,7 +86,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'Set list name is required.' }, { status: 400 })
     }
 
-    await createBandSetList(access.bandId, { name, description, notes, is_active: false, songIds: uniqueSongIds })
+    await createBandSetList(access.bandId, { name, description, notes, is_active: false })
   } catch (error) {
     return NextResponse.json({ message: error instanceof Error ? error.message : 'Unable to create set list.' }, { status: 500 })
   }

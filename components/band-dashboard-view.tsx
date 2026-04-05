@@ -357,33 +357,6 @@ export function BandDashboardView({
           </Panel>
         </div>
 
-        {canManageShow ? (
-          <div className="grid gap-8">
-            <Panel title={bandSetListsCopy.title} eyebrow={bandSetListsCopy.eyebrow}>
-              <p className="text-sm text-slate-400">{bandSetListsCopy.useSetListNote}</p>
-              <form className="mt-4 space-y-4" action="/api/band/set-lists" method="post">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-200" htmlFor="set-list-name">{bandSetListsCopy.nameLabel}</label>
-                  <input id="set-list-name" name="name" type="text" className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none" />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-200" htmlFor="set-list-description">{bandSetListsCopy.descriptionLabel}</label>
-                  <input id="set-list-description" name="description" type="text" className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none" />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-200" htmlFor="set-list-notes">{bandSetListsCopy.notesLabel}</label>
-                  <input id="set-list-notes" name="notes" type="text" className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none" />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-200" htmlFor="set-list-song-ids">{bandSetListsCopy.songsLabel}</label>
-                  <textarea id="set-list-song-ids" name="songIds" rows={3} className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none" />
-                </div>
-                <button type="submit" className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-medium text-white">{bandSetListsCopy.createButton}</button>
-              </form>
-            </Panel>
-          </div>
-        ) : null}
-
         <div className="grid gap-8">
           <Panel title={bandSetListsCopy.title} eyebrow={bandSetListsCopy.eyebrow}>
             <p className="text-sm text-slate-400">{bandSetListsCopy.activeOnlyNote}</p>
@@ -420,11 +393,6 @@ export function BandDashboardView({
                             <div className="space-y-2 md:col-span-2">
                               <label className="text-sm font-medium text-slate-200" htmlFor={`set-list-notes-${setList.id}`}>{bandSetListsCopy.notesLabel}</label>
                               <input id={`set-list-notes-${setList.id}`} name="notes" defaultValue={setList.notes ?? ''} className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" />
-                            </div>
-                            <div className="space-y-2 md:col-span-2">
-                              <label className="text-sm font-medium text-slate-200" htmlFor={`set-list-song-ids-${setList.id}`}>{bandSetListsCopy.songsLabel}</label>
-                              <textarea id={`set-list-song-ids-${setList.id}`} name="songIds" rows={4} defaultValue={(setList.songIds ?? []).join(', ')} className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none" />
-                              <p className="text-xs text-slate-400">{bandSetListsCopy.songsHelper}</p>
                             </div>
                             <div className="md:col-span-2 flex justify-end">
                               <button type="submit" className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-medium text-white">{bandSetListsCopy.saveButton}</button>

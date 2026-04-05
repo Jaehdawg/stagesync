@@ -57,12 +57,6 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
   const description = String(formData.get('description') ?? '').trim() || null
   const notes = String(formData.get('notes') ?? '').trim() || null
   const songId = String(formData.get('songId') ?? '').trim()
-  const songIds = String(formData.get('songIds') ?? '')
-    .split(/[\n,]/)
-    .map((value) => value.trim())
-    .filter(Boolean)
-
-  const uniqueSongIds = Array.from(new Set(songIds))
 
   try {
     if (action === 'delete') {
@@ -87,7 +81,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
       if (!name) {
         return NextResponse.json({ message: 'Set list name is required.' }, { status: 400 })
       }
-      await updateBandSetList(access.bandId, id, { name, description, notes, songIds: uniqueSongIds })
+      await updateBandSetList(access.bandId, id, { name, description, notes })
     }
   } catch (error) {
     return NextResponse.json({ message: error instanceof Error ? error.message : 'Unable to update set list.' }, { status: 500 })

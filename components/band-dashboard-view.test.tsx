@@ -4,6 +4,17 @@ import { BandDashboardView } from './band-dashboard-view'
 
 const refreshMock = vi.fn()
 
+vi.stubGlobal('matchMedia', vi.fn(() => ({
+  matches: false,
+  media: '(max-width: 767px)',
+  onchange: null,
+  addEventListener: vi.fn(),
+  removeEventListener: vi.fn(),
+  addListener: vi.fn(),
+  removeListener: vi.fn(),
+  dispatchEvent: vi.fn(),
+})) as unknown as typeof window.matchMedia)
+
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ refresh: refreshMock }),
 }))
@@ -65,6 +76,7 @@ describe('BandDashboardView', () => {
         testMode
         showDurationMinutes={90}
         signupBufferMinutes={2}
+        songSourceMode="set_list"
       />
     )
 

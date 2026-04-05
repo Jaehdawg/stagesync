@@ -87,12 +87,25 @@ export default async function BandSetListsPage() {
         </header>
 
         <section className="rounded-3xl border border-white/10 bg-white/5 p-6">
-          <h2 className="text-2xl font-semibold text-white">{bandSetListsCopy.title}</h2>
-          <p className="mt-2 text-sm text-slate-300">Create new set lists from the Song Library flow, then manage them here.</p>
-          <div className="mt-4 rounded-2xl border border-white/10 bg-slate-950/50 p-4 text-sm text-slate-300">
-            <p>{bandSetListsCopy.createWithSongNote}</p>
-            <p className="mt-2">Use the Song Library to seed a new set list with songs, or add songs into an existing set list without overwriting what is already there.</p>
-          </div>
+          <h2 className="text-2xl font-semibold text-white">{bandSetListsCopy.createTitle}</h2>
+          <p className="mt-2 text-sm text-slate-300">Create a new set list here, then add songs from the Song Library or the set-list editor below.</p>
+          <form className="mt-6 grid gap-4 rounded-2xl border border-white/10 bg-slate-950/50 p-5" action="/api/band/set-lists" method="post">
+            <div className="space-y-2">
+              <label htmlFor="set-list-name" className="text-sm font-medium text-slate-200">{bandSetListsCopy.nameLabel}</label>
+              <input id="set-list-name" name="name" type="text" required className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" placeholder="Friday Night Set" />
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="set-list-description" className="text-sm font-medium text-slate-200">{bandSetListsCopy.descriptionLabel}</label>
+              <input id="set-list-description" name="description" type="text" className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" placeholder="High-energy opener" />
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="set-list-notes" className="text-sm font-medium text-slate-200">{bandSetListsCopy.notesLabel}</label>
+              <input id="set-list-notes" name="notes" type="text" className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" placeholder="Keep this one tight" />
+            </div>
+            <div className="flex justify-end">
+              <button type="submit" className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-medium text-white">{bandSetListsCopy.createButton}</button>
+            </div>
+          </form>
         </section>
 
         <section className="rounded-3xl border border-white/10 bg-white/5 p-6">
@@ -116,7 +129,7 @@ export default async function BandSetListsPage() {
                     {setList.notes ? <p className="mt-2 text-xs text-slate-400">{setList.notes}</p> : null}
                     <p className="mt-2 text-xs uppercase tracking-[0.2em] text-slate-500">{songs.length} songs</p>
                   </div>
-                  <div className="flex flex-wrap gap-2" onClickCapture={(event) => event.stopPropagation()}>
+                  <div className="flex flex-wrap gap-2">
                     <form action={`/api/band/set-lists/${setList.id}`} method="post">
                       <input type="hidden" name="action" value={setList.is_active ? 'deactivate' : 'activate'} />
                       <button type="submit" className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-medium text-white">{setList.is_active ? bandSetListsCopy.deactivate : bandSetListsCopy.activate}</button>
@@ -136,9 +149,7 @@ export default async function BandSetListsPage() {
                     </AdminRowDialog>
                   </div>
                 </div>
-                <div onClickCapture={(event) => event.stopPropagation()}>
-                  <SetListSongEditor setListId={setList.id} songs={songs} />
-                </div>
+                <SetListSongEditor setListId={setList.id} songs={songs} />
               </div>
             )) : <p className="text-sm text-slate-400">{bandSetListsCopy.empty}</p>}
           </div>

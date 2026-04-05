@@ -85,7 +85,7 @@ describe('band set-lists api route', () => {
     expect(listBandSetListsMock).toHaveBeenCalledWith('band-1')
   })
 
-  it('creates a new set list with normalized song ids', async () => {
+  it('creates a new set list with metadata', async () => {
     getTestSessionMock.mockResolvedValue({ role: 'band', username: 'stagesync-band', activeBandId: 'band-1' })
     getTestLoginMock.mockResolvedValue({ role: 'band', band_access_level: 'admin', active_band_id: 'band-1' })
     createBandSetListMock.mockResolvedValue({ id: 'set-1' })
@@ -95,7 +95,6 @@ describe('band set-lists api route', () => {
     formData.set('name', 'Friday Set')
     formData.set('description', 'Best songs')
     formData.set('notes', 'Bring the energy')
-    formData.set('songIds', 'song-1, song-2\n song-2\n')
 
     const response = await POST(makeRequest(formData))
 
@@ -105,7 +104,6 @@ describe('band set-lists api route', () => {
       description: 'Best songs',
       notes: 'Bring the energy',
       is_active: false,
-      songIds: ['song-1', 'song-2'],
     })
   })
 

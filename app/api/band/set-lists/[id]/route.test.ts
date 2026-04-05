@@ -102,7 +102,7 @@ describe('band set-lists [id] api route', () => {
     expect(copyBandSetListMock).toHaveBeenCalledWith('band-1', 'set-1', 'Friday Set Copy')
   })
 
-  it('updates set list songs and metadata with normalized ids', async () => {
+  it('updates set list metadata without changing songs', async () => {
     getTestSessionMock.mockResolvedValue({ role: 'band', username: 'stagesync-band', activeBandId: 'band-1' })
     getTestLoginMock.mockResolvedValue({ role: 'band', band_access_level: 'admin', active_band_id: 'band-1' })
     updateBandSetListMock.mockResolvedValue({ id: 'set-1' })
@@ -112,7 +112,6 @@ describe('band set-lists [id] api route', () => {
     formData.set('name', 'Friday Set')
     formData.set('description', 'Main show')
     formData.set('notes', 'Keep it moving')
-    formData.set('songIds', 'song-1\n song-2, song-2')
 
     const response = await POST(makeRequest(formData), { params: Promise.resolve({ id: 'set-1' }) })
 
@@ -121,7 +120,6 @@ describe('band set-lists [id] api route', () => {
       name: 'Friday Set',
       description: 'Main show',
       notes: 'Keep it moving',
-      songIds: ['song-1', 'song-2'],
     })
   })
 

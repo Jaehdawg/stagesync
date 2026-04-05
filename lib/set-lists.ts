@@ -77,7 +77,7 @@ export async function getBandSetListSongs(bandId: string, setListId: string) {
 
 export async function createBandSetList(
   bandIdInput: unknown,
-  payload: { name: string; description?: string | null; notes?: string | null; is_active?: boolean | null; songIds?: string[] }
+  payload: { name: string; description?: string | null; notes?: string | null; is_active?: boolean | null }
 ) {
   const bandId = assertBandId(bandIdInput)
   const supabase = createServiceClient()
@@ -97,10 +97,6 @@ export async function createBandSetList(
   if (error) throw new Error(error.message)
   if (!created) throw new Error('Unable to create set list.')
 
-  if (payload.songIds?.length) {
-    await replaceBandSetListSongs(bandId, created.id, payload.songIds)
-  }
-
   if (created.is_active) {
     await activateBandSetList(bandId, created.id)
   }
@@ -111,7 +107,7 @@ export async function createBandSetList(
 export async function updateBandSetList(
   bandIdInput: unknown,
   setListIdInput: unknown,
-  payload: { name?: string; description?: string | null; notes?: string | null; is_active?: boolean | null; songIds?: string[] }
+  payload: { name?: string; description?: string | null; notes?: string | null; is_active?: boolean | null }
 ) {
   const bandId = assertBandId(bandIdInput)
   const setListId = normalizeId(setListIdInput)
@@ -134,10 +130,6 @@ export async function updateBandSetList(
 
   if (error) throw new Error(error.message)
   if (!data) throw new Error('Set list not found.')
-
-  if (payload.songIds) {
-    await replaceBandSetListSongs(bandId, setListId, payload.songIds)
-  }
 
   if (payload.is_active) {
     await activateBandSetList(bandId, setListId)
@@ -167,13 +159,18 @@ export async function copyBandSetList(bandIdInput: unknown, setListIdInput: unkn
   const songs = await getBandSetListSongs(bandId, setListId)
   const copyName = (nameOverride?.trim() || `${source.name} (Copy)`)
 
-  return createBandSetList(bandId, {
+  const copied = await createBandSetList(bandId, {
     name: copyName,
     description: source.description ?? null,
     notes: source.notes ?? null,
     is_active: false,
-    songIds: songs.map((song) => song.song_id),
   })
+
+  if (songs.length) {
+    await replaceBandSetListSongs(bandId, copied.id, songs.map((song) => song.song_id))
+  }
+
+  return copied
 }
 
 export async function activateBandSetList(bandIdInput: unknown, setListIdInput: unknown) {
