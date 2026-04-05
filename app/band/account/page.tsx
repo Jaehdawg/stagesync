@@ -89,7 +89,9 @@ function AccountForm({
     }
     billingCycleLabel: string
     primaryActionLabel: string
+    primaryActionIntent: string
     secondaryActionLabel: string
+    secondaryActionIntent: string
     helperText: string
   }
   subscriptionNotice?: string | null
@@ -119,13 +121,13 @@ function AccountForm({
             </div>
             <div className="flex flex-wrap gap-3">
               <form action="/api/billing/subscription" method="post">
-                <input type="hidden" name="intent" value={subscriptionControlState.current.plan === 'professional' ? 'manage' : 'upgrade'} />
+                <input type="hidden" name="intent" value={subscriptionControlState.primaryActionIntent} />
                 <button type="submit" className="rounded-xl border border-cyan-400/30 bg-cyan-400/10 px-4 py-3 text-sm font-medium text-cyan-100">
                   {subscriptionControlState.primaryActionLabel}
                 </button>
               </form>
               <form action="/api/billing/subscription" method="post">
-                <input type="hidden" name="intent" value={subscriptionControlState.current.plan === 'professional' ? 'downgrade' : 'stay'} />
+                <input type="hidden" name="intent" value={subscriptionControlState.secondaryActionIntent} />
                 <button type="submit" className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-white">
                   {subscriptionControlState.secondaryActionLabel}
                 </button>

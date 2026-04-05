@@ -8,11 +8,15 @@ export type BillingAccountSubscriptionRow = {
   free_shows_used: number
 }
 
+export type SubscriptionBillingIntent = 'upgrade' | 'manage' | 'downgrade' | 'stay'
+
 export type SubscriptionControlState = {
   current: SubscriptionState
   billingCycleLabel: string
   primaryActionLabel: string
+  primaryActionIntent: SubscriptionBillingIntent
   secondaryActionLabel: string
+  secondaryActionIntent: SubscriptionBillingIntent
   helperText: string
 }
 
@@ -27,6 +31,19 @@ export function resolveSubscriptionStateFromBillingAccount(row: BillingAccountSu
   })
 }
 
+export function resolveSubscriptionNoticeForIntent(intent: SubscriptionBillingIntent) {
+  switch (intent) {
+    case 'upgrade':
+      return 'checkout-pending'
+    case 'manage':
+      return 'portal-pending'
+    case 'downgrade':
+      return 'downgrade-pending'
+    case 'stay':
+      return 'no-change'
+  }
+}
+
 export function resolveSubscriptionControlState(row: BillingAccountSubscriptionRow | null | undefined): SubscriptionControlState {
   const current = resolveSubscriptionStateFromBillingAccount(row)
   const isProfessional = current.plan === 'professional'
@@ -35,7 +52,9 @@ export function resolveSubscriptionControlState(row: BillingAccountSubscriptionR
     current,
     billingCycleLabel: 'Monthly only',
     primaryActionLabel: isProfessional ? 'Open billing portal' : 'Start Professional checkout',
+    primaryActionIntent: isProfessional ? 'manage' : 'upgrade',
     secondaryActionLabel: isProfessional ? 'Downgrade to Free' : 'Stay on Free',
+    secondaryActionIntent: isProfessional ? 'downgrade' : 'stay',
     helperText: isProfessional
       ? 'Hosted checkout keeps payment data outside StageSync.'
       : 'Professional is delivered through hosted checkout when enabled.',

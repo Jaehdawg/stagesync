@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { resolveSubscriptionControlState, resolveSubscriptionStateFromBillingAccount } from './subscription-sync'
+import { resolveSubscriptionControlState, resolveSubscriptionStateFromBillingAccount, resolveSubscriptionNoticeForIntent } from './subscription-sync'
 
 describe('subscription sync helpers', () => {
   it('maps a billing account row into a subscription state', () => {
@@ -100,6 +100,13 @@ describe('subscription sync helpers', () => {
     })
   })
 
+  it('resolves a billing notice for each intent', () => {
+    expect(resolveSubscriptionNoticeForIntent('upgrade')).toBe('checkout-pending')
+    expect(resolveSubscriptionNoticeForIntent('manage')).toBe('portal-pending')
+    expect(resolveSubscriptionNoticeForIntent('downgrade')).toBe('downgrade-pending')
+    expect(resolveSubscriptionNoticeForIntent('stay')).toBe('no-change')
+  })
+
   it('provides upgrade and downgrade control labels from the current subscription state', () => {
     expect(
       resolveSubscriptionControlState({
@@ -119,7 +126,9 @@ describe('subscription sync helpers', () => {
       },
       billingCycleLabel: 'Monthly only',
       primaryActionLabel: 'Open billing portal',
+      primaryActionIntent: 'manage',
       secondaryActionLabel: 'Downgrade to Free',
+      secondaryActionIntent: 'downgrade',
       helperText: 'Hosted checkout keeps payment data outside StageSync.',
     })
 
@@ -141,7 +150,9 @@ describe('subscription sync helpers', () => {
       },
       billingCycleLabel: 'Monthly only',
       primaryActionLabel: 'Start Professional checkout',
+      primaryActionIntent: 'upgrade',
       secondaryActionLabel: 'Stay on Free',
+      secondaryActionIntent: 'stay',
       helperText: 'Professional is delivered through hosted checkout when enabled.',
     })
   })
