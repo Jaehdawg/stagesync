@@ -1,5 +1,16 @@
 # StageSync Backlog
 
+## Monetization
+
+- [ ] Follow the build plan in `docs/monetization-build-plan.md`
+- [ ] Legal first: #42, #57, #58
+- [ ] Core monetization foundation: #36, #43, #44, #45
+- [ ] Per-event credits: #38, #46, #47
+- [ ] Professional subscription: #37, #53, #54
+- [ ] Billing UX: #40, #55, #56
+- [ ] Analytics and reporting: #41, #51, #52
+- [ ] Venue workflow: #39, #48, #49, #50
+
 ## Mailers
 
 - [ ] Update Supabase magic link email template
