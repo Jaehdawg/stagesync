@@ -145,6 +145,11 @@ function AccountForm({
             </div>
           </div>
           <p className="mt-4 text-sm text-slate-400">{subscriptionControlState.helperText}</p>
+          {['grace', 'past_due', 'suspended', 'paused', 'canceled'].includes(subscriptionControlState.current.status) ? (
+            <p className="mt-3 rounded-2xl border border-amber-400/20 bg-amber-400/10 px-4 py-3 text-sm text-amber-100">
+              Hosted billing needs attention for this subscription status.
+            </p>
+          ) : null}
           {getSubscriptionNoticeMessage(subscriptionNotice) ? (
             <p className="mt-3 rounded-2xl border border-amber-400/20 bg-amber-400/10 px-4 py-3 text-sm text-amber-100">
               {getSubscriptionNoticeMessage(subscriptionNotice)}
