@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { createClient } from '@/utils/supabase/server'
 import { BandAccessForm } from '@/components/band-access-form'
 import { getAdminAccess } from '@/lib/admin-access'
+import { buildAnalyticsSections } from '@/lib/analytics-reporting'
 import { adminCopy } from '@/content/en/admin'
 
 export default async function AdminAnalyticsPage() {
@@ -30,13 +31,35 @@ export default async function AdminAnalyticsPage() {
       )
   }
 
-  const [{ count: showCount }, { count: activeShowCount }, { count: singerCount }, { count: tracksPlayedCount }, { data: recentShows }] = await Promise.all([
+  const [
+    { count: bandCount },
+    { count: showCount },
+    { count: activeShowCount },
+    { count: singerCount },
+    { count: tracksPlayedCount },
+    { data: recentShows },
+  ] = await Promise.all([
+    supabase.from('bands').select('id', { count: 'exact', head: true }),
     supabase.from('events').select('id', { count: 'exact', head: true }),
     supabase.from('events').select('id', { count: 'exact', head: true }).eq('is_active', true),
     supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('role', 'singer'),
     supabase.from('queue_items').select('id', { count: 'exact', head: true }).eq('status', 'completed'),
-    supabase.from('events').select('id, name, is_active, allow_signups, created_at').order('created_at', { ascending: false }).limit(5),
+    supabase
+      .from('events')
+      .select('id, name, is_active, allow_signups, created_at')
+      .gte('created_at', new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString())
+      .order('created_at', { ascending: false })
+      .limit(5),
   ])
+
+  const analyticsSections = buildAnalyticsSections({
+    bandCount: bandCount ?? 0,
+    showCount: showCount ?? 0,
+    activeShowCount: activeShowCount ?? 0,
+    recentShowCount: recentShows?.length ?? 0,
+    singerCount: singerCount ?? 0,
+    tracksPlayedCount: tracksPlayedCount ?? 0,
+  })
 
   return (
     <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100 sm:px-6 lg:px-8">
@@ -63,8 +86,8 @@ export default async function AdminAnalyticsPage() {
 
         <section className="grid gap-4 md:grid-cols-4">
           {[
-            { label: adminCopy.analyticsPage.metrics.bandShows, value: String(showCount ?? 0) },
-            { label: adminCopy.analyticsPage.metrics.activeShow, value: activeShowCount ? '🤘' : '⛔️' },
+            { label: adminCopy.analyticsPage.metrics.bandShows, value: String(bandCount ?? 0) },
+            { label: adminCopy.analyticsPage.metrics.activeShow, value: String(activeShowCount ?? 0) },
             { label: adminCopy.analyticsPage.metrics.singerCount, value: String(singerCount ?? 0) },
             { label: adminCopy.analyticsPage.metrics.tracksPlayed, value: String(tracksPlayedCount ?? 0) },
           ].map((item) => (
@@ -74,6 +97,27 @@ export default async function AdminAnalyticsPage() {
             </div>
           ))}
         </section>
+
+        {[
+          analyticsSections.funnel,
+          analyticsSections.retention,
+          analyticsSections.usage,
+          analyticsSections.storage,
+        ].map((section) => (
+          <section key={section.title} className="rounded-3xl border border-white/10 bg-white/5 p-6">
+            <h2 className="text-2xl font-semibold text-white">{section.title}</h2>
+            <p className="mt-2 max-w-2xl text-sm text-slate-300">{section.description}</p>
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              {section.items.map((item) => (
+                <article key={item.label} className="rounded-2xl border border-white/10 bg-slate-950/50 p-4">
+                  <p className="text-xs uppercase tracking-[0.2em] text-slate-400">{item.label}</p>
+                  <p className="mt-2 text-2xl font-semibold text-white">{item.value}</p>
+                  <p className="mt-2 text-sm text-slate-300">{item.detail}</p>
+                </article>
+              ))}
+            </div>
+          </section>
+        ))}
 
         <section className="rounded-3xl border border-white/10 bg-white/5 p-6">
           <h2 className="text-2xl font-semibold text-white">{adminCopy.analyticsPage.recentShowsTitle}</h2>
