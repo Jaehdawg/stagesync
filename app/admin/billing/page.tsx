@@ -42,11 +42,13 @@ export default async function AdminBillingPage() {
     )
   }
 
-  const readiness = getStripeBillingReadiness(getStripeBillingConfig(), {
+  const hostedBillingUrls = {
     checkoutUrl: process.env.STAGESYNC_BILLING_CHECKOUT_URL ?? null,
     portalUrl: process.env.STAGESYNC_BILLING_PORTAL_URL ?? null,
     invoicesUrl: process.env.STAGESYNC_BILLING_INVOICES_URL ?? null,
-  })
+  }
+
+  const readiness = getStripeBillingReadiness(getStripeBillingConfig(), hostedBillingUrls)
 
   return (
     <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100 sm:px-6 lg:px-8">
@@ -109,14 +111,29 @@ export default async function AdminBillingPage() {
               <div className="rounded-2xl border border-white/10 bg-slate-950/50 px-4 py-3">
                 <dt className="uppercase tracking-[0.22em] text-slate-400">Checkout</dt>
                 <dd className="mt-1">{readiness.hostedCheckoutReady ? 'Configured' : 'Missing'}</dd>
+                {hostedBillingUrls.checkoutUrl ? (
+                  <a className="mt-2 inline-block text-cyan-300 underline-offset-4 hover:underline" href={hostedBillingUrls.checkoutUrl} target="_blank" rel="noreferrer">
+                    Open checkout
+                  </a>
+                ) : null}
               </div>
               <div className="rounded-2xl border border-white/10 bg-slate-950/50 px-4 py-3">
                 <dt className="uppercase tracking-[0.22em] text-slate-400">Portal</dt>
                 <dd className="mt-1">{readiness.hostedPortalReady ? 'Configured' : 'Missing'}</dd>
+                {hostedBillingUrls.portalUrl ? (
+                  <a className="mt-2 inline-block text-cyan-300 underline-offset-4 hover:underline" href={hostedBillingUrls.portalUrl} target="_blank" rel="noreferrer">
+                    Open portal
+                  </a>
+                ) : null}
               </div>
               <div className="rounded-2xl border border-white/10 bg-slate-950/50 px-4 py-3">
                 <dt className="uppercase tracking-[0.22em] text-slate-400">Invoices</dt>
                 <dd className="mt-1">{readiness.hostedInvoicesReady ? 'Configured' : 'Missing'}</dd>
+                {hostedBillingUrls.invoicesUrl ? (
+                  <a className="mt-2 inline-block text-cyan-300 underline-offset-4 hover:underline" href={hostedBillingUrls.invoicesUrl} target="_blank" rel="noreferrer">
+                    Open invoices
+                  </a>
+                ) : null}
               </div>
             </dl>
           </div>
