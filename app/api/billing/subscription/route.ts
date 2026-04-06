@@ -64,6 +64,7 @@ export async function POST(request: NextRequest) {
   const formData = await request.formData()
   const intent = String(formData.get('intent') ?? '').trim()
   const stripeBillingConfig = getStripeBillingConfig()
+  const hostedBillingConfig = getHostedBillingConfig()
 
   if (!['upgrade', 'manage', 'downgrade', 'stay', 'invoices'].includes(intent)) {
     return NextResponse.json({ message: 'Unknown billing intent.' }, { status: 400 })
@@ -75,7 +76,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'Band admin access required.' }, { status: 403 })
     }
 
-    const hosted = resolveHostedBillingRedirect(intent as SubscriptionBillingIntent, getHostedBillingConfig())
+    const hosted = resolveHostedBillingRedirect(intent as SubscriptionBillingIntent, hostedBillingConfig)
     if (hosted.url) {
       return redirectToHostedUrl(hosted.url)
     }
@@ -88,6 +89,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: 'Band admin access required.' }, { status: 403 })
   }
 
+  const hosted = resolveHostedBillingRedirect(intent as SubscriptionBillingIntent, hostedBillingConfig)
+  if (intent === 'invoices' && hosted.url) {
+    return redirectToHostedUrl(hosted.url)
+  }
+
   if (hasStripeCheckoutConfig(stripeBillingConfig)) {
     const billingAccount = await serviceSupabase
       .from('billing_accounts')
@@ -98,8 +104,6 @@ export async function POST(request: NextRequest) {
     const { data: { user } } = await testSupabase.auth.getUser()
     const stripe = createStripeClient(stripeBillingConfig.secretKey!)
     const urls = getBillingRedirectUrls(request)
-    const hosted = resolveHostedBillingRedirect(intent as SubscriptionBillingIntent, getHostedBillingConfig())
-
     if (intent === 'upgrade') {
       const session = await stripe.checkout.sessions.create(
         buildStripeCheckoutRequest({
@@ -135,6 +139,5 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  const hosted = resolveHostedBillingRedirect(intent as SubscriptionBillingIntent, getHostedBillingConfig())
   return hosted.url ? redirectToHostedUrl(hosted.url) : redirectWithNotice(request, hosted.notice ?? 'no-change')
 }
