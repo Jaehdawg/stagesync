@@ -5,6 +5,13 @@ import { getTestSession } from '@/lib/test-session'
 import { getTestLogin } from '@/lib/test-login-list'
 import { getLiveBandAccessContext } from '@/lib/band-access'
 import { resolveHostedBillingRedirect } from '@/lib/hosted-billing'
+import {
+  buildStripeCheckoutRequest,
+  buildStripePortalRequest,
+  createStripeClient,
+  getStripeBillingConfig,
+  hasStripeCheckoutConfig,
+} from '@/lib/stripe-billing'
 import { type SubscriptionBillingIntent } from '@/lib/subscription-sync'
 
 function getSupabase(request: NextRequest) {
@@ -42,12 +49,21 @@ function getHostedBillingConfig() {
   }
 }
 
+function getBillingRedirectUrls(request: NextRequest) {
+  return {
+    successUrl: new URL('/band/account?subscriptionNotice=checkout-complete', request.url).toString(),
+    cancelUrl: new URL('/band/account?subscriptionNotice=checkout-canceled', request.url).toString(),
+    returnUrl: new URL('/band/account?subscriptionNotice=portal-return', request.url).toString(),
+  }
+}
+
 export async function POST(request: NextRequest) {
   const testSession = await getTestSession()
   const testSupabase = getSupabase(request)
   const serviceSupabase = createServiceClient()
   const formData = await request.formData()
   const intent = String(formData.get('intent') ?? '').trim()
+  const stripeBillingConfig = getStripeBillingConfig()
 
   if (!['upgrade', 'manage', 'downgrade', 'stay', 'invoices'].includes(intent)) {
     return NextResponse.json({ message: 'Unknown billing intent.' }, { status: 400 })
@@ -60,12 +76,58 @@ export async function POST(request: NextRequest) {
     }
 
     const hosted = resolveHostedBillingRedirect(intent as SubscriptionBillingIntent, getHostedBillingConfig())
-    return hosted.url ? redirectToHostedUrl(hosted.url) : redirectWithNotice(request, hosted.notice ?? 'no-change')
+    if (hosted.url) {
+      return redirectToHostedUrl(hosted.url)
+    }
+
+    return redirectWithNotice(request, hosted.notice ?? 'no-change')
   }
 
   const liveAccess = await getLiveBandAccessContext(testSupabase, serviceSupabase, { requireAdmin: true })
   if (!liveAccess) {
     return NextResponse.json({ message: 'Band admin access required.' }, { status: 403 })
+  }
+
+  if (hasStripeCheckoutConfig(stripeBillingConfig)) {
+    const billingAccount = await serviceSupabase
+      .from('billing_accounts')
+      .select('id, payment_customer_id')
+      .eq('band_id', liveAccess.bandId)
+      .maybeSingle()
+
+    const { data: { user } } = await testSupabase.auth.getUser()
+    const stripe = createStripeClient(stripeBillingConfig.secretKey!)
+    const urls = getBillingRedirectUrls(request)
+
+    if (intent === 'upgrade') {
+      const session = await stripe.checkout.sessions.create(
+        buildStripeCheckoutRequest({
+          bandId: liveAccess.bandId,
+          bandName: liveAccess.bandName,
+          customerEmail: user?.email ?? null,
+          professionalPriceId: stripeBillingConfig.professionalPriceId!,
+          successUrl: urls.successUrl,
+          cancelUrl: urls.cancelUrl,
+        })
+      )
+
+      if (session.url) {
+        return redirectToHostedUrl(session.url)
+      }
+    }
+
+    if ((intent === 'manage' || intent === 'downgrade' || intent === 'invoices') && billingAccount.data?.payment_customer_id) {
+      const session = await stripe.billingPortal.sessions.create(
+        buildStripePortalRequest({
+          customerId: billingAccount.data.payment_customer_id,
+          returnUrl: urls.returnUrl,
+        })
+      )
+
+      if (session.url) {
+        return redirectToHostedUrl(session.url)
+      }
+    }
   }
 
   const hosted = resolveHostedBillingRedirect(intent as SubscriptionBillingIntent, getHostedBillingConfig())

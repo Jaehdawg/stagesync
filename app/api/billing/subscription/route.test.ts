@@ -5,12 +5,27 @@ const getTestSessionMock = vi.fn()
 const getTestLoginMock = vi.fn()
 const getLiveBandAccessContextMock = vi.fn()
 const createServiceClientMock = vi.fn()
+const authGetUserMock = vi.fn()
 const createServerClientMock = vi.fn(() => ({
   cookies: {
     getAll: () => [],
     setAll: vi.fn(),
   },
+  auth: {
+    getUser: authGetUserMock,
+  },
 }))
+const createStripeClientMock = vi.fn()
+const getStripeBillingConfigMock = vi.fn()
+
+vi.mock('../../../../lib/stripe-billing', async () => {
+  const actual = await vi.importActual<typeof import('../../../../lib/stripe-billing')>('../../../../lib/stripe-billing')
+  return {
+    ...actual,
+    createStripeClient: createStripeClientMock,
+    getStripeBillingConfig: getStripeBillingConfigMock,
+  }
+})
 
 vi.mock('../../../../lib/test-session', () => ({
   getTestSession: getTestSessionMock,
@@ -47,8 +62,15 @@ beforeEach(() => {
   getTestLoginMock.mockReset()
   getLiveBandAccessContextMock.mockReset()
   createServiceClientMock.mockReset()
+  authGetUserMock.mockReset()
   createServerClientMock.mockClear()
   createServiceClientMock.mockReturnValue({})
+  getStripeBillingConfigMock.mockReturnValue({
+    secretKey: null,
+    webhookSecret: null,
+    professionalPriceId: null,
+  })
+  createStripeClientMock.mockReset()
   vi.unstubAllEnvs()
 })
 
@@ -164,5 +186,62 @@ describe('billing subscription route', () => {
     expect((await POST(request(upgradeForm))).headers.get('location')).toBe('https://billing.example.com/checkout')
     expect((await POST(request(manageForm))).headers.get('location')).toBe('https://billing.example.com/portal')
     expect((await POST(request(invoicesForm))).headers.get('location')).toBe('https://billing.example.com/invoices')
+  })
+
+  it('uses stripe checkout and billing portal when stripe config is present', async () => {
+    getTestSessionMock.mockResolvedValue(null)
+    getLiveBandAccessContextMock.mockResolvedValue({
+      userId: 'user-1',
+      username: 'northside',
+      displayName: 'Northside',
+      bandId: 'band-1',
+      bandName: 'Northside',
+      bandRole: 'admin',
+    })
+    getStripeBillingConfigMock.mockReturnValue({
+      secretKey: 'sk_test_123',
+      webhookSecret: 'whsec_123',
+      professionalPriceId: 'price_123',
+    })
+    authGetUserMock.mockResolvedValue({ data: { user: { email: 'northside@example.com' } } })
+    createServiceClientMock.mockReturnValue({
+      from: () => ({
+        select: () => ({
+          eq: () => ({
+            maybeSingle: async () => ({ data: { id: 'account-1', payment_customer_id: 'cus_123' }, error: null }),
+          }),
+        }),
+        update: vi.fn(),
+      }),
+    })
+    createStripeClientMock.mockReturnValue({
+      checkout: {
+        sessions: {
+          create: vi.fn(async () => ({ url: 'https://checkout.stripe.com/session/abc' })),
+        },
+      },
+      billingPortal: {
+        sessions: {
+          create: vi.fn(async () => ({ url: 'https://billing.stripe.com/session/portal' })),
+        },
+      },
+    })
+
+    const { POST } = await loadRoute()
+
+    const checkoutForm = new FormData()
+    checkoutForm.set('intent', 'upgrade')
+    const manageForm = new FormData()
+    manageForm.set('intent', 'manage')
+
+    const request = (formData: FormData) => ({
+      formData: async () => formData,
+      url: 'https://example.com/api/billing/subscription',
+      cookies: { getAll: () => [], set: vi.fn() },
+      headers: { get: () => null },
+    }) as unknown as NextRequest
+
+    expect((await POST(request(checkoutForm))).headers.get('location')).toBe('https://checkout.stripe.com/session/abc')
+    expect((await POST(request(manageForm))).headers.get('location')).toBe('https://billing.stripe.com/session/portal')
   })
 })

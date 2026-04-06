@@ -2,6 +2,7 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { createServiceClient } from '@/utils/supabase/service'
 import { resolveBillingLifecycleUpdate } from '@/lib/billing-lifecycle'
+import { createStripeClient, getStripeBillingConfig, resolveStripeBillingLifecycleUpdate, type StripeWebhookLikeEvent } from '@/lib/stripe-billing'
 
 function getSupabase(request: NextRequest) {
   return createServerClient(
@@ -23,8 +24,26 @@ function getSupabase(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const payload = await request.json().catch(() => null)
-  const update = resolveBillingLifecycleUpdate(payload ?? {})
+  const stripeConfig = getStripeBillingConfig()
+  const stripeSignature = request.headers?.get?.('stripe-signature') ?? null
+
+  let payload: any = null
+  let update = null
+
+  if (stripeConfig.webhookSecret && stripeConfig.secretKey && stripeSignature) {
+    try {
+      const rawBody = await request.text()
+      const stripe = createStripeClient(stripeConfig.secretKey)
+      const event = stripe.webhooks.constructEvent(rawBody, stripeSignature, stripeConfig.webhookSecret)
+      update = resolveStripeBillingLifecycleUpdate(event as unknown as StripeWebhookLikeEvent)
+      payload = event.data?.object ?? null
+    } catch (error) {
+      return NextResponse.json({ message: error instanceof Error ? error.message : 'Invalid Stripe webhook signature.' }, { status: 400 })
+    }
+  } else {
+    payload = await request.json().catch(() => null)
+    update = resolveBillingLifecycleUpdate(payload ?? {})
+  }
 
   if (!update) {
     return NextResponse.json({ message: 'No lifecycle update provided.' }, { status: 400 })
