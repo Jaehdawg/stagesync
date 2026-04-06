@@ -7,6 +7,10 @@ export type PerEventBillingConfig = {
 
 export type PerEventBillingIntent = 'purchase' | 'receipts'
 
+export function requiresPerEventPurchaseAcknowledgment(intent: PerEventBillingIntent) {
+  return intent === 'purchase'
+}
+
 export type PerEventBillingRedirect = {
   url: string | null
   notice: string | null
@@ -29,6 +33,8 @@ export function resolvePerEventBillingRedirect(intent: PerEventBillingIntent, co
 
 export function getPerEventBillingStatusMessage(notice?: string | null) {
   switch (notice) {
+    case 'terms-required':
+      return 'Please confirm you agree to the Terms of Service before starting a per-event purchase.'
     case 'checkout-complete':
       return 'Per-event credit purchase completed. Refresh once if the remaining credit count looks stale.'
     case 'checkout-canceled':

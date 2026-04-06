@@ -4,7 +4,7 @@ import { createServiceClient } from '@/utils/supabase/service'
 import { getTestSession } from '@/lib/test-session'
 import { getTestLogin } from '@/lib/test-login-list'
 import { getLiveBandAccessContext } from '@/lib/band-access'
-import { resolvePerEventBillingRedirect, type PerEventBillingIntent } from '@/lib/per-event-billing'
+import { requiresPerEventPurchaseAcknowledgment, resolvePerEventBillingRedirect, type PerEventBillingIntent } from '@/lib/per-event-billing'
 
 function getSupabase(request: NextRequest) {
   return createServerClient(
@@ -46,9 +46,14 @@ export async function POST(request: NextRequest) {
   const serviceSupabase = createServiceClient()
   const formData = await request.formData()
   const intent = String(formData.get('intent') ?? '').trim()
+  const acknowledgeTerms = String(formData.get('acknowledgeTerms') ?? '').trim()
 
   if (!['purchase', 'receipts'].includes(intent)) {
     return NextResponse.json({ message: 'Unknown per-event billing intent.' }, { status: 400 })
+  }
+
+  if (requiresPerEventPurchaseAcknowledgment(intent as PerEventBillingIntent) && acknowledgeTerms !== 'yes') {
+    return redirectWithNotice(request, 'terms-required')
   }
 
   if (testSession?.role === 'band') {

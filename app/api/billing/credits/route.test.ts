@@ -60,6 +60,7 @@ describe('billing credits route', () => {
     const { POST } = await loadRoute()
     const formData = new FormData()
     formData.set('intent', 'purchase')
+    formData.set('acknowledgeTerms', 'yes')
 
     const request = {
       formData: async () => formData,
@@ -70,6 +71,26 @@ describe('billing credits route', () => {
     const response = await POST(request)
     expect(response.status).toBe(303)
     expect(response.headers.get('location')).toBe('https://example.com/band/account?creditNotice=credit-checkout-pending')
+  })
+
+  it('requires terms acknowledgment before purchase checkout', async () => {
+    getTestSessionMock.mockResolvedValue({ role: 'band', username: 'northside' })
+    getTestLoginMock.mockResolvedValue({ role: 'band', band_access_level: 'admin' })
+    stubBillingUrls({ STAGESYNC_CREDIT_CHECKOUT_URL: 'https://billing.example.com/checkout' })
+
+    const { POST } = await loadRoute()
+    const formData = new FormData()
+    formData.set('intent', 'purchase')
+
+    const request = {
+      formData: async () => formData,
+      url: 'https://example.com/api/billing/credits',
+      cookies: { getAll: () => [], set: vi.fn() },
+    } as unknown as NextRequest
+
+    const response = await POST(request)
+    expect(response.status).toBe(303)
+    expect(response.headers.get('location')).toBe('https://example.com/band/account?creditNotice=terms-required')
   })
 
   it('redirects to hosted receipts when configured', async () => {

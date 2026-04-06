@@ -1,9 +1,10 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import { getPaymentBoundaryRules, getPaymentBoundarySummary } from '@/lib/payment-boundary'
 
 export const metadata: Metadata = {
   title: 'Terms / Terms of Service | StageSync',
-  description: 'StageSync terms and terms of service shell.',
+  description: 'StageSync terms of service shell.',
 }
 
 export default function TermsPage() {
@@ -17,14 +18,17 @@ export default function TermsPage() {
             Terms / Terms of Service
           </h1>
           <p className="mt-5 text-lg leading-8 text-slate-700 dark:text-slate-300">
-            This page is the legal shell for StageSync. It exists so the site can present clear terms before any paid flow is introduced.
+            These terms set the service boundaries for StageSync. They are meant to be visible before any paid flow, account upgrade, or operational action that depends on them.
           </p>
 
           <section className="mt-8 grid gap-4">
             <article className="rounded-2xl border border-slate-200 bg-slate-50 p-5 dark:border-white/10 dark:bg-slate-950/60">
               <h2 className="text-lg font-semibold text-slate-950 dark:text-white">Use of the service</h2>
               <p className="mt-3 text-sm leading-6 text-slate-700 dark:text-slate-300">
-                StageSync is provided to help bands, venues, and singers manage live-show workflows. Access to paid features will be governed by the applicable plan, account status, and the terms on this page.
+                StageSync is provided to help bands, venues, and singers manage live-show workflows. Access to paid features is governed by the applicable plan, account status, and the terms on this page.
+              </p>
+              <p className="mt-3 text-sm leading-6 text-slate-700 dark:text-slate-300">
+                Use the service only if you have authority to bind the band or venue account you are operating.
               </p>
             </article>
 
@@ -46,8 +50,20 @@ export default function TermsPage() {
             <article className="rounded-2xl border border-slate-200 bg-slate-50 p-5 dark:border-white/10 dark:bg-slate-950/60">
               <h2 className="text-lg font-semibold text-slate-950 dark:text-white">Acceptance</h2>
               <p className="mt-3 text-sm leading-6 text-slate-700 dark:text-slate-300">
-                If a future workflow needs explicit acceptance, it should surface that requirement only at the point of use. For now, this page is the visible legal shell and footer destination.
+                Some actions may require explicit acceptance before they proceed. When that happens, the acknowledgment belongs at the point of use, not buried elsewhere.
               </p>
+            </article>
+
+            <article className="rounded-2xl border border-slate-200 bg-slate-50 p-5 dark:border-white/10 dark:bg-slate-950/60">
+              <h2 className="text-lg font-semibold text-slate-950 dark:text-white">Related pages</h2>
+              <div className="mt-3 flex flex-wrap gap-4 text-sm font-medium">
+                <Link href="/privacy" className="text-cyan-700 underline-offset-4 hover:underline dark:text-cyan-300">
+                  Privacy Policy
+                </Link>
+                <Link href="/support" className="text-cyan-700 underline-offset-4 hover:underline dark:text-cyan-300">
+                  Support
+                </Link>
+              </div>
             </article>
           </section>
         </div>

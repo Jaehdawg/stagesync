@@ -194,10 +194,15 @@ function AccountForm({
               <p className="text-xs font-semibold uppercase tracking-[0.28em] text-cyan-300">Per-event access</p>
               <h2 className="mt-2 text-2xl font-semibold text-white">One-off show credit</h2>
               <p className="mt-2 max-w-2xl text-slate-300">Buy a credit for a single show. A paid show stays unlocked for 24 hours after start, and restarts inside that window do not burn another credit.</p>
+              <p className="mt-2 max-w-2xl text-xs leading-6 text-slate-400">By starting checkout, you confirm you’ve read and agree to the Terms of Service and understand payment processing happens through the hosted provider.</p>
             </div>
             <div className="flex flex-wrap gap-3">
-              <form action="/api/billing/credits" method="post">
+              <form action="/api/billing/credits" method="post" className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-slate-950/40 px-4 py-3">
                 <input type="hidden" name="intent" value="purchase" />
+                <label className="flex items-start gap-3 text-sm text-slate-300">
+                  <input type="checkbox" name="acknowledgeTerms" value="yes" required className="mt-1 h-4 w-4 rounded border-slate-400 bg-slate-950 text-cyan-400" />
+                  <span>I agree to the <a href="/terms" className="text-cyan-300 underline-offset-4 hover:underline">Terms of Service</a> before purchasing.</span>
+                </label>
                 <button type="submit" className="rounded-xl border border-cyan-400/30 bg-cyan-400/10 px-4 py-3 text-sm font-medium text-cyan-100">Buy show credit</button>
               </form>
               <form action="/api/billing/credits" method="post">

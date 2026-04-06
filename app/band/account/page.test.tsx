@@ -190,6 +190,7 @@ describe('BandAccountPage', () => {
     expect(screen.getByText(/buy a credit for a single show/i)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /buy show credit/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /view receipts/i })).toBeInTheDocument()
+    expect(screen.getByRole('checkbox', { name: /i agree to the terms of service before purchasing/i })).toBeInTheDocument()
     expect(screen.getByText(/per-event credit purchase completed/i)).toBeInTheDocument()
   })
 })

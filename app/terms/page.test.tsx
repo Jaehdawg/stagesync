@@ -10,5 +10,7 @@ describe('TermsPage', () => {
     expect(screen.getByText(/StageSync keeps payment data outside its PCI boundary/i)).toBeInTheDocument()
     expect(screen.getByText(/hosted payments only/i)).toBeInTheDocument()
     expect(screen.getByText(/no raw card storage/i)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /privacy policy/i })).toHaveAttribute('href', '/privacy')
+    expect(screen.getByRole('link', { name: /support/i })).toHaveAttribute('href', '/support')
   })
 })

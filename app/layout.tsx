@@ -38,6 +38,12 @@ export default function RootLayout({
                 <Link href="/terms" className="font-medium text-slate-700 transition hover:text-slate-950 dark:text-slate-300 dark:hover:text-white">
                   Terms / Terms of Service
                 </Link>
+                <Link href="/privacy" className="font-medium text-slate-700 transition hover:text-slate-950 dark:text-slate-300 dark:hover:text-white">
+                  Privacy Policy
+                </Link>
+                <Link href="/support" className="font-medium text-slate-700 transition hover:text-slate-950 dark:text-slate-300 dark:hover:text-white">
+                  Support
+                </Link>
               </nav>
             </div>
           </footer>
