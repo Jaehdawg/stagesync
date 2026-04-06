@@ -203,6 +203,9 @@ describe('billing subscription route', () => {
       webhookSecret: 'whsec_123',
       professionalPriceId: 'price_123',
     })
+    stubBillingUrls({
+      STAGESYNC_BILLING_INVOICES_URL: 'https://billing.example.com/invoices',
+    })
     authGetUserMock.mockResolvedValue({ data: { user: { email: 'northside@example.com' } } })
     createServiceClientMock.mockReturnValue({
       from: () => ({
@@ -241,7 +244,11 @@ describe('billing subscription route', () => {
       headers: { get: () => null },
     }) as unknown as NextRequest
 
+    const invoicesForm = new FormData()
+    invoicesForm.set('intent', 'invoices')
+
     expect((await POST(request(checkoutForm))).headers.get('location')).toBe('https://checkout.stripe.com/session/abc')
     expect((await POST(request(manageForm))).headers.get('location')).toBe('https://billing.stripe.com/session/portal')
+    expect((await POST(request(invoicesForm))).headers.get('location')).toBe('https://billing.example.com/invoices')
   })
 })

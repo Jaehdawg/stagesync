@@ -98,6 +98,7 @@ export async function POST(request: NextRequest) {
     const { data: { user } } = await testSupabase.auth.getUser()
     const stripe = createStripeClient(stripeBillingConfig.secretKey!)
     const urls = getBillingRedirectUrls(request)
+    const hosted = resolveHostedBillingRedirect(intent as SubscriptionBillingIntent, getHostedBillingConfig())
 
     if (intent === 'upgrade') {
       const session = await stripe.checkout.sessions.create(
@@ -114,6 +115,10 @@ export async function POST(request: NextRequest) {
       if (session.url) {
         return redirectToHostedUrl(session.url)
       }
+    }
+
+    if (intent === 'invoices' && hosted.url) {
+      return redirectToHostedUrl(hosted.url)
     }
 
     if ((intent === 'manage' || intent === 'downgrade' || intent === 'invoices') && billingAccount.data?.payment_customer_id) {
