@@ -144,4 +144,37 @@ describe('BandAccountPage', () => {
     expect(screen.getAllByRole('button', { name: /start professional checkout/i }).length).toBeGreaterThanOrEqual(1)
     expect(screen.getByText(/professional is delivered through hosted checkout when enabled/i)).toBeInTheDocument()
   })
+
+  it('shows a hosted billing attention message for past due accounts', async () => {
+    createQueryMock.mockImplementation((table: string) => {
+      if (table === 'band_profiles') {
+        return { data: { tidal_client_id: null, tidal_client_secret: null }, error: null }
+      }
+
+      if (table === 'billing_accounts') {
+        return {
+          data: {
+            status: 'past_due',
+            payment_provider: 'stripe',
+            payment_subscription_id: 'sub_123',
+            free_shows_allocated: 3,
+            free_shows_used: 2,
+          },
+          error: null,
+        }
+      }
+
+      return { data: null, error: null }
+    })
+
+    const { default: BandAccountPage } = await loadPage()
+    const element = await BandAccountPage({ searchParams: Promise.resolve({}) })
+
+    render(element)
+
+    expect(screen.getAllByText(/update your payment method in the hosted billing portal/i).length).toBeGreaterThanOrEqual(1)
+    expect(screen.getByText('Payment methods', { selector: 'p' })).toBeInTheDocument()
+    expect(screen.getByText('Invoices and receipts', { selector: 'p' })).toBeInTheDocument()
+    expect(screen.getByText('Plan management', { selector: 'p' })).toBeInTheDocument()
+  })
 })

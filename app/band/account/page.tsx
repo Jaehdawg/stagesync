@@ -34,6 +34,22 @@ function getSubscriptionNoticeMessage(notice?: string | null) {
   }
 }
 
+function getBillingStatusMessage(status: string) {
+  switch (status) {
+    case 'grace':
+    case 'past_due':
+      return 'Update your payment method in the hosted billing portal to keep Professional access active.'
+    case 'suspended':
+      return 'Your subscription is suspended at the provider. Use hosted billing to resolve the payment issue and restore access.'
+    case 'canceled':
+      return 'Your subscription is canceled at the provider. Start checkout again when you’re ready to re-subscribe.'
+    case 'paused':
+      return 'Your subscription is paused at the provider. Resume it from the hosted billing portal if available.'
+    default:
+      return 'Hosted billing keeps payment methods, receipts, and plan changes outside StageSync.'
+  }
+}
+
 function LoginCard({ title, description }: { title: string; description: string }) {
   return (
     <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100 sm:px-6 lg:px-8">
@@ -104,7 +120,10 @@ function AccountForm({
     summaryLines: { label: string; value: string }[]
   }
   subscriptionNotice?: string | null
-}) {
+  }) {
+  const billingStatusMessage = getBillingStatusMessage(subscriptionControlState.current.status)
+  const billingNeedsAttention = ['grace', 'past_due', 'suspended', 'paused', 'canceled'].includes(subscriptionControlState.current.status)
+
   return (
     <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100 sm:px-6 lg:px-8">
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
@@ -168,7 +187,7 @@ function AccountForm({
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.28em] text-cyan-300">Billing portal</p>
               <h2 className="mt-2 text-2xl font-semibold text-white">Payment methods and invoices</h2>
-              <p className="mt-2 max-w-2xl text-slate-300">Hosted billing keeps card data, receipts, and plan management outside StageSync.</p>
+              <p className="mt-2 max-w-2xl text-slate-300">{billingStatusMessage}</p>
             </div>
             <div className="flex flex-wrap gap-3">
               <form action="/api/billing/subscription" method="post">
@@ -185,7 +204,25 @@ function AccountForm({
               </form>
             </div>
           </div>
-          <p className="mt-4 text-sm text-slate-400">Payment methods, invoices, and plan management are intentionally routed through hosted billing flows.</p>
+          <div className="mt-4 grid gap-3 md:grid-cols-3">
+            <div className="rounded-2xl border border-white/10 bg-slate-950/50 px-4 py-3 text-sm text-slate-300">
+              <p className="font-semibold text-white">Payment methods</p>
+              <p className="mt-1">Manage cards and billing details in the hosted portal.</p>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-slate-950/50 px-4 py-3 text-sm text-slate-300">
+              <p className="font-semibold text-white">Invoices and receipts</p>
+              <p className="mt-1">Open hosted invoices and download receipts without leaving billing.</p>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-slate-950/50 px-4 py-3 text-sm text-slate-300">
+              <p className="font-semibold text-white">Plan management</p>
+              <p className="mt-1">Upgrade, downgrade, or return to the billing portal from the plan section.</p>
+            </div>
+          </div>
+          {billingNeedsAttention ? (
+            <p className="mt-4 rounded-2xl border border-amber-400/20 bg-amber-400/10 px-4 py-3 text-sm text-amber-100">
+              {billingStatusMessage}
+            </p>
+          ) : null}
           {getSubscriptionNoticeMessage(subscriptionNotice) ? (
             <p className="mt-3 rounded-2xl border border-amber-400/20 bg-amber-400/10 px-4 py-3 text-sm text-amber-100">
               {getSubscriptionNoticeMessage(subscriptionNotice)}
