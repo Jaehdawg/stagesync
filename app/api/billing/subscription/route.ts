@@ -4,7 +4,8 @@ import { createServiceClient } from '@/utils/supabase/service'
 import { getTestSession } from '@/lib/test-session'
 import { getTestLogin } from '@/lib/test-login-list'
 import { getLiveBandAccessContext } from '@/lib/band-access'
-import { resolveSubscriptionNoticeForIntent } from '@/lib/subscription-sync'
+import { resolveHostedBillingRedirect } from '@/lib/hosted-billing'
+import { type SubscriptionBillingIntent } from '@/lib/subscription-sync'
 
 function getSupabase(request: NextRequest) {
   return createServerClient(
@@ -29,6 +30,18 @@ function redirectWithNotice(request: NextRequest, notice: string) {
   return NextResponse.redirect(new URL(`/band/account?subscriptionNotice=${encodeURIComponent(notice)}`, request.url), 303)
 }
 
+function redirectToHostedUrl(url: string) {
+  return NextResponse.redirect(url, 303)
+}
+
+function getHostedBillingConfig() {
+  return {
+    checkoutUrl: process.env.STAGESYNC_BILLING_CHECKOUT_URL ?? null,
+    portalUrl: process.env.STAGESYNC_BILLING_PORTAL_URL ?? null,
+    invoicesUrl: process.env.STAGESYNC_BILLING_INVOICES_URL ?? null,
+  }
+}
+
 export async function POST(request: NextRequest) {
   const testSession = await getTestSession()
   const testSupabase = getSupabase(request)
@@ -46,7 +59,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'Band admin access required.' }, { status: 403 })
     }
 
-    return redirectWithNotice(request, resolveSubscriptionNoticeForIntent(intent as 'upgrade' | 'manage' | 'downgrade' | 'stay' | 'invoices'))
+    const hosted = resolveHostedBillingRedirect(intent as SubscriptionBillingIntent, getHostedBillingConfig())
+    return hosted.url ? redirectToHostedUrl(hosted.url) : redirectWithNotice(request, hosted.notice ?? 'no-change')
   }
 
   const liveAccess = await getLiveBandAccessContext(testSupabase, serviceSupabase, { requireAdmin: true })
@@ -54,5 +68,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: 'Band admin access required.' }, { status: 403 })
   }
 
-  return redirectWithNotice(request, resolveSubscriptionNoticeForIntent(intent as 'upgrade' | 'manage' | 'downgrade' | 'stay' | 'invoices'))
+  const hosted = resolveHostedBillingRedirect(intent as SubscriptionBillingIntent, getHostedBillingConfig())
+  return hosted.url ? redirectToHostedUrl(hosted.url) : redirectWithNotice(request, hosted.notice ?? 'no-change')
 }
