@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { getPaymentBoundaryRules, getPaymentBoundarySummary } from '@/lib/payment-boundary'
+import { getTermsAcceptancePrompt, getTermsSections } from '@/lib/terms-copy'
 
 export const metadata: Metadata = {
   title: 'Terms / Terms of Service | StageSync',
@@ -9,6 +10,7 @@ export const metadata: Metadata = {
 
 export default function TermsPage() {
   const paymentBoundaryRules = getPaymentBoundaryRules()
+  const termsSections = getTermsSections()
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(34,211,238,0.10),_transparent_30%),radial-gradient(circle_at_bottom_right,_rgba(168,85,247,0.08),_transparent_28%),#f8fafc] px-4 py-10 text-slate-950 dark:bg-[radial-gradient(circle_at_top,_rgba(34,211,238,0.12),_transparent_30%),radial-gradient(circle_at_bottom_right,_rgba(168,85,247,0.10),_transparent_28%),#020617] dark:text-slate-100 sm:px-6 lg:px-8">
       <div className="mx-auto w-full max-w-3xl">
@@ -22,15 +24,16 @@ export default function TermsPage() {
           </p>
 
           <section className="mt-8 grid gap-4">
-            <article className="rounded-2xl border border-slate-200 bg-slate-50 p-5 dark:border-white/10 dark:bg-slate-950/60">
-              <h2 className="text-lg font-semibold text-slate-950 dark:text-white">Use of the service</h2>
-              <p className="mt-3 text-sm leading-6 text-slate-700 dark:text-slate-300">
-                StageSync is provided to help bands, venues, and singers manage live-show workflows. Access to paid features is governed by the applicable plan, account status, and the terms on this page.
-              </p>
-              <p className="mt-3 text-sm leading-6 text-slate-700 dark:text-slate-300">
-                Use the service only if you have authority to bind the band or venue account you are operating.
-              </p>
-            </article>
+            {termsSections.map((section) => (
+              <article key={section.title} className="rounded-2xl border border-slate-200 bg-slate-50 p-5 dark:border-white/10 dark:bg-slate-950/60">
+                <h2 className="text-lg font-semibold text-slate-950 dark:text-white">{section.title}</h2>
+                {section.paragraphs.map((paragraph) => (
+                  <p key={paragraph} className="mt-3 text-sm leading-6 text-slate-700 dark:text-slate-300">
+                    {paragraph}
+                  </p>
+                ))}
+              </article>
+            ))}
 
             <article className="rounded-2xl border border-slate-200 bg-slate-50 p-5 dark:border-white/10 dark:bg-slate-950/60">
               <h2 className="text-lg font-semibold text-slate-950 dark:text-white">Payments and billing</h2>
@@ -51,6 +54,9 @@ export default function TermsPage() {
               <h2 className="text-lg font-semibold text-slate-950 dark:text-white">Acceptance</h2>
               <p className="mt-3 text-sm leading-6 text-slate-700 dark:text-slate-300">
                 Some actions may require explicit acceptance before they proceed. When that happens, the acknowledgment belongs at the point of use, not buried elsewhere.
+              </p>
+              <p className="mt-3 text-sm leading-6 text-slate-700 dark:text-slate-300">
+                {getTermsAcceptancePrompt()}
               </p>
             </article>
 
