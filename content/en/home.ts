@@ -5,7 +5,7 @@ export const homeCopy = {
     startFreeTrial: 'Start a free trial',
   },
   hero: {
-    headline: 'Run the room, keep the queue moving, and make the night feel effortless.',
+    headline: 'Live band Karaoke and song requests made simple',
     subhead:
       'StageSync turns singer sign-ups, show controls, and set lists into one clean workflow so bands can focus on the room and venues can keep the night on rails.',
     primaryCta: 'Start a free trial',
