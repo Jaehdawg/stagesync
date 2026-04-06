@@ -20,6 +20,7 @@ export const adminCopy = {
     analytics: { title: 'System analytics', description: 'Track usage, queue volume, and show health.' },
     billing: { title: 'Billing readiness', description: 'Check Stripe keys, hosted URLs, and webhook readiness.' },
     bandProfiles: { title: 'Band profiles', description: 'Modify public band profile records.' },
+    venues: { title: 'Venue operations', description: 'Reporting and operator management for venue accounts.' },
   },
   bandProfilesPage: {
     title: 'Band profiles',
@@ -151,5 +152,9 @@ export const adminCopy = {
       singerCount: 'Singer count',
       tracksPlayed: 'Tracks played',
     },
+  },
+  venuesPage: {
+    title: 'Venue operations',
+    description: 'Reporting and operator summaries for venue accounts, rooms, and partner bands.',
   },
 } as const
