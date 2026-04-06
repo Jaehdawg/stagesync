@@ -1,12 +1,15 @@
 import Link from 'next/link'
+import { createClient } from '@/utils/supabase/server'
 import { createServiceClient } from '@/utils/supabase/service'
 import { BandAccessForm } from '@/components/band-access-form'
 import { getAdminAccess } from '@/lib/admin-access'
 import { AdminRowDialog } from '@/components/admin-row-dialog'
 import { adminCopy } from '@/content/en/admin'
 
+export const dynamic = 'force-dynamic'
+
 export default async function AdminBandProfilesPage() {
-  const supabase = createServiceClient()
+  const supabase = await createClient()
   const liveAdminAccess = await getAdminAccess(supabase)
 
   if (!liveAdminAccess) {
@@ -24,12 +27,14 @@ export default async function AdminBandProfilesPage() {
     )
   }
 
-  const { data: bandProfiles } = await supabase
+  const serviceSupabase = createServiceClient()
+
+  const { data: bandProfiles } = await serviceSupabase
     .from('band_profiles')
     .select('id, profile_id, band_name, logo_url, website_url, facebook_url, instagram_url, tiktok_url, paypal_url, venmo_url, cashapp_url, custom_message, updated_at')
     .order('updated_at', { ascending: false })
 
-  const { data: profiles } = await supabase.from('profiles').select('id, username, display_name, role').order('updated_at', { ascending: false })
+  const { data: profiles } = await serviceSupabase.from('profiles').select('id, username, display_name, role').order('updated_at', { ascending: false })
   const safeBandProfiles = bandProfiles ?? []
   const safeProfiles = profiles ?? []
 
