@@ -3,6 +3,7 @@ import { getStripeBillingConfig, hasStripeCheckoutConfig, type StripeBillingConf
 export type StripeBillingReadiness = {
   stripeCheckoutReady: boolean
   stripeWebhookReady: boolean
+  professionalPriceReady: boolean
   hostedCheckoutReady: boolean
   hostedPortalReady: boolean
   hostedInvoicesReady: boolean
@@ -19,6 +20,7 @@ export function getStripeBillingReadiness(config: StripeBillingConfig = getStrip
   return {
     stripeCheckoutReady: hasStripeCheckoutConfig(config),
     stripeWebhookReady: Boolean(config.secretKey && config.webhookSecret),
+    professionalPriceReady: Boolean(config.professionalPriceId),
     hostedCheckoutReady: Boolean(hostedUrls.checkoutUrl),
     hostedPortalReady: Boolean(hostedUrls.portalUrl),
     hostedInvoicesReady: Boolean(hostedUrls.invoicesUrl),

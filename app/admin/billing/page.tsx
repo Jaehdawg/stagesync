@@ -61,7 +61,7 @@ export default async function AdminBillingPage() {
               <p className="mt-3 max-w-2xl text-slate-300">{adminCopy.billingPage.description}</p>
             </div>
             <div className="flex flex-wrap gap-3">
-              <StatusChip ready={readiness.stripeCheckoutReady && readiness.stripeWebhookReady} />
+              <StatusChip ready={readiness.stripeCheckoutReady && readiness.stripeWebhookReady && readiness.professionalPriceReady} />
               <Link href="/admin" className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-white hover:border-cyan-400/50">
                 {adminCopy.backToAdmin}
               </Link>

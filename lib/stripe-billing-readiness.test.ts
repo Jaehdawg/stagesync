@@ -17,6 +17,7 @@ describe('stripe billing readiness helpers', () => {
     ).toEqual({
       stripeCheckoutReady: false,
       stripeWebhookReady: false,
+      professionalPriceReady: false,
       hostedCheckoutReady: true,
       hostedPortalReady: false,
       hostedInvoicesReady: false,
@@ -41,6 +42,7 @@ describe('stripe billing readiness helpers', () => {
     ).toEqual({
       stripeCheckoutReady: true,
       stripeWebhookReady: true,
+      professionalPriceReady: true,
       hostedCheckoutReady: true,
       hostedPortalReady: true,
       hostedInvoicesReady: true,

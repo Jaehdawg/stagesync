@@ -20,6 +20,7 @@ vi.mock('@/lib/stripe-billing-readiness', () => ({
   getStripeBillingReadiness: () => ({
     stripeCheckoutReady: true,
     stripeWebhookReady: true,
+    professionalPriceReady: true,
     hostedCheckoutReady: true,
     hostedPortalReady: true,
     hostedInvoicesReady: false,
