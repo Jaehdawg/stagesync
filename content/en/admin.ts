@@ -139,6 +139,8 @@ export const adminCopy = {
     retentionTitle: 'Retention and churn',
     usageTitle: 'Band / singer usage',
     storageTitle: 'Storage and export expectations',
+    trackingTitle: 'Analytics event schema and tracking plan',
+    trackingDescription: 'This is the canonical naming and payload guide for product and monetization analytics.',
     activeLabel: 'active',
     endedLabel: 'ended',
     signupsOn: 'signups on',

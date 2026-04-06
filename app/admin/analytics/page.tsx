@@ -3,6 +3,7 @@ import { createClient } from '@/utils/supabase/server'
 import { BandAccessForm } from '@/components/band-access-form'
 import { getAdminAccess } from '@/lib/admin-access'
 import { buildAnalyticsSections } from '@/lib/analytics-reporting'
+import { getAnalyticsTrackingPlan } from '@/lib/analytics-schema'
 import { adminCopy } from '@/content/en/admin'
 
 export default async function AdminAnalyticsPage() {
@@ -60,6 +61,7 @@ export default async function AdminAnalyticsPage() {
     singerCount: singerCount ?? 0,
     tracksPlayedCount: tracksPlayedCount ?? 0,
   })
+  const trackingPlan = getAnalyticsTrackingPlan()
 
   return (
     <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100 sm:px-6 lg:px-8">
@@ -118,6 +120,50 @@ export default async function AdminAnalyticsPage() {
             </div>
           </section>
         ))}
+
+        <section className="rounded-3xl border border-white/10 bg-white/5 p-6">
+          <h2 className="text-2xl font-semibold text-white">{adminCopy.analyticsPage.trackingTitle}</h2>
+          <p className="mt-2 max-w-2xl text-sm text-slate-300">{adminCopy.analyticsPage.trackingDescription}</p>
+          <div className="mt-4 grid gap-4 lg:grid-cols-2">
+            <div className="rounded-2xl border border-white/10 bg-slate-950/50 p-4">
+              <h3 className="text-lg font-semibold text-white">Naming conventions</h3>
+              <ul className="mt-3 space-y-2 text-sm text-slate-300">
+                {trackingPlan.namingConventions.map((item) => (
+                  <li key={item} className="flex gap-2"><span className="text-cyan-300">•</span><span>{item}</span></li>
+                ))}
+              </ul>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-slate-950/50 p-4">
+              <h3 className="text-lg font-semibold text-white">Required metadata</h3>
+              <ul className="mt-3 space-y-2 text-sm text-slate-300">
+                {trackingPlan.requiredMetadata.map((item) => (
+                  <li key={item} className="flex gap-2"><span className="text-cyan-300">•</span><span>{item}</span></li>
+                ))}
+              </ul>
+            </div>
+          </div>
+          <div className="mt-4 grid gap-4 lg:grid-cols-2">
+            <div className="rounded-2xl border border-white/10 bg-slate-950/50 p-4">
+              <h3 className="text-lg font-semibold text-white">Must never be logged</h3>
+              <ul className="mt-3 space-y-2 text-sm text-slate-300">
+                {trackingPlan.prohibitedData.map((item) => (
+                  <li key={item} className="flex gap-2"><span className="text-rose-300">•</span><span>{item}</span></li>
+                ))}
+              </ul>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-slate-950/50 p-4">
+              <h3 className="text-lg font-semibold text-white">Canonical event names</h3>
+              <ul className="mt-3 space-y-2 text-sm text-slate-300">
+                {trackingPlan.eventSpecs.map((event) => (
+                  <li key={event.name} className="flex items-start gap-2">
+                    <span className="text-cyan-300">•</span>
+                    <span><span className="font-medium text-white">{event.name}</span> — {event.description}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </section>
 
         <section className="rounded-3xl border border-white/10 bg-white/5 p-6">
           <h2 className="text-2xl font-semibold text-white">{adminCopy.analyticsPage.recentShowsTitle}</h2>

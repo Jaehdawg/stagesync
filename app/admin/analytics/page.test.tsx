@@ -16,6 +16,46 @@ vi.mock('@/components/band-access-form', () => ({
   BandAccessForm: () => null,
 }))
 
+vi.mock('@/lib/analytics-reporting', () => ({
+  buildAnalyticsSections: () => ({
+    funnel: {
+      title: 'Core funnel',
+      description: 'desc',
+      items: [{ label: 'Bands onboarded', value: '5', detail: 'Bands with live profiles or account access.' }],
+    },
+    retention: {
+      title: 'Retention and churn',
+      description: 'desc',
+      items: [{ label: 'Recent shows', value: '1', detail: 'Shows created in the last 30 days.' }],
+    },
+    usage: {
+      title: 'Band / singer usage',
+      description: 'desc',
+      items: [{ label: 'Tracks played', value: '9', detail: 'Songs completed through the queue.' }],
+    },
+    storage: {
+      title: 'Storage and export expectations',
+      description: 'desc',
+      items: [
+        { label: 'Raw event log', value: 'analytics_events', detail: 'Append-only event capture for product, funnel, and lifecycle events.' },
+        { label: 'Daily rollups', value: 'analytics_daily_rollups', detail: 'Precomputed summaries for dashboards and CSV exports.' },
+      ],
+    },
+  }),
+}))
+
+vi.mock('@/lib/analytics-schema', () => ({
+  getAnalyticsTrackingPlan: () => ({
+    namingConventions: ['Use lowercase dotted names in the form area.action or area.entity.action.'],
+    requiredMetadata: ['occurredAt timestamp', 'source surface or origin'],
+    prohibitedData: ['raw card numbers, CVC, or any payment instrument secret'],
+    eventSpecs: [
+      { name: 'pricing.checkout.started', description: 'A checkout flow was launched from the pricing surface.' },
+      { name: 'show.started', description: 'A live show started or resumed inside a paid window.' },
+    ],
+  }),
+}))
+
 function buildSupabaseClient() {
   return {
     from(table: string) {
@@ -58,7 +98,9 @@ describe('AdminAnalyticsPage', () => {
     expect(screen.getByRole('heading', { name: /retention and churn/i })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: /band \/ singer usage/i })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: /storage and export expectations/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /analytics event schema and tracking plan/i })).toBeInTheDocument()
     expect(screen.getByText(/analytics_events/i)).toBeInTheDocument()
     expect(screen.getByText(/analytics_daily_rollups/i)).toBeInTheDocument()
+    expect(screen.getByText(/pricing.checkout.started/i)).toBeInTheDocument()
   })
 })
