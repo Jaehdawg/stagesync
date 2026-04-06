@@ -3,12 +3,14 @@ import { createClient } from '@/utils/supabase/server'
 import { BandAccessForm } from '@/components/band-access-form'
 import { getAdminAccess } from '@/lib/admin-access'
 import { buildVenueOperatorSections } from '@/lib/venue-ops'
+import { getVenueProvisioningPlan } from '@/lib/venue-provisioning'
 import { adminCopy } from '@/content/en/admin'
 
 export default async function AdminVenuesPage() {
   const supabase = await createClient()
   const liveAdminAccess = await getAdminAccess(supabase)
   const sections = buildVenueOperatorSections()
+  const provisioningPlan = getVenueProvisioningPlan()
 
   if (!liveAdminAccess) {
     return (
@@ -65,6 +67,57 @@ export default async function AdminVenuesPage() {
               <p className="mt-3 text-3xl font-semibold text-white">{item.value}</p>
             </div>
           ))}
+        </section>
+
+        <section className="rounded-3xl border border-white/10 bg-white/5 p-6">
+          <h2 className="text-2xl font-semibold text-white">{adminCopy.venuesPage.provisioningTitle}</h2>
+          <p className="mt-2 max-w-2xl text-sm text-slate-300">{adminCopy.venuesPage.provisioningDescription}</p>
+          <div className="mt-4 grid gap-4 lg:grid-cols-2">
+            <div className="rounded-2xl border border-white/10 bg-slate-950/50 p-4">
+              <h3 className="text-lg font-semibold text-white">Admin provisioning flow</h3>
+              <ol className="mt-3 space-y-3 text-sm text-slate-300">
+                {provisioningPlan.flow.map((step, index) => (
+                  <li key={step.title} className="flex gap-3">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-cyan-400/40 bg-cyan-400/10 text-xs text-cyan-200">{index + 1}</span>
+                    <span><span className="font-medium text-white">{step.title}</span> — {step.detail}</span>
+                  </li>
+                ))}
+              </ol>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-slate-950/50 p-4">
+              <h3 className="text-lg font-semibold text-white">Custom pricing and discounts</h3>
+              <ul className="mt-3 space-y-2 text-sm text-slate-300">
+                {provisioningPlan.pricing.map((item) => (
+                  <li key={item.title} className="flex gap-2"><span className="text-cyan-300">•</span><span><span className="font-medium text-white">{item.title}</span> — {item.detail}</span></li>
+                ))}
+              </ul>
+            </div>
+          </div>
+          <div className="mt-4 grid gap-4 lg:grid-cols-2">
+            <div className="rounded-2xl border border-white/10 bg-slate-950/50 p-4">
+              <h3 className="text-lg font-semibold text-white">Venue access / status lifecycle</h3>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {provisioningPlan.lifecycle.map((state) => (
+                  <span key={state.status} className="rounded-full border border-white/10 px-3 py-1 text-xs uppercase tracking-[0.2em] text-slate-300" title={state.meaning}>
+                    {state.status}
+                  </span>
+                ))}
+              </div>
+              <ul className="mt-4 space-y-2 text-sm text-slate-300">
+                {provisioningPlan.lifecycle.map((state) => (
+                  <li key={state.status} className="flex gap-2"><span className="text-cyan-300">•</span><span><span className="font-medium text-white">{state.status}</span> — {state.meaning}</span></li>
+                ))}
+              </ul>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-slate-950/50 p-4">
+              <h3 className="text-lg font-semibold text-white">Configuration primitives</h3>
+              <ul className="mt-3 space-y-2 text-sm text-slate-300">
+                {provisioningPlan.primitives.map((item) => (
+                  <li key={item.title} className="flex gap-2"><span className="text-cyan-300">•</span><span><span className="font-medium text-white">{item.title}</span> — {item.detail}</span></li>
+                ))}
+              </ul>
+            </div>
+          </div>
         </section>
 
         {sections.map((section) => (

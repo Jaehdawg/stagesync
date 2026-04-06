@@ -156,5 +156,7 @@ export const adminCopy = {
   venuesPage: {
     title: 'Venue operations',
     description: 'Reporting and operator summaries for venue accounts, rooms, and partner bands.',
+    provisioningTitle: 'Venue admin provisioning and configuration',
+    provisioningDescription: 'This area defines how venue accounts are reviewed, priced, configured, and moved through their lifecycle.',
   },
 } as const

@@ -35,6 +35,7 @@ describe('AdminVenuesPage', () => {
     render(element)
 
     expect(screen.getByRole('heading', { name: /venue operations/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /venue admin provisioning and configuration/i })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: /venue reporting requirements/i })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: /operator-facing summaries/i })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: /multi-band and multi-room access/i })).toBeInTheDocument()
