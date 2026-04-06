@@ -18,6 +18,7 @@ export const adminCopy = {
     bands: { title: 'Manage bands', description: 'CRUD bands and members.' },
     users: { title: 'User management', description: 'CRUD singers, band members, and admins.' },
     analytics: { title: 'System analytics', description: 'Track usage, queue volume, and show health.' },
+    billing: { title: 'Billing readiness', description: 'Check Stripe keys, hosted URLs, and webhook readiness.' },
     bandProfiles: { title: 'Band profiles', description: 'Modify public band profile records.' },
   },
   bandProfilesPage: {
@@ -120,6 +121,15 @@ export const adminCopy = {
     addBand: 'Add band',
     bandRoleMember: 'member',
     bandRoleAdmin: 'admin',
+  },
+  billingPage: {
+    title: 'Billing readiness',
+    description: 'View Stripe readiness status, missing keys, and hosted billing URL setup.',
+    endpointLabel: 'Raw config endpoint',
+    missingKeysLabel: 'Missing Stripe keys',
+    hostedUrlsLabel: 'Hosted billing URLs',
+    readyLabel: 'Ready',
+    notReadyLabel: 'Not ready',
   },
   analyticsPage: {
     title: 'System analytics',

@@ -39,6 +39,10 @@ export default async function AdminPage() {
               <h2 className="text-lg font-semibold text-white">{adminCopy.cards.analytics.title}</h2>
               <p className="mt-2 text-sm text-slate-300">{adminCopy.cards.analytics.description}</p>
             </Link>
+            <Link href="/admin/billing" className="rounded-3xl border border-white/10 bg-white/5 p-5 transition hover:border-cyan-400/50 hover:bg-white/10">
+              <h2 className="text-lg font-semibold text-white">{adminCopy.cards.billing.title}</h2>
+              <p className="mt-2 text-sm text-slate-300">{adminCopy.cards.billing.description}</p>
+            </Link>
           </section>
         </div>
       </main>
@@ -128,6 +132,10 @@ export default async function AdminPage() {
           <Link href="/admin/analytics" className="rounded-3xl border border-white/10 bg-white/5 p-5 transition hover:border-cyan-400/50 hover:bg-white/10">
             <h2 className="text-lg font-semibold text-white">{adminCopy.cards.analytics.title}</h2>
             <p className="mt-2 text-sm text-slate-300">{adminCopy.cards.analytics.description}</p>
+          </Link>
+          <Link href="/admin/billing" className="rounded-3xl border border-white/10 bg-white/5 p-5 transition hover:border-cyan-400/50 hover:bg-white/10">
+            <h2 className="text-lg font-semibold text-white">{adminCopy.cards.billing.title}</h2>
+            <p className="mt-2 text-sm text-slate-300">{adminCopy.cards.billing.description}</p>
           </Link>
         </section>
       </div>
