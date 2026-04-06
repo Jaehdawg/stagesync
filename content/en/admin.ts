@@ -129,6 +129,8 @@ export const adminCopy = {
     endpointLabel: 'Raw config endpoint',
     missingKeysLabel: 'Missing Stripe keys',
     hostedUrlsLabel: 'Hosted billing URLs',
+    contractTitle: 'Billing schema and resolver contract',
+    contractDescription: 'The canonical billing layer combines account state, plan status, and event logging so the rest of the product can ask one question: what can this account do right now?',
     readyLabel: 'Ready',
     notReadyLabel: 'Not ready',
   },

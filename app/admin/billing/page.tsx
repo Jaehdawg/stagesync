@@ -5,6 +5,7 @@ import { getAdminAccess } from '@/lib/admin-access'
 import { getStripeBillingConfig } from '@/lib/stripe-billing'
 import { getStripeBillingReadiness } from '@/lib/stripe-billing-readiness'
 import { getPaymentBoundaryRules, getPaymentBoundarySummary } from '@/lib/payment-boundary'
+import { buildBillingAuditEvent, getBillingAuditEventNames, resolveBillingEntitlementSnapshot } from '@/lib/billing-resolver'
 import { adminCopy } from '@/content/en/admin'
 
 function StatusChip({ ready }: { ready: boolean }) {
@@ -51,6 +52,26 @@ export default async function AdminBillingPage() {
 
   const readiness = getStripeBillingReadiness(getStripeBillingConfig(), hostedBillingUrls)
   const paymentBoundaryRules = getPaymentBoundaryRules()
+  const billingSnapshot = resolveBillingEntitlementSnapshot({
+    bandId: 'billing-contract',
+    billingStatus: 'active',
+    subscriptionPlan: 'professional',
+    subscriptionStatus: 'active',
+    freeShowsAllocated: 3,
+    freeShowsUsed: 1,
+    paymentProvider: 'stripe',
+    paymentCustomerId: 'cus_demo',
+    paymentSubscriptionId: 'sub_demo',
+  })
+  const billingAuditEvents = getBillingAuditEventNames()
+  const sampleAuditEvent = buildBillingAuditEvent({
+    eventName: 'billing.account.updated',
+    bandId: 'billing-contract',
+    actorRole: 'system',
+    entityType: 'billing_accounts',
+    entityId: 'billing-contract',
+    details: { note: 'Example audit payload for the canonical billing layer.' },
+  })
 
   return (
     <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100 sm:px-6 lg:px-8">
@@ -142,6 +163,35 @@ export default async function AdminBillingPage() {
                 ) : null}
               </div>
             </dl>
+          </div>
+
+          <div className="rounded-3xl border border-white/10 bg-white/5 p-6 md:col-span-2">
+            <h2 className="text-2xl font-semibold text-white">{adminCopy.billingPage.contractTitle}</h2>
+            <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-300">{adminCopy.billingPage.contractDescription}</p>
+            <div className="mt-4 grid gap-4 lg:grid-cols-2">
+              <div className="rounded-2xl border border-white/10 bg-slate-950/50 p-4">
+                <h3 className="text-lg font-semibold text-white">Resolver snapshot</h3>
+                <dl className="mt-3 space-y-2 text-sm text-slate-300">
+                  <div className="flex justify-between gap-4"><dt>Plan</dt><dd className="font-medium text-white">{billingSnapshot.plan}</dd></div>
+                  <div className="flex justify-between gap-4"><dt>Status</dt><dd className="font-medium text-white">{billingSnapshot.status}</dd></div>
+                  <div className="flex justify-between gap-4"><dt>Free shows remaining</dt><dd className="font-medium text-white">{billingSnapshot.freeShowsRemaining}</dd></div>
+                  <div className="flex justify-between gap-4"><dt>Can purchase credits</dt><dd className="font-medium text-white">{billingSnapshot.canPurchaseCredits ? 'yes' : 'no'}</dd></div>
+                  <div className="flex justify-between gap-4"><dt>Needs attention</dt><dd className="font-medium text-white">{billingSnapshot.needsAttention ? 'yes' : 'no'}</dd></div>
+                </dl>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-slate-950/50 p-4">
+                <h3 className="text-lg font-semibold text-white">Audit / event log</h3>
+                <p className="mt-2 text-sm text-slate-300">Canonical billing changes should be recorded as append-only events, not overwritten state.</p>
+                <p className="mt-4 text-xs uppercase tracking-[0.22em] text-slate-400">Event names</p>
+                <ul className="mt-2 space-y-2 text-sm text-slate-300">
+                  {billingAuditEvents.map((eventName) => (
+                    <li key={eventName} className="rounded-xl border border-white/10 bg-slate-950/60 px-4 py-2">{eventName}</li>
+                  ))}
+                </ul>
+                <p className="mt-4 text-xs uppercase tracking-[0.22em] text-slate-400">Example audit payload</p>
+                <pre className="mt-2 overflow-x-auto rounded-2xl border border-white/10 bg-slate-950/70 p-4 text-xs text-slate-300">{JSON.stringify(sampleAuditEvent, null, 2)}</pre>
+              </div>
+            </div>
           </div>
 
           <div className="rounded-3xl border border-white/10 bg-white/5 p-6 md:col-span-2">

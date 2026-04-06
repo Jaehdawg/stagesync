@@ -53,5 +53,8 @@ describe('AdminBillingPage', () => {
     expect(screen.getByText('Hosted URLs', { selector: 'p' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: /pci boundary/i })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: /missing stripe keys/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /billing schema and resolver contract/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /resolver snapshot/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /audit \/ event log/i })).toBeInTheDocument()
   })
 })
