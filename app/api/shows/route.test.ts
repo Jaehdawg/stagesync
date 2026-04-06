@@ -134,6 +134,33 @@ describe('shows api route', () => {
     )
   })
 
+  it('saves tidal playlist mode with the playlist url when creating a test show', async () => {
+    getTestSessionMock.mockResolvedValue({ role: 'band', activeBandId: 'band-1' })
+    eventInsertMock.mockResolvedValue({ error: null })
+    eventSelectEqMock.mockResolvedValue({ data: { id: 'event-1' }, error: null })
+    showSettingsUpsertMock.mockResolvedValue({ error: null })
+
+    const { POST } = await loadRoute()
+    const response = await POST(makeRequest({
+      action: 'create',
+      name: 'Saturday Night',
+      description: 'Live karaoke show',
+      showDurationMinutes: '90',
+      signupBufferMinutes: '2',
+      songSourceMode: 'tidal_playlist',
+      tidalPlaylistUrl: 'https://tidal.com/playlist/abc123',
+    }))
+
+    expect(response.status).toBe(307)
+    expect(showSettingsUpsertMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        song_source_mode: 'tidal_playlist',
+        tidal_playlist_url: 'https://tidal.com/playlist/abc123',
+      }),
+      { onConflict: 'band_id' }
+    )
+  })
+
   it('keeps tidal catalog mode when updating test show settings', async () => {
     getTestSessionMock.mockResolvedValue({ role: 'band', activeBandId: 'band-1' })
     showSettingsSelectEqMock.mockResolvedValue({ data: { tidal_playlist_url: null }, error: null })
@@ -157,6 +184,34 @@ describe('shows api route', () => {
         song_source_mode: 'tidal_catalog',
         show_duration_minutes: 120,
         signup_buffer_minutes: 1,
+      }),
+      { onConflict: 'band_id' }
+    )
+  })
+
+  it('keeps the playlist url when updating tidal playlist mode', async () => {
+    getTestSessionMock.mockResolvedValue({ role: 'band', activeBandId: 'band-1' })
+    showSettingsSelectEqMock.mockResolvedValue({ data: { tidal_playlist_url: 'https://tidal.com/playlist/old' }, error: null })
+    showSettingsUpsertMock.mockResolvedValue({ error: null })
+    eventUpdateEqMock.mockResolvedValue({ error: null })
+
+    const { POST } = await loadRoute()
+    const response = await POST(makeRequest({
+      action: 'settings',
+      eventId: 'event-1',
+      name: 'Saturday Night',
+      description: 'Live karaoke show',
+      showDurationMinutes: '120',
+      signupBufferMinutes: '1',
+      songSourceMode: 'tidal_playlist',
+      tidalPlaylistUrl: 'https://tidal.com/playlist/new',
+    }))
+
+    expect(response.status).toBe(307)
+    expect(showSettingsUpsertMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        song_source_mode: 'tidal_playlist',
+        tidal_playlist_url: 'https://tidal.com/playlist/new',
       }),
       { onConflict: 'band_id' }
     )

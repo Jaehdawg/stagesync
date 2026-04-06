@@ -28,6 +28,7 @@ export type BandDashboardState = {
   showDurationMinutes?: number | null
   signupBufferMinutes?: number | null
   songSourceMode?: 'uploaded' | 'tidal_playlist' | 'tidal_catalog' | 'set_list'
+  tidalPlaylistUrl?: string | null
   bandAccessLevel?: 'admin' | 'member'
   testMode?: boolean
   singerSignupUrl?: string | null
@@ -76,6 +77,7 @@ export function BandDashboardView({
   showDurationMinutes,
   signupBufferMinutes,
   songSourceMode = 'uploaded',
+  tidalPlaylistUrl = null,
   bandAccessLevel = 'admin',
   testMode = false,
   singerSignupUrl = null,
@@ -86,9 +88,12 @@ export function BandDashboardView({
   const songSourceSelection =
     songSourceMode === 'set_list' && activeSetList
       ? 'set_list'
-      : songSourceMode === 'tidal_catalog' || songSourceMode === 'tidal_playlist'
-        ? 'tidal_catalog'
-        : 'uploaded'
+      : songSourceMode === 'tidal_playlist'
+        ? 'tidal_playlist'
+        : songSourceMode === 'tidal_catalog'
+          ? 'tidal_catalog'
+          : 'uploaded'
+  const isPlaylistMode = songSourceSelection === 'tidal_playlist'
   const liveQueueItems = queueItems.filter((item) => !['played', 'cancelled'].includes(item.status))
   const historyItems = queueItems.filter((item) => ['played', 'cancelled'].includes(item.status))
   const controls =
@@ -262,9 +267,26 @@ export function BandDashboardView({
                           className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white focus:border-cyan-400 focus:outline-none"
                         >
                           <option value="uploaded">{bandDashboardViewCopy.operations.uploadedSongList}</option>
+                          <option value="tidal_playlist">{bandDashboardViewCopy.operations.tidalPlaylist}</option>
                           <option value="tidal_catalog">{bandDashboardViewCopy.operations.tidalCatalog}</option>
                           {activeSetList ? <option value="set_list">{bandDashboardViewCopy.operations.setList}</option> : null}
                         </select>
+                        {isPlaylistMode ? (
+                          <div className="mt-3 space-y-2 rounded-2xl border border-white/10 bg-slate-950/50 p-4">
+                            <label htmlFor="tidal-playlist-url" className="text-sm font-medium text-slate-200">
+                              {bandDashboardViewCopy.operations.tidalPlaylistUrlLabel}
+                            </label>
+                            <input
+                              id="tidal-playlist-url"
+                              name="tidalPlaylistUrl"
+                              type="url"
+                              defaultValue={tidalPlaylistUrl ?? ''}
+                              placeholder="https://tidal.com/playlist/..."
+                              className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none"
+                            />
+                            <p className="text-xs text-cyan-100">{bandDashboardViewCopy.operations.tidalPlaylistNote}</p>
+                          </div>
+                        ) : null}
                         {songSourceSelection === 'set_list' && activeSetList ? (
                           <p className="text-xs text-cyan-100">
                             {bandDashboardViewCopy.operations.activeSetListLabel}: <span className="font-semibold">{activeSetList.name}</span>

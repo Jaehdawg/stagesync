@@ -39,6 +39,7 @@ export async function POST(request: NextRequest) {
   const showDurationMinutes = Number(formData.get('showDurationMinutes'))
   const signupBufferMinutes = Number(formData.get('signupBufferMinutes'))
   const songSourceMode = normalizeSongSourceMode(String(formData.get('songSourceMode') ?? ''))
+  const playlistUrl = String(formData.get('tidalPlaylistUrl') ?? '').trim()
 
   if (testSession?.role === 'band') {
     const bandId = testSession.activeBandId
@@ -69,7 +70,7 @@ export async function POST(request: NextRequest) {
             show_duration_minutes: Number.isFinite(showDurationMinutes) ? showDurationMinutes : 60,
             signup_buffer_minutes: Number.isFinite(signupBufferMinutes) ? signupBufferMinutes : 1,
             song_source_mode: songSourceMode,
-            tidal_playlist_url: null,
+            tidal_playlist_url: songSourceMode === 'tidal_playlist' ? playlistUrl || null : null,
             allow_tips: true,
           },
           { onConflict: 'band_id' }
@@ -92,6 +93,10 @@ export async function POST(request: NextRequest) {
         .select('tidal_playlist_url')
         .eq('band_id', bandId)
         .maybeSingle()
+      const nextPlaylistUrl =
+        songSourceMode === 'tidal_playlist'
+          ? playlistUrl || currentSettings?.tidal_playlist_url || null
+          : currentSettings?.tidal_playlist_url || null
 
       const { error: settingsError } = await serviceSupabase.from('test_show_settings').upsert(
         {
@@ -100,7 +105,7 @@ export async function POST(request: NextRequest) {
           show_duration_minutes: Number.isFinite(showDurationMinutes) ? showDurationMinutes : 60,
           signup_buffer_minutes: Number.isFinite(signupBufferMinutes) ? signupBufferMinutes : 1,
           song_source_mode: songSourceMode,
-          tidal_playlist_url: currentSettings?.tidal_playlist_url ?? null,
+          tidal_playlist_url: nextPlaylistUrl,
           allow_tips: true,
         },
         { onConflict: 'band_id' }
@@ -165,6 +170,7 @@ export async function POST(request: NextRequest) {
         signup_buffer_minutes: Number.isFinite(signupBufferMinutes) ? signupBufferMinutes : 1,
         show_duration_minutes: Number.isFinite(showDurationMinutes) ? showDurationMinutes : 60,
         song_source_mode: songSourceMode,
+        tidal_playlist_url: songSourceMode === 'tidal_playlist' ? playlistUrl || null : null,
       })
       if (settingsError) {
         return NextResponse.json({ message: settingsError.message }, { status: 500 })
@@ -179,6 +185,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'Event ID is required.' }, { status: 400 })
     }
 
+    const { data: currentSettings } = await serviceSupabase
+      .from('show_settings')
+      .select('tidal_playlist_url')
+      .eq('band_id', liveAccess.bandId)
+      .maybeSingle()
+
     const { error: settingsError } = await serviceSupabase.from('show_settings').upsert(
       {
         band_id: liveAccess.bandId,
@@ -189,6 +201,10 @@ export async function POST(request: NextRequest) {
         signup_buffer_minutes: Number.isFinite(signupBufferMinutes) ? signupBufferMinutes : 1,
         show_duration_minutes: Number.isFinite(showDurationMinutes) ? showDurationMinutes : 60,
         song_source_mode: songSourceMode,
+        tidal_playlist_url:
+          songSourceMode === 'tidal_playlist'
+            ? playlistUrl || currentSettings?.tidal_playlist_url || null
+            : currentSettings?.tidal_playlist_url || null,
       },
       { onConflict: 'event_id' }
     )

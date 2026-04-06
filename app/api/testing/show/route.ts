@@ -41,6 +41,7 @@ export async function POST(request: NextRequest) {
   const showDurationMinutes = Number(formData.get('showDurationMinutes'))
   const signupBufferMinutes = Number(formData.get('signupBufferMinutes'))
   const songSourceMode = String(formData.get('songSourceMode') ?? '')
+  const playlistUrl = String(formData.get('tidalPlaylistUrl') ?? '').trim()
 
   try {
     if (action === 'create') {
@@ -54,13 +55,18 @@ export async function POST(request: NextRequest) {
         .eq('band_id', testSession.activeBandId)
         .maybeSingle()
 
+      const nextPlaylistUrl =
+        mode === 'tidal_playlist'
+          ? playlistUrl || currentSettings?.tidal_playlist_url || null
+          : currentSettings?.tidal_playlist_url || null
+
       await updateTestShowSettings(supabase, {
         band_id: testSession.activeBandId,
         event_id: eventId,
         showDurationMinutes: Number.isFinite(showDurationMinutes) ? showDurationMinutes : 60,
         signupBufferMinutes: Number.isFinite(signupBufferMinutes) ? signupBufferMinutes : 1,
         songSourceMode: mode,
-        tidalPlaylistUrl: currentSettings?.tidal_playlist_url ?? null,
+        tidalPlaylistUrl: nextPlaylistUrl,
       })
     } else if (action === 'start' || action === 'pause' || action === 'resume' || action === 'end') {
       await updateTestShowState(supabase, { event_id: eventId, action })

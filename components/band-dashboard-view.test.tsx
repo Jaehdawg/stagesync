@@ -83,9 +83,26 @@ describe('BandDashboardView', () => {
     expect(screen.getByRole('button', { name: /save settings/i })).toBeInTheDocument()
     expect(screen.getByLabelText(/show duration/i)).toHaveValue(90)
     expect(screen.getByLabelText(/buffer between songs/i)).toHaveValue(2)
+    expect(screen.getByRole('option', { name: /tidal playlist/i })).toBeInTheDocument()
     expect(screen.getByRole('option', { name: /tidal catalog/i })).toBeInTheDocument()
     expect(screen.getByRole('option', { name: /set list/i })).toBeInTheDocument()
     expect(screen.getByText(/active set list/i)).toBeInTheDocument()
+  })
+
+  it('shows the playlist url field when playlist mode is selected', () => {
+    render(
+      <BandDashboardView
+        {...state}
+        currentShowId="show-1"
+        currentShowName="Saturday Night"
+        testMode
+        songSourceMode="tidal_playlist"
+        tidalPlaylistUrl="https://tidal.com/playlist/abc123"
+      />
+    )
+
+    expect(screen.getByLabelText(/playlist url/i)).toHaveValue('https://tidal.com/playlist/abc123')
+    expect(screen.getByText(/imported Tidal playlist instead of the live catalog/i)).toBeInTheDocument()
   })
 
   it('falls back when no active set list exists', () => {
