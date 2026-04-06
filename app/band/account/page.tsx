@@ -7,6 +7,7 @@ import { getTestLogin } from '@/lib/test-login-list'
 import { getLiveBandAccessContext } from '@/lib/band-access'
 import { getBandProfileForBandId } from '@/lib/band-tenancy'
 import { resolveSubscriptionControlState } from '@/lib/subscription-sync'
+import { getPerEventBillingStatusMessage } from '@/lib/per-event-billing'
 import { bandCopy } from '@/content/en/band'
 
 function getSubscriptionNoticeMessage(notice?: string | null) {
@@ -87,6 +88,7 @@ function AccountForm({
   hasTidalClientSecret,
   subscriptionControlState,
   subscriptionNotice,
+  creditNotice,
 }: {
   username: string
   bandName: string
@@ -118,11 +120,15 @@ function AccountForm({
     secondaryActionIntent: string
     helperText: string
     summaryLines: { label: string; value: string }[]
+    freeShowsAllocated: number
+    freeShowsRemaining: number
   }
   subscriptionNotice?: string | null
-  }) {
+  creditNotice?: string | null
+}) {
   const billingStatusMessage = getBillingStatusMessage(subscriptionControlState.current.status)
   const billingNeedsAttention = ['grace', 'past_due', 'suspended', 'paused', 'canceled'].includes(subscriptionControlState.current.status)
+  const perEventNoticeMessage = getPerEventBillingStatusMessage(creditNotice)
 
   return (
     <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100 sm:px-6 lg:px-8">
@@ -178,6 +184,45 @@ function AccountForm({
           {getSubscriptionNoticeMessage(subscriptionNotice) ? (
             <p className="mt-3 rounded-2xl border border-amber-400/20 bg-amber-400/10 px-4 py-3 text-sm text-amber-100">
               {getSubscriptionNoticeMessage(subscriptionNotice)}
+            </p>
+          ) : null}
+        </section>
+
+        <section className="rounded-3xl border border-white/10 bg-white/5 p-6">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-cyan-300">Per-event access</p>
+              <h2 className="mt-2 text-2xl font-semibold text-white">One-off show credit</h2>
+              <p className="mt-2 max-w-2xl text-slate-300">Buy a credit for a single show. A paid show stays unlocked for 24 hours after start, and restarts inside that window do not burn another credit.</p>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <form action="/api/billing/credits" method="post">
+                <input type="hidden" name="intent" value="purchase" />
+                <button type="submit" className="rounded-xl border border-cyan-400/30 bg-cyan-400/10 px-4 py-3 text-sm font-medium text-cyan-100">Buy show credit</button>
+              </form>
+              <form action="/api/billing/credits" method="post">
+                <input type="hidden" name="intent" value="receipts" />
+                <button type="submit" className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-white">View receipts</button>
+              </form>
+            </div>
+          </div>
+          <div className="mt-4 grid gap-3 md:grid-cols-3">
+            <div className="rounded-2xl border border-white/10 bg-slate-950/50 px-4 py-3 text-sm text-slate-300">
+              <p className="font-semibold text-white">Free shows remaining</p>
+              <p className="mt-1">{subscriptionControlState.freeShowsRemaining} of {subscriptionControlState.freeShowsAllocated}</p>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-slate-950/50 px-4 py-3 text-sm text-slate-300">
+              <p className="font-semibold text-white">Paid window</p>
+              <p className="mt-1">24 hours from the show start time.</p>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-slate-950/50 px-4 py-3 text-sm text-slate-300">
+              <p className="font-semibold text-white">Restart protection</p>
+              <p className="mt-1">Repeated start/stop in one paid window should not consume another credit.</p>
+            </div>
+          </div>
+          {perEventNoticeMessage ? (
+            <p className="mt-4 rounded-2xl border border-amber-400/20 bg-amber-400/10 px-4 py-3 text-sm text-amber-100">
+              {perEventNoticeMessage}
             </p>
           ) : null}
         </section>
@@ -331,6 +376,7 @@ export default async function BandAccountPage({ searchParams }: { searchParams?:
         hasTidalClientSecret={Boolean(tidalSettings?.tidal_client_secret)}
         subscriptionControlState={resolveSubscriptionControlState(billingAccount)}
         subscriptionNotice={subscriptionNotice}
+        creditNotice={firstSearchParam(params?.creditNotice) ?? null}
       />
     )
   }
@@ -358,6 +404,7 @@ export default async function BandAccountPage({ searchParams }: { searchParams?:
           hasTidalClientSecret={Boolean(tidalSettings?.tidal_client_secret)}
           subscriptionControlState={resolveSubscriptionControlState(billingAccount)}
           subscriptionNotice={subscriptionNotice}
+          creditNotice={firstSearchParam(params?.creditNotice) ?? null}
         />
       )
     }

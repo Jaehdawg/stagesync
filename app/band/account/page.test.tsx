@@ -177,4 +177,19 @@ describe('BandAccountPage', () => {
     expect(screen.getByText('Invoices and receipts', { selector: 'p' })).toBeInTheDocument()
     expect(screen.getByText('Plan management', { selector: 'p' })).toBeInTheDocument()
   })
+
+  it('shows the per-event credit purchase surface', async () => {
+    getTestSessionMock.mockResolvedValue(null)
+
+    const { default: BandAccountPage } = await loadPage()
+    const element = await BandAccountPage({ searchParams: Promise.resolve({ creditNotice: 'checkout-complete' }) })
+
+    render(element)
+
+    expect(screen.getByRole('heading', { name: /one-off show credit/i })).toBeInTheDocument()
+    expect(screen.getByText(/buy a credit for a single show/i)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /buy show credit/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /view receipts/i })).toBeInTheDocument()
+    expect(screen.getByText(/per-event credit purchase completed/i)).toBeInTheDocument()
+  })
 })

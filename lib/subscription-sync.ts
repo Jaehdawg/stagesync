@@ -25,6 +25,9 @@ export type SubscriptionControlState = {
   secondaryActionIntent: SubscriptionBillingIntent
   helperText: string
   summaryLines: SubscriptionSummaryLine[]
+  freeShowsAllocated: number
+  freeShowsUsed: number
+  freeShowsRemaining: number
 }
 
 export function resolveSubscriptionStateFromBillingAccount(row: BillingAccountSubscriptionRow | null | undefined): SubscriptionState {
@@ -121,5 +124,8 @@ export function resolveSubscriptionControlState(row: BillingAccountSubscriptionR
       { label: 'Renewal', value: formatSubscriptionRenewalLabel(current.plan, current.status) },
       { label: 'Free shows', value: freeShowsAllocated > 0 ? `${freeShowsRemaining} of ${freeShowsAllocated} remaining` : 'None configured' },
     ],
+    freeShowsAllocated,
+    freeShowsUsed,
+    freeShowsRemaining,
   }
 }

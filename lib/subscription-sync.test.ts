@@ -139,6 +139,9 @@ describe('subscription sync helpers', () => {
         { label: 'Renewal', value: 'Renews monthly' },
         { label: 'Free shows', value: '2 of 3 remaining' },
       ],
+      freeShowsAllocated: 3,
+      freeShowsUsed: 1,
+      freeShowsRemaining: 2,
     })
 
     expect(
@@ -171,6 +174,9 @@ describe('subscription sync helpers', () => {
         { label: 'Renewal', value: 'No renewal while free' },
         { label: 'Free shows', value: '3 of 3 remaining' },
       ],
+      freeShowsAllocated: 3,
+      freeShowsUsed: 0,
+      freeShowsRemaining: 3,
     })
   })
 })
