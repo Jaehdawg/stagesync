@@ -144,6 +144,30 @@ function AccountForm({
           </div>
         </header>
 
+        <section className="rounded-3xl border border-cyan-400/20 bg-cyan-400/10 p-6 text-cyan-50">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-cyan-200">Billing summary</p>
+              <h2 className="mt-2 text-2xl font-semibold text-white">{subscriptionControlState.current.label}</h2>
+              <p className="mt-2 max-w-2xl text-cyan-50/90">{subscriptionControlState.current.summary}</p>
+              <p className="mt-2 text-xs uppercase tracking-[0.22em] text-cyan-100/80">{subscriptionControlState.billingCycleLabel}</p>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {subscriptionControlState.summaryLines.slice(0, 4).map((line) => (
+                <div key={line.label} className="rounded-2xl border border-white/10 bg-slate-950/40 px-4 py-3">
+                  <p className="text-[11px] uppercase tracking-[0.22em] text-cyan-100/70">{line.label}</p>
+                  <p className="mt-2 text-sm font-medium text-white">{line.value}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="mt-4 flex flex-wrap gap-3 text-sm">
+            <Link href="/support" className="rounded-full border border-white/10 bg-white/5 px-4 py-2 font-medium text-white hover:border-cyan-400/50 hover:bg-white/10">Billing support</Link>
+            <span className="rounded-full border border-white/10 bg-slate-950/40 px-4 py-2 font-medium text-cyan-50/90">{subscriptionControlState.summaryLines[4]?.value ?? 'Billing status'}</span>
+            <span className="rounded-full border border-white/10 bg-slate-950/40 px-4 py-2 font-medium text-cyan-50/90">{subscriptionControlState.summaryLines[5]?.value ?? 'Free shows'}</span>
+          </div>
+        </section>
+
         <section className="rounded-3xl border border-white/10 bg-white/5 p-6">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>

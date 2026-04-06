@@ -109,15 +109,16 @@ describe('BandAccountPage', () => {
 
     render(element)
 
-    expect(screen.getByRole('heading', { name: /professional/i })).toBeInTheDocument()
-    expect(screen.getByText(/professional access is active/i)).toBeInTheDocument()
-    expect(screen.getByText(/monthly only/i)).toBeInTheDocument()
+    expect(screen.getByText(/billing summary/i)).toBeInTheDocument()
+    expect(screen.getAllByRole('heading', { name: /professional/i }).length).toBeGreaterThanOrEqual(2)
+    expect(screen.getAllByText(/professional access is active/i).length).toBeGreaterThanOrEqual(2)
+    expect(screen.getAllByText(/monthly only/i).length).toBeGreaterThanOrEqual(2)
     expect(screen.getAllByRole('button', { name: /open billing portal/i }).length).toBeGreaterThanOrEqual(1)
     expect(screen.getAllByRole('button', { name: /downgrade to free/i }).length).toBeGreaterThanOrEqual(1)
     expect(screen.getByText(/payment methods and invoices/i)).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /billing support/i })).toBeInTheDocument()
+    expect(screen.getAllByRole('link', { name: /billing support/i }).length).toBeGreaterThanOrEqual(2)
     expect(screen.getAllByText(/hosted checkout is not wired yet/i).length).toBeGreaterThanOrEqual(1)
-    expect(screen.getByText(/2 of 3 remaining/i)).toBeInTheDocument()
+    expect(screen.getAllByText(/2 of 3 remaining/i).length).toBeGreaterThanOrEqual(2)
   })
 
   it('shows the free state when no billing account exists', async () => {
@@ -141,7 +142,7 @@ describe('BandAccountPage', () => {
 
     render(element)
 
-    expect(screen.getByRole('heading', { name: /free/i })).toBeInTheDocument()
+    expect(screen.getAllByRole('heading', { name: /^free$/i }).length).toBeGreaterThanOrEqual(2)
     expect(screen.getAllByRole('button', { name: /start professional checkout/i }).length).toBeGreaterThanOrEqual(1)
     expect(screen.getByText(/professional is delivered through hosted checkout when enabled/i)).toBeInTheDocument()
   })
