@@ -49,6 +49,7 @@ describe('AdminBillingPage', () => {
     expect(screen.getByRole('heading', { name: /billing readiness/i })).toBeInTheDocument()
     expect(screen.getByText(/stripe checkout/i)).toBeInTheDocument()
     expect(screen.getByText(/stripe webhook/i)).toBeInTheDocument()
+    expect(screen.getByText(/professional price id/i)).toBeInTheDocument()
     expect(screen.getByText(/hosted urls/i)).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: /missing stripe keys/i })).toBeInTheDocument()
   })

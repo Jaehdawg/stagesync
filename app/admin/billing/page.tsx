@@ -74,7 +74,7 @@ export default async function AdminBillingPage() {
           </form>
         </header>
 
-        <section className="grid gap-4 md:grid-cols-3">
+        <section className="grid gap-4 md:grid-cols-4">
           <div className="rounded-3xl border border-white/10 bg-white/5 p-5">
             <p className="text-xs uppercase tracking-[0.22em] text-slate-400">Stripe checkout</p>
             <p className="mt-3 text-lg font-semibold text-white">{readiness.stripeCheckoutReady ? 'Configured' : 'Missing config'}</p>
@@ -82,6 +82,10 @@ export default async function AdminBillingPage() {
           <div className="rounded-3xl border border-white/10 bg-white/5 p-5">
             <p className="text-xs uppercase tracking-[0.22em] text-slate-400">Stripe webhook</p>
             <p className="mt-3 text-lg font-semibold text-white">{readiness.stripeWebhookReady ? 'Configured' : 'Missing config'}</p>
+          </div>
+          <div className="rounded-3xl border border-white/10 bg-white/5 p-5">
+            <p className="text-xs uppercase tracking-[0.22em] text-slate-400">Professional price ID</p>
+            <p className="mt-3 text-lg font-semibold text-white">{readiness.professionalPriceReady ? 'Configured' : 'Missing config'}</p>
           </div>
           <div className="rounded-3xl border border-white/10 bg-white/5 p-5">
             <p className="text-xs uppercase tracking-[0.22em] text-slate-400">Hosted URLs</p>

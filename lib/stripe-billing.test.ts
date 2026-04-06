@@ -14,7 +14,7 @@ describe('stripe billing helpers', () => {
         STRIPE_SECRET_KEY: 'sk_test_123',
         STRIPE_WEBHOOK_SECRET: 'whsec_123',
         STAGESYNC_PRO_MONTHLY_PRICE_ID: 'price_123',
-      } as NodeJS.ProcessEnv)
+      } as unknown as NodeJS.ProcessEnv)
     ).toEqual({
       secretKey: 'sk_test_123',
       webhookSecret: 'whsec_123',
