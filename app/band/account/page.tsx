@@ -11,6 +11,12 @@ import { bandCopy } from '@/content/en/band'
 
 function getSubscriptionNoticeMessage(notice?: string | null) {
   switch (notice) {
+    case 'checkout-complete':
+      return 'Checkout completed. If the plan summary looks stale, refresh once.'
+    case 'checkout-canceled':
+      return 'Checkout was canceled before anything changed.'
+    case 'portal-return':
+      return 'Returned from the billing portal.'
     case 'checkout-pending':
       return 'Hosted checkout is not wired yet.'
     case 'portal-pending':
