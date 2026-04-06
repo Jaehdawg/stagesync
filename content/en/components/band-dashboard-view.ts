@@ -20,6 +20,7 @@ export const bandDashboardViewCopy = {
     startShow: 'Start show',
     pauseSignups: 'Pause signups',
     resumeSignups: 'Resume signups',
+    undoPause: 'Undo pause',
     endShow: 'End show',
     saveSettings: 'Save settings',
     openSongLibrary: 'Open song library',

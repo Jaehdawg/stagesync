@@ -60,6 +60,12 @@ describe('BandDashboardView', () => {
     expect(screen.queryByRole('heading', { name: /singer experience/i })).not.toBeInTheDocument()
   })
 
+  it('adds an undo action when a show is paused', () => {
+    render(<BandDashboardView {...state} showState="paused" />)
+
+    expect(screen.getByRole('button', { name: /undo pause/i })).toBeInTheDocument()
+  })
+
   it('shows a create show form when there is no current show in test mode', () => {
     render(<BandDashboardView {...state} currentShowId={null} testMode currentShowName={null} />)
 

@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { resolveShowLifecycleTransition } from '@/lib/show-lifecycle'
 
 type RouteContext = {
   params: Promise<{ id: string }>
@@ -51,41 +52,66 @@ export async function POST(request: NextRequest, context: RouteContext) {
     return NextResponse.redirect(new URL('/band', request.url))
   }
 
-  const update: Record<string, unknown> = {}
-
-  switch (action) {
-    case 'start':
-      update.is_active = true
-      update.allow_signups = true
-      update.ended_at = null
-      break
-    case 'pause':
-      update.is_active = true
-      update.allow_signups = false
-      break
-    case 'resume':
-      update.is_active = true
-      update.allow_signups = true
-      break
-    case 'end':
-      update.is_active = false
-      update.allow_signups = false
-      update.ended_at = new Date().toISOString()
-      break
-    default:
-      return NextResponse.redirect(referer)
+  if (!['start', 'pause', 'resume', 'end', 'undo'].includes(action)) {
+    return NextResponse.redirect(referer)
   }
 
-  const { error } = await supabase.from('events').update(update).eq('id', id)
+  const { data: event } = await supabase
+    .from('events')
+    .select('band_id')
+    .eq('id', id)
+    .maybeSingle()
+
+  const { data: billingAccount } = event?.band_id
+    ? await supabase
+        .from('billing_accounts')
+        .select('id')
+        .eq('band_id', event.band_id)
+        .maybeSingle()
+    : { data: null }
+
+  const { data: currentWindow } = await supabase
+    .from('billing_show_windows')
+    .select('started_at, expires_at, consumed_credit_at, undo_grace_until, restart_count')
+    .eq('event_id', id)
+    .maybeSingle()
+
+  const transition = resolveShowLifecycleTransition(action as 'start' | 'pause' | 'resume' | 'end' | 'undo', {
+    bandId: String(event?.band_id ?? ''),
+    eventId: id,
+    billingAccountId: billingAccount?.id ?? null,
+    currentWindow: currentWindow
+      ? {
+          startedAt: currentWindow.started_at,
+          expiresAt: currentWindow.expires_at,
+          consumedCreditAt: currentWindow.consumed_credit_at,
+          undoGraceUntil: currentWindow.undo_grace_until,
+          restartCount: currentWindow.restart_count ?? 0,
+        }
+      : null,
+  })
+
+  const { error } = await supabase.from('events').update(transition.eventUpdate).eq('id', id)
 
   if (error) {
     return NextResponse.redirect(new URL(`/band?error=${encodeURIComponent(error.message)}`, request.url))
   }
 
-  if (action === 'end') {
-    const { error: queueError } = await supabase.from('queue_items').delete().eq('event_id', id)
-    if (queueError) {
-      return NextResponse.redirect(new URL(`/band?error=${encodeURIComponent(queueError.message)}`, request.url))
+  if (transition.windowUpdate && transition.windowUpdate.billingAccountId) {
+    const { error: windowError } = await supabase.from('billing_show_windows').upsert({
+      billing_account_id: transition.windowUpdate.billingAccountId,
+      band_id: transition.windowUpdate.bandId,
+      event_id: transition.windowUpdate.eventId,
+      started_at: transition.windowUpdate.startedAt,
+      expires_at: transition.windowUpdate.expiresAt,
+      undo_grace_until: transition.windowUpdate.undoGraceUntil,
+      consumed_credit_at: transition.windowUpdate.consumedCreditAt,
+      restart_count: transition.windowUpdate.restartCount,
+      is_paid_window: transition.windowUpdate.isPaidWindow,
+    }, { onConflict: 'event_id' })
+
+    if (windowError) {
+      return NextResponse.redirect(new URL(`/band?error=${encodeURIComponent(windowError.message)}`, request.url))
     }
   }
 

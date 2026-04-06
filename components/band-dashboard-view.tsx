@@ -104,10 +104,11 @@ export function BandDashboardView({
         ]
       : showState === 'paused'
         ? [
-            { label: bandDashboardViewCopy.operations.resumeSignups, value: 'resume' },
-            { label: bandDashboardViewCopy.operations.endShow, value: 'end' },
-          ]
-        : [{ label: bandDashboardViewCopy.operations.startShow, value: 'start' }]
+          { label: bandDashboardViewCopy.operations.resumeSignups, value: 'resume' },
+          { label: bandDashboardViewCopy.operations.undoPause, value: 'undo' },
+          { label: bandDashboardViewCopy.operations.endShow, value: 'end' },
+        ]
+      : [{ label: bandDashboardViewCopy.operations.startShow, value: 'start' }]
 
   return (
     <main className="space-y-8">

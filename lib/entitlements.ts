@@ -49,7 +49,7 @@ export function applyCreditConsumption(showWindow: PaidShowWindow, consumedAt: D
 }
 
 export function shouldConsumeAnotherCreditForRestart(
-  showWindow: PaidShowWindow | null | undefined,
+  showWindow: Pick<PaidShowWindow, 'startedAt' | 'expiresAt' | 'consumedCreditAt' | 'undoGraceUntil' | 'restartCount'> | null | undefined,
   now: Date = new Date()
 ) {
   if (!showWindow) {
