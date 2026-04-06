@@ -8,6 +8,11 @@ const createServerClientMock = vi.fn(() => ({
     setAll: vi.fn(),
   },
 }))
+const updateMock = vi.fn(() => ({
+  eq: () => ({
+    select: () => ({ maybeSingle: async () => ({ error: null }) }),
+  }),
+}))
 
 vi.mock('@supabase/ssr', () => ({
   createServerClient: createServerClientMock,
@@ -26,13 +31,10 @@ beforeEach(() => {
   createServerClientMock.mockClear()
   createServiceClientMock.mockReturnValue({
     from: () => ({
-      update: () => ({
-        eq: () => ({
-          select: () => ({ maybeSingle: async () => ({ error: null }) }),
-        }),
-      }),
+      update: updateMock,
     }),
   })
+  updateMock.mockClear()
 })
 
 describe('billing webhook route', () => {
@@ -51,6 +53,13 @@ describe('billing webhook route', () => {
 
     const response = await POST(request)
     expect(response.status).toBe(200)
+    expect(updateMock).toHaveBeenCalledWith(expect.objectContaining({
+      status: 'trialing',
+      payment_provider: 'stripe',
+      payment_customer_id: 'cus_123',
+      payment_subscription_id: 'sub_123',
+      updated_at: expect.any(String),
+    }))
   })
 
   it('applies a lifecycle update by band id', async () => {
@@ -67,6 +76,12 @@ describe('billing webhook route', () => {
 
     const response = await POST(request)
     expect(response.status).toBe(200)
+    expect(updateMock).toHaveBeenCalledWith(expect.objectContaining({
+      status: 'canceled',
+      payment_provider: 'stripe',
+      payment_subscription_id: 'sub_999',
+      updated_at: expect.any(String),
+    }))
   })
 
   it('rejects payloads with no lifecycle update', async () => {

@@ -45,6 +45,7 @@ export async function POST(request: NextRequest) {
     ...(update.paymentProvider !== undefined ? { payment_provider: update.paymentProvider } : {}),
     ...(update.paymentCustomerId !== undefined ? { payment_customer_id: update.paymentCustomerId } : {}),
     ...(update.paymentSubscriptionId !== undefined ? { payment_subscription_id: update.paymentSubscriptionId } : {}),
+    updated_at: new Date().toISOString(),
   })
 
   const result = billingAccountId
