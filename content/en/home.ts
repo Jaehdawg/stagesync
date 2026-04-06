@@ -7,7 +7,7 @@ export const homeCopy = {
   hero: {
     headline: 'Live band Karaoke and song requests made simple',
     subhead:
-      'StageSync turns singer sign-ups, show controls, and set lists into one clean workflow so bands can focus on the room and venues can keep the night on rails.',
+      'StageSync turns singer sign-ups, show control, and set lists into one smooth workflow—so singers have a better experience, bands stay in the moment, and venues keep the night on track.',
     primaryCta: 'Start a free trial',
     secondaryCta: 'Learn more',
   },
