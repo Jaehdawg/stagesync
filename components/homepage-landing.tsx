@@ -81,6 +81,9 @@ export function HomepageLanding() {
             <Link href="#learn-more" className="rounded-full border border-slate-300 bg-white px-4 py-2 text-slate-900 hover:border-cyan-400/50 hover:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10">
               {homeCopy.topNav.learnMore}
             </Link>
+            <Link href="/venues" className="rounded-full border border-slate-300 bg-white px-4 py-2 text-slate-900 hover:border-cyan-400/50 hover:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10">
+              {homeCopy.topNav.contactSales}
+            </Link>
             <Link href="#free-trial" className="rounded-full bg-cyan-600 px-4 py-2 text-white hover:bg-cyan-500 dark:bg-cyan-400 dark:text-slate-950 dark:hover:bg-cyan-300">
               {homeCopy.topNav.startFreeTrial}
             </Link>
@@ -179,6 +182,12 @@ export function HomepageLanding() {
                 <p className="mt-3 text-sm leading-6 text-slate-700 dark:text-slate-300">{item.note}</p>
               </article>
             ))}
+          </div>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Link href="/venues" className="rounded-full bg-cyan-600 px-5 py-3 text-sm font-semibold text-white hover:bg-cyan-500 dark:bg-cyan-400 dark:text-slate-950 dark:hover:bg-cyan-300">
+              {homeCopy.sales.cta}
+            </Link>
+            <p className="flex items-center text-sm text-slate-600 dark:text-slate-300">{homeCopy.sales.body}</p>
           </div>
         </section>
       </div>

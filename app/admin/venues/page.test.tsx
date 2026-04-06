@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const createClientMock = vi.fn()
 const getAdminAccessMock = vi.fn()
+const selectMock = vi.fn()
 
 vi.mock('@/utils/supabase/server', () => ({
   createClient: createClientMock,
@@ -23,7 +24,16 @@ async function loadPage() {
 beforeEach(() => {
   createClientMock.mockReset()
   getAdminAccessMock.mockReset()
-  createClientMock.mockResolvedValue({})
+  selectMock.mockReset()
+  createClientMock.mockResolvedValue({
+    from: vi.fn(() => ({
+      select: vi.fn(() => ({
+        order: vi.fn(() => ({
+          limit: vi.fn(() => Promise.resolve({ data: [], error: null })),
+        })),
+      })),
+    })),
+  })
 })
 
 describe('AdminVenuesPage', () => {

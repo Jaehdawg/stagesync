@@ -3,6 +3,7 @@ export const homeCopy = {
   topNav: {
     learnMore: 'Learn more',
     startFreeTrial: 'Start a free trial',
+    contactSales: 'Contact sales',
   },
   hero: {
     headline: 'Live band Karaoke and song requests made simple',
@@ -76,6 +77,12 @@ export const homeCopy = {
     body: 'Jump into the band portal, create a show, and see the full workflow in a few minutes.',
     cta: 'Start a free trial',
     secondaryCta: 'See pricing',
+  },
+  sales: {
+    eyebrow: 'Venues and operators',
+    title: 'Need pricing, a demo, or a multi-room setup?',
+    body: 'Use the venue inquiry flow to get routed to the right internal review path.',
+    cta: 'Contact sales',
   },
   authAlerts: {
     success: 'Magic link confirmed. You’re signed in.',

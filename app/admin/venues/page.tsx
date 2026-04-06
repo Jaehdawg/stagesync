@@ -11,6 +11,11 @@ export default async function AdminVenuesPage() {
   const liveAdminAccess = await getAdminAccess(supabase)
   const sections = buildVenueOperatorSections()
   const provisioningPlan = getVenueProvisioningPlan()
+  const { data: recentLeads } = await supabase
+    .from('venue_leads')
+    .select('id, company_name, contact_name, interest_level, follow_up_queue, status, created_at')
+    .order('created_at', { ascending: false })
+    .limit(5)
 
   if (!liveAdminAccess) {
     return (
@@ -67,6 +72,32 @@ export default async function AdminVenuesPage() {
               <p className="mt-3 text-3xl font-semibold text-white">{item.value}</p>
             </div>
           ))}
+        </section>
+
+        <section className="rounded-3xl border border-white/10 bg-white/5 p-6">
+          <h2 className="text-2xl font-semibold text-white">Recent venue leads</h2>
+          <p className="mt-2 max-w-2xl text-sm text-slate-300">New inquiries land here for sales follow-up and qualification routing.</p>
+          <div className="mt-4 space-y-3">
+            {(recentLeads ?? []).length ? (
+              (recentLeads ?? []).map((lead) => (
+                <article key={lead.id} className="rounded-2xl border border-white/10 bg-slate-950/50 p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <p className="text-lg font-semibold text-white">{lead.company_name}</p>
+                      <p className="text-sm text-slate-400">{lead.contact_name} · {lead.created_at}</p>
+                    </div>
+                    <div className="flex flex-wrap gap-2 text-xs uppercase tracking-[0.2em] text-slate-300">
+                      <span className="rounded-full border border-white/10 px-3 py-1">{lead.interest_level}</span>
+                      <span className="rounded-full border border-white/10 px-3 py-1">{lead.status}</span>
+                      <span className="rounded-full border border-white/10 px-3 py-1">{lead.follow_up_queue}</span>
+                    </div>
+                  </div>
+                </article>
+              ))
+            ) : (
+              <p className="rounded-2xl border border-white/10 bg-slate-950/50 p-4 text-sm text-slate-300">No venue leads yet.</p>
+            )}
+          </div>
         </section>
 
         <section className="rounded-3xl border border-white/10 bg-white/5 p-6">
