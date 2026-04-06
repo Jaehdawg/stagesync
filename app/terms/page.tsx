@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { getPaymentBoundaryRules, getPaymentBoundarySummary } from '@/lib/payment-boundary'
 
 export const metadata: Metadata = {
   title: 'Terms / Terms of Service | StageSync',
@@ -6,6 +7,7 @@ export const metadata: Metadata = {
 }
 
 export default function TermsPage() {
+  const paymentBoundaryRules = getPaymentBoundaryRules()
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(34,211,238,0.10),_transparent_30%),radial-gradient(circle_at_bottom_right,_rgba(168,85,247,0.08),_transparent_28%),#f8fafc] px-4 py-10 text-slate-950 dark:bg-[radial-gradient(circle_at_top,_rgba(34,211,238,0.12),_transparent_30%),radial-gradient(circle_at_bottom_right,_rgba(168,85,247,0.10),_transparent_28%),#020617] dark:text-slate-100 sm:px-6 lg:px-8">
       <div className="mx-auto w-full max-w-3xl">
@@ -29,8 +31,16 @@ export default function TermsPage() {
             <article className="rounded-2xl border border-slate-200 bg-slate-50 p-5 dark:border-white/10 dark:bg-slate-950/60">
               <h2 className="text-lg font-semibold text-slate-950 dark:text-white">Payments and billing</h2>
               <p className="mt-3 text-sm leading-6 text-slate-700 dark:text-slate-300">
-                Payment flows will be hosted outside StageSync’s PCI boundary. Checkout, subscription, and invoice experiences are intentionally not implemented yet.
+                {getPaymentBoundarySummary()}
               </p>
+              <ul className="mt-4 space-y-3 text-sm leading-6 text-slate-700 dark:text-slate-300">
+                {paymentBoundaryRules.map((rule) => (
+                  <li key={rule.title} className="rounded-xl border border-slate-200 bg-white px-4 py-3 dark:border-white/10 dark:bg-slate-950/60">
+                    <p className="font-semibold text-slate-950 dark:text-white">{rule.title}</p>
+                    <p className="mt-1">{rule.detail}</p>
+                  </li>
+                ))}
+              </ul>
             </article>
 
             <article className="rounded-2xl border border-slate-200 bg-slate-50 p-5 dark:border-white/10 dark:bg-slate-950/60">

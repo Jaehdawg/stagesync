@@ -4,6 +4,7 @@ import { BandAccessForm } from '@/components/band-access-form'
 import { getAdminAccess } from '@/lib/admin-access'
 import { getStripeBillingConfig } from '@/lib/stripe-billing'
 import { getStripeBillingReadiness } from '@/lib/stripe-billing-readiness'
+import { getPaymentBoundaryRules, getPaymentBoundarySummary } from '@/lib/payment-boundary'
 import { adminCopy } from '@/content/en/admin'
 
 function StatusChip({ ready }: { ready: boolean }) {
@@ -49,6 +50,7 @@ export default async function AdminBillingPage() {
   }
 
   const readiness = getStripeBillingReadiness(getStripeBillingConfig(), hostedBillingUrls)
+  const paymentBoundaryRules = getPaymentBoundaryRules()
 
   return (
     <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100 sm:px-6 lg:px-8">
@@ -140,6 +142,19 @@ export default async function AdminBillingPage() {
                 ) : null}
               </div>
             </dl>
+          </div>
+
+          <div className="rounded-3xl border border-white/10 bg-white/5 p-6 md:col-span-2">
+            <h2 className="text-2xl font-semibold text-white">PCI boundary</h2>
+            <p className="mt-3 text-sm leading-6 text-slate-300">{getPaymentBoundarySummary()}</p>
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              {paymentBoundaryRules.map((rule) => (
+                <div key={rule.title} className="rounded-2xl border border-white/10 bg-slate-950/50 px-4 py-3 text-sm text-slate-300">
+                  <p className="font-semibold text-white">{rule.title}</p>
+                  <p className="mt-1">{rule.detail}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </section>
       </div>
