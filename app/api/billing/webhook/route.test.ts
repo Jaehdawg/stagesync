@@ -13,6 +13,17 @@ const updateMock = vi.fn(() => ({
     select: () => ({ maybeSingle: async () => ({ error: null }) }),
   }),
 }))
+const createStripeClientMock = vi.fn()
+const getStripeBillingConfigMock = vi.fn()
+
+vi.mock('../../../../lib/stripe-billing', async () => {
+  const actual = await vi.importActual<typeof import('../../../../lib/stripe-billing')>('../../../../lib/stripe-billing')
+  return {
+    ...actual,
+    createStripeClient: createStripeClientMock,
+    getStripeBillingConfig: getStripeBillingConfigMock,
+  }
+})
 
 vi.mock('@supabase/ssr', () => ({
   createServerClient: createServerClientMock,
@@ -29,10 +40,17 @@ async function loadRoute() {
 beforeEach(() => {
   createServiceClientMock.mockReset()
   createServerClientMock.mockClear()
+  createStripeClientMock.mockReset()
+  getStripeBillingConfigMock.mockReset()
   createServiceClientMock.mockReturnValue({
     from: () => ({
       update: updateMock,
     }),
+  })
+  getStripeBillingConfigMock.mockReturnValue({
+    secretKey: null,
+    webhookSecret: null,
+    professionalPriceId: null,
   })
   updateMock.mockClear()
 })
@@ -93,5 +111,39 @@ describe('billing webhook route', () => {
 
     const response = await POST(request)
     expect(response.status).toBe(400)
+  })
+
+  it('verifies stripe webhook signatures and applies stripe lifecycle updates', async () => {
+    getStripeBillingConfigMock.mockReturnValue({
+      secretKey: 'sk_test_123',
+      webhookSecret: 'whsec_123',
+      professionalPriceId: 'price_123',
+    })
+    createStripeClientMock.mockReturnValue({
+      webhooks: {
+        constructEvent: vi.fn(() => ({
+          type: 'customer.subscription.updated',
+          data: { object: { customer: 'cus_123', id: 'sub_123', status: 'past_due', metadata: { billing_account_id: 'account-1' } } },
+        })),
+      },
+    })
+
+    const { POST } = await loadRoute()
+    const request = {
+      text: async () => '{"id":"evt_123"}',
+      headers: { get: () => 't=1,v1=abc' },
+      cookies: { getAll: () => [], set: vi.fn() },
+      json: async () => ({}) ,
+    } as unknown as NextRequest
+
+    const response = await POST(request)
+    expect(response.status).toBe(200)
+    expect(updateMock).toHaveBeenCalledWith(expect.objectContaining({
+      status: 'past_due',
+      payment_provider: 'stripe',
+      payment_customer_id: 'cus_123',
+      payment_subscription_id: 'sub_123',
+      updated_at: expect.any(String),
+    }))
   })
 })

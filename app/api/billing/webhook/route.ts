@@ -36,7 +36,11 @@ export async function POST(request: NextRequest) {
       const stripe = createStripeClient(stripeConfig.secretKey)
       const event = stripe.webhooks.constructEvent(rawBody, stripeSignature, stripeConfig.webhookSecret)
       update = resolveStripeBillingLifecycleUpdate(event as unknown as StripeWebhookLikeEvent)
-      payload = event.data?.object ?? null
+      const object = event.data?.object as { metadata?: Record<string, string | undefined> } | undefined
+      payload = {
+        billingAccountId: object?.metadata?.billing_account_id ?? object?.metadata?.billingAccountId ?? null,
+        bandId: object?.metadata?.band_id ?? object?.metadata?.bandId ?? null,
+      }
     } catch (error) {
       return NextResponse.json({ message: error instanceof Error ? error.message : 'Invalid Stripe webhook signature.' }, { status: 400 })
     }
