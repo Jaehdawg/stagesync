@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { AnalyticsPageView } from '@/components/analytics-page-view'
 import { getVenueLeadInterestOptions, getVenueLeadQuestions, getVenueLeadStatusMessage } from '@/lib/venue-leads'
 
 export const metadata: Metadata = {
@@ -19,6 +20,7 @@ export default async function VenuesPage({ searchParams }: { searchParams?: Prom
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(34,211,238,0.14),_transparent_30%),radial-gradient(circle_at_bottom_right,_rgba(168,85,247,0.10),_transparent_28%),#020617] px-4 py-8 text-slate-100 sm:px-6 lg:px-8">
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
+        <AnalyticsPageView eventName="venue.lead.page.viewed" source="venues" />
         <header className="rounded-[2rem] border border-white/10 bg-white/5 p-6">
           <p className="text-xs font-semibold uppercase tracking-[0.35em] text-cyan-300">Venue sales</p>
           <h1 className="mt-3 text-4xl font-semibold tracking-tight text-white sm:text-5xl">Request a demo or contact sales</h1>

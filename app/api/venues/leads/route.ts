@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { createServiceClient } from '@/utils/supabase/service'
+import { recordAnalyticsEvent } from '@/lib/analytics-events'
 import { getVenueLeadFollowUpQueue, type VenueLeadInterestLevel } from '@/lib/venue-leads'
 
 function getFormValue(formData: FormData, key: string) {
@@ -48,6 +49,31 @@ export async function POST(request: NextRequest) {
   const { error } = await serviceSupabase.from('venue_leads').insert(lead)
   if (error) {
     return NextResponse.json({ message: error.message }, { status: 500 })
+  }
+
+  void recordAnalyticsEvent(serviceSupabase, {
+    eventName: 'venue.lead.created',
+    source: 'venues.lead.form',
+    actorRole: 'guest',
+    entityType: 'venue_leads',
+    properties: {
+      interestLevel,
+      followUpQueue: lead.follow_up_queue,
+      roomsCount,
+    },
+  }).catch(() => {})
+
+  if (interestLevel === 'ready') {
+    void recordAnalyticsEvent(serviceSupabase, {
+      eventName: 'venue.lead.converted',
+      source: 'venues.lead.form',
+      actorRole: 'guest',
+      entityType: 'venue_leads',
+      properties: {
+        interestLevel,
+        followUpQueue: lead.follow_up_queue,
+      },
+    }).catch(() => {})
   }
 
   return redirectWithNotice(request, 'submitted')

@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { createServiceClient } from '../../../utils/supabase/service'
+import { recordAnalyticsEvent } from '../../../lib/analytics-events'
 import { getShowState } from '../../../lib/show-state'
 
 type SongSourceType = 'uploaded' | 'google_sheet' | 'tidal_playlist' | 'tidal_catalog' | 'manual'
@@ -132,6 +133,21 @@ export async function POST(request: NextRequest) {
   if (songError) {
     return NextResponse.json({ message: songError.message }, { status: 500 })
   }
+
+  void recordAnalyticsEvent(serviceSupabase, {
+    eventName: 'queue.song.requested',
+    source: 'singer.queue.request',
+    bandId,
+    actorRole: 'singer',
+    actorUserId: user.id,
+    entityType: 'queue_items',
+    entityId: currentSingerRequest?.id ?? null,
+    properties: {
+      sourceType,
+      songId,
+      action,
+    },
+  }).catch(() => {})
 
   if (currentSingerRequest?.id) {
     const { error: updateError } = await serviceSupabase

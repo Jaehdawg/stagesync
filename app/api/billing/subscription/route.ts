@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { createServiceClient } from '@/utils/supabase/service'
+import { recordAnalyticsEvent } from '@/lib/analytics-events'
 import { getTestSession } from '@/lib/test-session'
 import { getTestLogin } from '@/lib/test-login-list'
 import { getLiveBandAccessContext } from '@/lib/band-access'
@@ -77,6 +78,14 @@ export async function POST(request: NextRequest) {
     }
 
     const hosted = resolveHostedBillingRedirect(intent as SubscriptionBillingIntent, hostedBillingConfig)
+    if (intent === 'upgrade') {
+      void recordAnalyticsEvent(createServiceClient(), {
+        eventName: 'subscription.started',
+        source: 'band.account.subscription',
+        actorRole: 'band',
+        properties: { intent },
+      }).catch(() => {})
+    }
     if (hosted.url) {
       return redirectToHostedUrl(hosted.url)
     }
@@ -90,6 +99,16 @@ export async function POST(request: NextRequest) {
   }
 
   const hosted = resolveHostedBillingRedirect(intent as SubscriptionBillingIntent, hostedBillingConfig)
+  if (intent === 'upgrade') {
+    void recordAnalyticsEvent(serviceSupabase, {
+      eventName: 'subscription.started',
+      source: 'band.account.subscription',
+      bandId: liveAccess.bandId,
+      actorRole: 'band',
+      actorUserId: liveAccess.userId,
+      properties: { intent },
+    }).catch(() => {})
+  }
   if (intent === 'invoices' && hosted.url) {
     return redirectToHostedUrl(hosted.url)
   }

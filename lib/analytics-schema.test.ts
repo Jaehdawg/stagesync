@@ -9,6 +9,8 @@ describe('analytics schema helpers', () => {
     expect(plan.requiredMetadata).toContain('occurredAt timestamp')
     expect(plan.prohibitedData).toContain('raw card numbers, CVC, or any payment instrument secret')
     expect(plan.eventSpecs.some((event) => event.name === 'pricing.checkout.started')).toBe(true)
+    expect(plan.eventSpecs.some((event) => event.name === 'venue.lead.page.viewed')).toBe(true)
+    expect(plan.eventSpecs.some((event) => event.name === 'subscription.started')).toBe(true)
   })
 
   it('lists the expected event names', () => {

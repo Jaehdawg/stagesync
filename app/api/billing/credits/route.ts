@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { createServiceClient } from '@/utils/supabase/service'
+import { recordAnalyticsEvent } from '@/lib/analytics-events'
 import { getTestSession } from '@/lib/test-session'
 import { getTestLogin } from '@/lib/test-login-list'
 import { getLiveBandAccessContext } from '@/lib/band-access'
@@ -54,6 +55,15 @@ export async function POST(request: NextRequest) {
 
   if (requiresPerEventPurchaseAcknowledgment(intent as PerEventBillingIntent) && acknowledgeTerms !== 'yes') {
     return redirectWithNotice(request, 'terms-required')
+  }
+
+  if (intent === 'purchase') {
+    void recordAnalyticsEvent(createServiceClient(), {
+      eventName: 'pricing.checkout.started',
+      source: 'band.account.per-event.purchase',
+      actorRole: 'band',
+      properties: { intent: 'purchase' },
+    }).catch(() => {})
   }
 
   if (testSession?.role === 'band') {

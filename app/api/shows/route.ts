@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { createServiceClient } from '@/utils/supabase/service'
+import { recordAnalyticsEvent } from '@/lib/analytics-events'
 import { getTestSession } from '@/lib/test-session'
 import { getLiveBandAccessContext } from '@/lib/band-access'
 
@@ -60,6 +61,15 @@ export async function POST(request: NextRequest) {
       if (createError) {
         return NextResponse.json({ message: createError.message }, { status: 500 })
       }
+
+      void recordAnalyticsEvent(serviceSupabase, {
+        eventName: 'show.created',
+        source: 'band.show.create',
+        bandId,
+        actorRole: 'band',
+        entityType: 'events',
+        properties: { action: 'create' },
+      }).catch(() => {})
 
       const { data: event } = await serviceSupabase.from('events').select('id').eq('band_id', bandId).order('created_at', { ascending: false }).limit(1).maybeSingle()
       if (event?.id) {
@@ -176,6 +186,17 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ message: settingsError.message }, { status: 500 })
       }
     }
+
+    void recordAnalyticsEvent(serviceSupabase, {
+      eventName: 'show.created',
+      source: 'band.show.create',
+      bandId: liveAccess.bandId,
+      actorRole: 'band',
+      actorUserId: liveAccess.userId,
+      entityType: 'events',
+      entityId: event?.id ?? null,
+      properties: { action: 'create' },
+    }).catch(() => {})
 
     return NextResponse.redirect(new URL('/band', request.url))
   }

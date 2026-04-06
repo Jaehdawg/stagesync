@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { createServiceClient } from '@/utils/supabase/service'
+import { recordAnalyticsEvent } from '@/lib/analytics-events'
 import { resolveBillingLifecycleUpdate } from '@/lib/billing-lifecycle'
 import { createStripeClient, getStripeBillingConfig, resolveStripeBillingLifecycleUpdate, type StripeWebhookLikeEvent } from '@/lib/stripe-billing'
 
@@ -77,6 +78,27 @@ export async function POST(request: NextRequest) {
 
   if (result.error) {
     return NextResponse.json({ message: result.error.message }, { status: 400 })
+  }
+
+  if (bandId) {
+    const eventName = update.status === 'canceled' || update.status === 'suspended'
+      ? 'subscription.churned'
+      : update.status === 'active' || update.status === 'trialing'
+        ? 'subscription.started'
+        : 'billing.status.changed'
+
+    void recordAnalyticsEvent(serviceSupabase, {
+      eventName,
+      source: 'api.billing.webhook',
+      bandId,
+      actorRole: 'system',
+      entityType: 'billing_accounts',
+      entityId: billingAccountId ?? null,
+      properties: {
+        status: update.status ?? null,
+        paymentProvider: update.paymentProvider ?? null,
+      },
+    }).catch(() => {})
   }
 
   return NextResponse.json({ ok: true })

@@ -34,6 +34,31 @@ const eventSpecs: AnalyticsEventSpec[] = [
     ],
   },
   {
+    name: 'pricing.cta.clicked',
+    category: 'pricing',
+    description: 'A pricing or conversion CTA was clicked.',
+    requiredFields: [
+      { name: 'source', required: true, description: 'The CTA location or page section.' },
+      { name: 'next', required: true, description: 'The destination or next step after the click.' },
+      { name: 'occurredAt', required: true, description: 'Timestamp of the click.' },
+    ],
+    optionalFields: [
+      { name: 'bandId', required: false, description: 'Associated band, if known.' },
+    ],
+  },
+  {
+    name: 'trial.started',
+    category: 'pricing',
+    description: 'A user started a free-trial or band onboarding flow.',
+    requiredFields: [
+      { name: 'source', required: true, description: 'The surface where the trial start originated.' },
+      { name: 'occurredAt', required: true, description: 'Timestamp of the start event.' },
+    ],
+    optionalFields: [
+      { name: 'bandId', required: false, description: 'The band being onboarded.' },
+    ],
+  },
+  {
     name: 'pricing.checkout.started',
     category: 'pricing',
     description: 'A checkout flow was launched from the pricing surface.',
@@ -60,6 +85,19 @@ const eventSpecs: AnalyticsEventSpec[] = [
       { name: 'bandId', required: false, description: 'Band that received the purchase.' },
       { name: 'provider', required: false, description: 'Hosted billing provider name.' },
       { name: 'providerReference', required: false, description: 'Stripe session, payment, or subscription reference.' },
+    ],
+  },
+  {
+    name: 'show.created',
+    category: 'show',
+    description: 'A new show was created or reopened.',
+    requiredFields: [
+      { name: 'bandId', required: true, description: 'Owning band.' },
+      { name: 'showId', required: true, description: 'Event or show identifier.' },
+      { name: 'occurredAt', required: true, description: 'Timestamp of the action.' },
+    ],
+    optionalFields: [
+      { name: 'source', required: false, description: 'Where the show creation originated.' },
     ],
   },
   {
@@ -103,6 +141,32 @@ const eventSpecs: AnalyticsEventSpec[] = [
     ],
   },
   {
+    name: 'queue.song.requested',
+    category: 'usage',
+    description: 'A singer submitted or updated a song request.',
+    requiredFields: [
+      { name: 'bandId', required: true, description: 'Owning band.' },
+      { name: 'showId', required: true, description: 'Event or show identifier.' },
+      { name: 'occurredAt', required: true, description: 'Timestamp of the request.' },
+    ],
+    optionalFields: [
+      { name: 'songId', required: false, description: 'Normalized song identifier.' },
+      { name: 'sourceType', required: false, description: 'How the song was sourced.' },
+    ],
+  },
+  {
+    name: 'venue.lead.page.viewed',
+    category: 'venue',
+    description: 'A visitor viewed the venue sales or request-demo page.',
+    requiredFields: [
+      { name: 'source', required: true, description: 'The sales surface or page section.' },
+      { name: 'occurredAt', required: true, description: 'Timestamp of the page view.' },
+    ],
+    optionalFields: [
+      { name: 'bandId', required: false, description: 'Band or venue context, if known.' },
+    ],
+  },
+  {
     name: 'venue.lead.created',
     category: 'venue',
     description: 'A venue lead or contact was created.',
@@ -113,6 +177,47 @@ const eventSpecs: AnalyticsEventSpec[] = [
     optionalFields: [
       { name: 'bandId', required: false, description: 'Band associated with the lead.' },
       { name: 'venueName', required: false, description: 'Venue name, when safe to store.' },
+    ],
+  },
+  {
+    name: 'venue.lead.converted',
+    category: 'venue',
+    description: 'A venue inquiry converted to a qualified or sales-ready lead.',
+    requiredFields: [
+      { name: 'occurredAt', required: true, description: 'Timestamp of the conversion.' },
+      { name: 'source', required: true, description: 'The originating lead flow or source.' },
+    ],
+    optionalFields: [
+      { name: 'bandId', required: false, description: 'Band associated with the lead.' },
+      { name: 'venueName', required: false, description: 'Venue name, when safe to store.' },
+    ],
+  },
+  {
+    name: 'subscription.started',
+    category: 'billing',
+    description: 'A subscription checkout or activation started.',
+    requiredFields: [
+      { name: 'bandId', required: true, description: 'Owning band.' },
+      { name: 'occurredAt', required: true, description: 'Timestamp of the start event.' },
+      { name: 'source', required: true, description: 'Where the start originated.' },
+    ],
+    optionalFields: [
+      { name: 'provider', required: false, description: 'Billing provider name.' },
+      { name: 'providerReference', required: false, description: 'Checkout or subscription reference.' },
+    ],
+  },
+  {
+    name: 'subscription.churned',
+    category: 'billing',
+    description: 'A subscription was canceled, paused, or otherwise churned.',
+    requiredFields: [
+      { name: 'bandId', required: true, description: 'Owning band.' },
+      { name: 'occurredAt', required: true, description: 'Timestamp of the churn event.' },
+      { name: 'source', required: true, description: 'Where the churn was observed.' },
+    ],
+    optionalFields: [
+      { name: 'provider', required: false, description: 'Billing provider name.' },
+      { name: 'providerReference', required: false, description: 'Subscription reference.' },
     ],
   },
 ]

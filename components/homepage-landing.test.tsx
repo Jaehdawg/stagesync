@@ -7,7 +7,8 @@ describe('HomepageLanding', () => {
     render(<HomepageLanding />)
 
     expect(screen.getByRole('heading', { name: /live band karaoke and song requests made simple/i })).toBeInTheDocument()
-    expect(screen.getAllByRole('link', { name: /start a free trial/i }).find((link) => link.getAttribute('href') === '/band')).toBeTruthy()
+    expect(screen.getAllByRole('link', { name: /start a free trial/i }).find((link) => (link.getAttribute('href') ?? '').includes('/api/analytics/redirect?eventName=trial.started'))).toBeTruthy()
+    expect(screen.getAllByRole('link', { name: /contact sales/i }).find((link) => (link.getAttribute('href') ?? '').includes('/api/analytics/redirect?eventName=pricing.cta.clicked'))).toBeTruthy()
     expect(screen.getAllByRole('link', { name: /learn more/i }).find((link) => link.getAttribute('href') === '#learn-more')).toBeTruthy()
     expect(screen.getByRole('heading', { name: /three steps from doors open to last song/i })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: /bands, singers, and venues all win/i })).toBeInTheDocument()

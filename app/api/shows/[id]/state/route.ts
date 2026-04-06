@@ -1,5 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { createServiceClient } from '@/utils/supabase/service'
+import { recordAnalyticsEvent } from '@/lib/analytics-events'
 import { resolveShowLifecycleTransition } from '@/lib/show-lifecycle'
 
 type RouteContext = {
@@ -96,6 +98,23 @@ export async function POST(request: NextRequest, context: RouteContext) {
   if (error) {
     return NextResponse.redirect(new URL(`/band?error=${encodeURIComponent(error.message)}`, request.url))
   }
+
+  const analyticsEventName = action === 'pause'
+    ? 'show.paused'
+    : action === 'end'
+      ? 'show.ended'
+      : 'show.started'
+
+  void recordAnalyticsEvent(createServiceClient(), {
+    eventName: analyticsEventName,
+    source: 'band.show.state',
+    bandId: transition.windowUpdate?.bandId ?? event?.band_id ?? null,
+    actorRole: 'band',
+    actorUserId: user.id,
+    entityType: 'events',
+    entityId: id,
+    properties: { action },
+  }).catch(() => {})
 
   if (transition.windowUpdate && transition.windowUpdate.billingAccountId) {
     const { error: windowError } = await supabase.from('billing_show_windows').upsert({

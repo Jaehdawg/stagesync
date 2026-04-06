@@ -1,5 +1,6 @@
 import Link from 'next/link'
 
+import { AnalyticsPageView } from '@/components/analytics-page-view'
 import { homeCopy } from '@/content/en/home'
 
 function VisualMockup() {
@@ -73,6 +74,7 @@ export function HomepageLanding() {
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(34,211,238,0.14),_transparent_30%),radial-gradient(circle_at_bottom_right,_rgba(168,85,247,0.10),_transparent_28%),#f8fafc] px-4 py-6 text-slate-950 dark:bg-[radial-gradient(circle_at_top,_rgba(34,211,238,0.16),_transparent_30%),radial-gradient(circle_at_bottom_right,_rgba(168,85,247,0.14),_transparent_28%),#020617] dark:text-slate-100 sm:px-6 lg:px-8">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-8">
+        <AnalyticsPageView eventName="pricing.page.viewed" source="homepage" properties={{ section: 'pricing' }} />
         <header className="flex flex-wrap items-center justify-between gap-4 rounded-full border border-slate-200 bg-white/80 px-5 py-3 text-slate-900 shadow-sm backdrop-blur dark:border-white/10 dark:bg-white/5 dark:text-slate-100">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.35em] text-cyan-700 dark:text-cyan-300">{homeCopy.eyebrow}</p>
@@ -81,10 +83,10 @@ export function HomepageLanding() {
             <Link href="#learn-more" className="rounded-full border border-slate-300 bg-white px-4 py-2 text-slate-900 hover:border-cyan-400/50 hover:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10">
               {homeCopy.topNav.learnMore}
             </Link>
-            <Link href="/venues" className="rounded-full border border-slate-300 bg-white px-4 py-2 text-slate-900 hover:border-cyan-400/50 hover:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10">
+            <Link href="/api/analytics/redirect?eventName=pricing.cta.clicked&source=homepage.topnav.contact-sales&next=/venues" className="rounded-full border border-slate-300 bg-white px-4 py-2 text-slate-900 hover:border-cyan-400/50 hover:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10">
               {homeCopy.topNav.contactSales}
             </Link>
-            <Link href="#free-trial" className="rounded-full bg-cyan-600 px-4 py-2 text-white hover:bg-cyan-500 dark:bg-cyan-400 dark:text-slate-950 dark:hover:bg-cyan-300">
+            <Link href="/api/analytics/redirect?eventName=trial.started&source=homepage.topnav.start-free-trial&next=/band" className="rounded-full bg-cyan-600 px-4 py-2 text-white hover:bg-cyan-500 dark:bg-cyan-400 dark:text-slate-950 dark:hover:bg-cyan-300">
               {homeCopy.topNav.startFreeTrial}
             </Link>
           </nav>
@@ -99,7 +101,7 @@ export function HomepageLanding() {
               {homeCopy.hero.subhead}
             </p>
             <div className="mt-8 flex flex-wrap gap-4">
-              <Link href="/band" className="rounded-full bg-cyan-600 px-6 py-3 text-base font-semibold text-white transition hover:bg-cyan-500 dark:bg-cyan-400 dark:text-slate-950 dark:hover:bg-cyan-300">
+            <Link href="/api/analytics/redirect?eventName=trial.started&source=homepage.hero.start-free-trial&next=/band" className="rounded-full bg-cyan-600 px-6 py-3 text-base font-semibold text-white transition hover:bg-cyan-500 dark:bg-cyan-400 dark:text-slate-950 dark:hover:bg-cyan-300">
                 {homeCopy.hero.primaryCta}
               </Link>
               <Link href="#learn-more" className="rounded-full border border-slate-300 bg-white px-6 py-3 text-base font-semibold text-slate-900 transition hover:border-cyan-400/50 hover:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:border-cyan-400/50 dark:hover:bg-white/10">
@@ -158,7 +160,7 @@ export function HomepageLanding() {
               <h2 className="mt-3 text-3xl font-semibold text-slate-950 sm:text-4xl dark:text-white">{homeCopy.trial.title}</h2>
               <p className="mt-4 text-sm leading-6 text-slate-700 dark:text-slate-300">{homeCopy.trial.body}</p>
               <div className="mt-6 flex flex-wrap gap-3">
-                <Link href="/band" className="rounded-full bg-cyan-600 px-5 py-3 text-sm font-semibold text-white hover:bg-cyan-500 dark:bg-cyan-400 dark:text-slate-950 dark:hover:bg-cyan-300">
+                <Link href="/api/analytics/redirect?eventName=trial.started&source=homepage.trial.start-free-trial&next=/band" className="rounded-full bg-cyan-600 px-5 py-3 text-sm font-semibold text-white hover:bg-cyan-500 dark:bg-cyan-400 dark:text-slate-950 dark:hover:bg-cyan-300">
                   {homeCopy.trial.cta}
                 </Link>
                 <Link href="#pricing" className="rounded-full border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-900 hover:border-cyan-400/50 hover:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:border-cyan-400/50 dark:hover:bg-white/10">
@@ -184,9 +186,9 @@ export function HomepageLanding() {
             ))}
           </div>
           <div className="mt-6 flex flex-wrap gap-3">
-            <Link href="/venues" className="rounded-full bg-cyan-600 px-5 py-3 text-sm font-semibold text-white hover:bg-cyan-500 dark:bg-cyan-400 dark:text-slate-950 dark:hover:bg-cyan-300">
-              {homeCopy.sales.cta}
-            </Link>
+              <Link href="/api/analytics/redirect?eventName=pricing.cta.clicked&source=homepage.pricing.contact-sales&next=/venues" className="rounded-full bg-cyan-600 px-5 py-3 text-sm font-semibold text-white hover:bg-cyan-500 dark:bg-cyan-400 dark:text-slate-950 dark:hover:bg-cyan-300">
+                {homeCopy.sales.cta}
+              </Link>
             <p className="flex items-center text-sm text-slate-600 dark:text-slate-300">{homeCopy.sales.body}</p>
           </div>
         </section>
