@@ -86,6 +86,7 @@ function AccountForm({
   username,
   bandName,
   bandProfile,
+  currentPaidWindow,
   tidalClientId,
   hasTidalClientSecret,
   subscriptionControlState,
@@ -104,6 +105,13 @@ function AccountForm({
     cashapp_url: string | null
     custom_message: string | null
     logo_url?: string | null
+  } | null
+  currentPaidWindow: {
+    event_id: string
+    started_at: string
+    expires_at: string
+    undo_grace_until: string | null
+    restart_count: number | null
   } | null
   tidalClientId: string | null
   hasTidalClientSecret: boolean
@@ -267,6 +275,43 @@ function AccountForm({
         <section className="rounded-3xl border border-white/10 bg-white/5 p-6">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-cyan-300">Active access window</p>
+              <h2 className="mt-2 text-2xl font-semibold text-white">Current paid show status</h2>
+              <p className="mt-2 max-w-2xl text-slate-300">This shows the live 24-hour access window for the most recent paid show, including any undo grace period.</p>
+            </div>
+          </div>
+          {currentPaidWindow ? (
+            <div className="mt-4 grid gap-3 md:grid-cols-4">
+              <div className="rounded-2xl border border-white/10 bg-slate-950/50 px-4 py-3 text-sm text-slate-300">
+                <p className="font-semibold text-white">Show ID</p>
+                <p className="mt-1 break-all">{currentPaidWindow.event_id}</p>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-slate-950/50 px-4 py-3 text-sm text-slate-300">
+                <p className="font-semibold text-white">Started</p>
+                <p className="mt-1">{currentPaidWindow.started_at}</p>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-slate-950/50 px-4 py-3 text-sm text-slate-300">
+                <p className="font-semibold text-white">Expires</p>
+                <p className="mt-1">{currentPaidWindow.expires_at}</p>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-slate-950/50 px-4 py-3 text-sm text-slate-300">
+                <p className="font-semibold text-white">Restarts</p>
+                <p className="mt-1">{currentPaidWindow.restart_count ?? 0}</p>
+              </div>
+            </div>
+          ) : (
+            <p className="mt-4 rounded-2xl border border-white/10 bg-slate-950/50 px-4 py-3 text-sm text-slate-300">No active paid show window is on file yet. Start a show to create one.</p>
+          )}
+          {currentPaidWindow?.undo_grace_until ? (
+            <p className="mt-4 rounded-2xl border border-cyan-400/20 bg-cyan-400/10 px-4 py-3 text-sm text-cyan-100">
+              Undo grace is active until {currentPaidWindow.undo_grace_until}.
+            </p>
+          ) : null}
+        </section>
+
+        <section className="rounded-3xl border border-white/10 bg-white/5 p-6">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
               <p className="text-xs font-semibold uppercase tracking-[0.28em] text-cyan-300">Billing portal</p>
               <h2 className="mt-2 text-2xl font-semibold text-white">Payment methods and invoices</h2>
               <p className="mt-2 max-w-2xl text-slate-300">{billingStatusMessage}</p>
@@ -412,12 +457,19 @@ export default async function BandAccountPage({ searchParams }: { searchParams?:
       .select('status, payment_provider, payment_subscription_id, free_shows_allocated, free_shows_used')
       .eq('band_id', liveAccess.bandId)
       .maybeSingle()
+    const { data: currentPaidWindows } = await serviceSupabase
+      .from('billing_show_windows')
+      .select('event_id, started_at, expires_at, undo_grace_until, restart_count')
+      .eq('band_id', liveAccess.bandId)
+      .order('started_at', { ascending: false })
+      .limit(1)
 
     return (
       <AccountForm
         username={liveAccess.username}
         bandName={liveAccess.bandName}
         bandProfile={bandProfile}
+        currentPaidWindow={(currentPaidWindows ?? [])[0] ?? null}
         tidalClientId={tidalSettings?.tidal_client_id ?? null}
         hasTidalClientSecret={Boolean(tidalSettings?.tidal_client_secret)}
         subscriptionControlState={resolveSubscriptionControlState(billingAccount)}
@@ -440,12 +492,19 @@ export default async function BandAccountPage({ searchParams }: { searchParams?:
         .select('status, payment_provider, payment_subscription_id, free_shows_allocated, free_shows_used')
         .eq('band_id', testSession.activeBandId)
         .maybeSingle()
+      const { data: currentPaidWindows } = await serviceSupabase
+        .from('billing_show_windows')
+        .select('event_id, started_at, expires_at, undo_grace_until, restart_count')
+        .eq('band_id', testSession.activeBandId)
+        .order('started_at', { ascending: false })
+        .limit(1)
 
       return (
         <AccountForm
           username={current.username}
           bandName={current.band_name ?? bandCopy.accountPage.bandFallbackName}
           bandProfile={null}
+          currentPaidWindow={(currentPaidWindows ?? [])[0] ?? null}
           tidalClientId={tidalSettings?.tidal_client_id ?? null}
           hasTidalClientSecret={Boolean(tidalSettings?.tidal_client_secret)}
           subscriptionControlState={resolveSubscriptionControlState(billingAccount)}
