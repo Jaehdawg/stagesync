@@ -40,9 +40,9 @@ export function getPerEventBillingStatusMessage(notice?: string | null) {
     case 'checkout-canceled':
       return 'Per-event credit purchase was canceled before payment completed.'
     case 'credit-checkout-pending':
-      return 'Per-event credit checkout is not wired yet.'
+      return 'Per-event credit checkout is unavailable in this environment yet.'
     case 'receipt-pending':
-      return 'Hosted receipts are not wired yet.'
+      return 'Hosted receipts are unavailable in this environment yet.'
     default:
       return null
   }

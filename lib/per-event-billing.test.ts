@@ -20,6 +20,8 @@ describe('per-event billing helpers', () => {
 
     expect(getPerEventBillingStatusMessage('checkout-complete')).toContain('completed')
     expect(getPerEventBillingStatusMessage('checkout-canceled')).toContain('canceled')
+    expect(getPerEventBillingStatusMessage('credit-checkout-pending')).toBe('Per-event credit checkout is unavailable in this environment yet.')
+    expect(getPerEventBillingStatusMessage('receipt-pending')).toBe('Hosted receipts are unavailable in this environment yet.')
   })
 
   it('builds a hosted credit purchase ledger entry', () => {
