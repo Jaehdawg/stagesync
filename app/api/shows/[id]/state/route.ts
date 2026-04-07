@@ -2,6 +2,7 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { createServiceClient } from '@/utils/supabase/service'
 import { recordAnalyticsEvent } from '@/lib/analytics-events'
+import { buildCreditConsumptionEntry } from '@/lib/billing'
 import { resolveShowLifecycleTransition } from '@/lib/show-lifecycle'
 
 type RouteContext = {
@@ -117,6 +118,24 @@ export async function POST(request: NextRequest, context: RouteContext) {
   }).catch(() => {})
 
   if (transition.windowUpdate && transition.windowUpdate.billingAccountId) {
+    const shouldRecordConsumption = transition.windowUpdate.consumedCreditAt !== null && (!currentWindow?.consumed_credit_at || currentWindow.consumed_credit_at === null)
+
+    if (shouldRecordConsumption) {
+      const { error: ledgerError } = await supabase.from('billing_credit_ledger').insert(
+        buildCreditConsumptionEntry({
+          bandId: transition.windowUpdate.bandId,
+          eventId: transition.windowUpdate.eventId,
+          billingAccountId: transition.windowUpdate.billingAccountId,
+          provider: 'internal',
+          note: action === 'start' ? 'First show start consumed one paid access credit.' : 'Show restart consumed one paid access credit.',
+        })
+      )
+
+      if (ledgerError) {
+        return NextResponse.redirect(new URL(`/band?error=${encodeURIComponent(ledgerError.message)}`, request.url))
+      }
+    }
+
     const { error: windowError } = await supabase.from('billing_show_windows').upsert({
       billing_account_id: transition.windowUpdate.billingAccountId,
       band_id: transition.windowUpdate.bandId,
