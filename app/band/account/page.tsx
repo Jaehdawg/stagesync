@@ -19,17 +19,17 @@ function getSubscriptionNoticeMessage(notice?: string | null) {
     case 'portal-return':
       return 'Returned from the billing portal.'
     case 'checkout-pending':
-      return 'Hosted checkout is not wired yet.'
+      return 'Hosted checkout is unavailable in this environment yet.'
     case 'portal-pending':
-      return 'Hosted billing portal is not wired yet.'
+      return 'Hosted billing portal is unavailable in this environment yet.'
     case 'downgrade-pending':
-      return 'Hosted downgrade flow is not wired yet.'
+      return 'Hosted downgrade flow is unavailable in this environment yet.'
     case 'no-change':
       return 'No billing change was made.'
     case 'invoices-pending':
-      return 'Hosted invoices and receipts are not wired yet.'
+      return 'Hosted invoices and receipts are unavailable in this environment yet.'
     case 'provider-pending':
-      return 'Billing actions are still waiting on hosted checkout or portal wiring.'
+      return 'Billing actions are waiting on the hosted provider configuration.'
     default:
       return null
   }

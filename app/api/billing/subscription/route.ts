@@ -77,6 +77,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'Band admin access required.' }, { status: 403 })
     }
 
+    const bandId = current.active_band_id ?? testSession.activeBandId ?? null
     const hosted = resolveHostedBillingRedirect(intent as SubscriptionBillingIntent, hostedBillingConfig)
     if (intent === 'upgrade') {
       void recordAnalyticsEvent(createServiceClient(), {
@@ -88,6 +89,47 @@ export async function POST(request: NextRequest) {
     }
     if (hosted.url) {
       return redirectToHostedUrl(hosted.url)
+    }
+
+    if (hasStripeCheckoutConfig(stripeBillingConfig) && bandId) {
+      const billingAccount = await serviceSupabase
+        .from('billing_accounts')
+        .select('id, payment_customer_id')
+        .eq('band_id', bandId)
+        .maybeSingle()
+
+      const urls = getBillingRedirectUrls(request)
+      const stripe = createStripeClient(stripeBillingConfig.secretKey!)
+
+      if (intent === 'upgrade') {
+        const session = await stripe.checkout.sessions.create(
+          buildStripeCheckoutRequest({
+            bandId,
+            bandName: current.band_name ?? 'Band',
+            customerEmail: null,
+            professionalPriceId: stripeBillingConfig.professionalPriceId!,
+            successUrl: urls.successUrl,
+            cancelUrl: urls.cancelUrl,
+          })
+        )
+
+        if (session.url) {
+          return redirectToHostedUrl(session.url)
+        }
+      }
+
+      if ((intent === 'manage' || intent === 'downgrade' || intent === 'invoices') && billingAccount.data?.payment_customer_id) {
+        const session = await stripe.billingPortal.sessions.create(
+          buildStripePortalRequest({
+            customerId: billingAccount.data.payment_customer_id,
+            returnUrl: urls.returnUrl,
+          })
+        )
+
+        if (session.url) {
+          return redirectToHostedUrl(session.url)
+        }
+      }
     }
 
     return redirectWithNotice(request, hosted.notice ?? 'no-change')
