@@ -40,11 +40,19 @@ vi.mock('@/components/band-access-form', () => ({
 function buildSupabaseClient() {
   return {
     from(table: string) {
-      if (table === 'band_profiles' || table === 'billing_accounts') {
+      if (table === 'band_profiles' || table === 'billing_accounts' || table === 'billing_show_windows') {
+        const query = {
+          maybeSingle: async () => createQueryMock(table),
+          order: vi.fn(() => ({
+            limit: vi.fn(async () => createQueryMock(table)),
+          })),
+        }
+
         return {
           select: vi.fn(() => ({
-            eq: vi.fn(() => ({
-              maybeSingle: async () => createQueryMock(table),
+            eq: vi.fn(() => query),
+            order: vi.fn(() => ({
+              limit: vi.fn(async () => createQueryMock(table)),
             })),
           })),
         }
@@ -96,6 +104,21 @@ beforeEach(() => {
       }
     }
 
+    if (table === 'billing_show_windows') {
+      return {
+        data: [
+          {
+            event_id: 'event-1',
+            started_at: '2026-04-05T14:00:00.000Z',
+            expires_at: '2026-04-06T14:00:00.000Z',
+            undo_grace_until: '2026-04-05T14:05:00.000Z',
+            restart_count: 1,
+          },
+        ],
+        error: null,
+      }
+    }
+
     return { data: null, error: null }
   })
 })
@@ -122,6 +145,9 @@ describe('BandAccountPage', () => {
     expect(screen.getAllByText(/hosted checkout is unavailable in this environment yet/i).length).toBeGreaterThanOrEqual(1)
     expect(screen.getAllByText(/2 of 3 remaining/i).length).toBeGreaterThanOrEqual(2)
     expect(screen.getByRole('checkbox', { name: /i agree to the terms of service before starting subscription checkout/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /current paid show status/i })).toBeInTheDocument()
+    expect(screen.getByText(/event-1/i)).toBeInTheDocument()
+    expect(screen.getByText(/undo grace is active until/i)).toBeInTheDocument()
   })
 
   it('shows the free state when no billing account exists', async () => {
@@ -135,6 +161,10 @@ describe('BandAccountPage', () => {
           data: null,
           error: null,
         }
+      }
+
+      if (table === 'billing_show_windows') {
+        return { data: [], error: null }
       }
 
       return { data: null, error: null }
@@ -167,6 +197,10 @@ describe('BandAccountPage', () => {
           },
           error: null,
         }
+      }
+
+      if (table === 'billing_show_windows') {
+        return { data: [], error: null }
       }
 
       return { data: null, error: null }
