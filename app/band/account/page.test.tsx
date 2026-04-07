@@ -117,8 +117,11 @@ describe('BandAccountPage', () => {
     expect(screen.getAllByRole('button', { name: /downgrade to free/i }).length).toBeGreaterThanOrEqual(1)
     expect(screen.getByText(/payment methods and invoices/i)).toBeInTheDocument()
     expect(screen.getAllByRole('link', { name: /billing support/i }).length).toBeGreaterThanOrEqual(2)
+    expect(screen.getAllByRole('link', { name: /^terms$/i }).length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByRole('link', { name: /^privacy$/i }).length).toBeGreaterThanOrEqual(1)
     expect(screen.getAllByText(/hosted checkout is unavailable in this environment yet/i).length).toBeGreaterThanOrEqual(1)
     expect(screen.getAllByText(/2 of 3 remaining/i).length).toBeGreaterThanOrEqual(2)
+    expect(screen.getByRole('checkbox', { name: /i agree to the terms of service before starting subscription checkout/i })).toBeInTheDocument()
   })
 
   it('shows the free state when no billing account exists', async () => {

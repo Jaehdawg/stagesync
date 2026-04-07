@@ -16,6 +16,8 @@ function getSubscriptionNoticeMessage(notice?: string | null) {
       return 'Checkout completed. If the plan summary looks stale, refresh once.'
     case 'checkout-canceled':
       return 'Checkout was canceled before anything changed.'
+    case 'terms-required':
+      return 'Please confirm the Terms of Service before starting checkout.'
     case 'portal-return':
       return 'Returned from the billing portal.'
     case 'checkout-pending':
@@ -163,6 +165,8 @@ function AccountForm({
           </div>
           <div className="mt-4 flex flex-wrap gap-3 text-sm">
             <Link href="/support" className="rounded-full border border-white/10 bg-white/5 px-4 py-2 font-medium text-white hover:border-cyan-400/50 hover:bg-white/10">Billing support</Link>
+            <Link href="/terms" className="rounded-full border border-white/10 bg-white/5 px-4 py-2 font-medium text-white hover:border-cyan-400/50 hover:bg-white/10">Terms</Link>
+            <Link href="/privacy" className="rounded-full border border-white/10 bg-white/5 px-4 py-2 font-medium text-white hover:border-cyan-400/50 hover:bg-white/10">Privacy</Link>
             <span className="rounded-full border border-white/10 bg-slate-950/40 px-4 py-2 font-medium text-cyan-50/90">{subscriptionControlState.summaryLines[4]?.value ?? 'Billing status'}</span>
             <span className="rounded-full border border-white/10 bg-slate-950/40 px-4 py-2 font-medium text-cyan-50/90">{subscriptionControlState.summaryLines[5]?.value ?? 'Free shows'}</span>
           </div>
@@ -185,8 +189,12 @@ function AccountForm({
               ))}
             </div>
             <div className="flex flex-wrap gap-3">
-              <form action="/api/billing/subscription" method="post">
+              <form action="/api/billing/subscription" method="post" className="flex flex-col gap-3 rounded-2xl border border-cyan-400/20 bg-slate-950/40 px-4 py-3">
                 <input type="hidden" name="intent" value={subscriptionControlState.primaryActionIntent} />
+                <label className="flex items-start gap-3 text-sm text-slate-300">
+                  <input type="checkbox" name="acknowledgeTerms" value="yes" required className="mt-1 h-4 w-4 rounded border-slate-400 bg-slate-950 text-cyan-400" />
+                  <span>I agree to the <a href="/terms" className="text-cyan-300 underline-offset-4 hover:underline">Terms of Service</a> before starting subscription checkout.</span>
+                </label>
                 <button type="submit" className="rounded-xl border border-cyan-400/30 bg-cyan-400/10 px-4 py-3 text-sm font-medium text-cyan-100">
                   {subscriptionControlState.primaryActionLabel}
                 </button>

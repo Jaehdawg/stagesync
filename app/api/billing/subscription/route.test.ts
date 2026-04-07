@@ -83,6 +83,7 @@ describe('billing subscription route', () => {
     const { POST } = await loadRoute()
     const formData = new FormData()
     formData.set('intent', 'upgrade')
+    formData.set('acknowledgeTerms', 'yes')
 
     const request = {
       formData: async () => formData,
@@ -94,6 +95,27 @@ describe('billing subscription route', () => {
 
     expect(response.status).toBe(303)
     expect(response.headers.get('location')).toBe('https://example.com/band/account?subscriptionNotice=checkout-pending')
+  })
+
+  it('requires terms acknowledgment before subscription checkout', async () => {
+    getTestSessionMock.mockResolvedValue({ role: 'band', username: 'northside' })
+    getTestLoginMock.mockResolvedValue({ role: 'band', band_access_level: 'admin' })
+    stubBillingUrls({ STAGESYNC_BILLING_CHECKOUT_URL: 'https://billing.example.com/checkout' })
+
+    const { POST } = await loadRoute()
+    const formData = new FormData()
+    formData.set('intent', 'upgrade')
+
+    const request = {
+      formData: async () => formData,
+      url: 'https://example.com/api/billing/subscription',
+      cookies: { getAll: () => [], set: vi.fn() },
+    } as unknown as NextRequest
+
+    const response = await POST(request)
+
+    expect(response.status).toBe(303)
+    expect(response.headers.get('location')).toBe('https://example.com/band/account?subscriptionNotice=terms-required')
   })
 
   it('redirects downgrade intents with a portal placeholder notice', async () => {
@@ -172,6 +194,7 @@ describe('billing subscription route', () => {
 
     const upgradeForm = new FormData()
     upgradeForm.set('intent', 'upgrade')
+    upgradeForm.set('acknowledgeTerms', 'yes')
     const manageForm = new FormData()
     manageForm.set('intent', 'manage')
     const invoicesForm = new FormData()
@@ -234,6 +257,7 @@ describe('billing subscription route', () => {
 
     const checkoutForm = new FormData()
     checkoutForm.set('intent', 'upgrade')
+    checkoutForm.set('acknowledgeTerms', 'yes')
     const manageForm = new FormData()
     manageForm.set('intent', 'manage')
 
@@ -295,6 +319,7 @@ describe('billing subscription route', () => {
 
     const checkoutForm = new FormData()
     checkoutForm.set('intent', 'upgrade')
+    checkoutForm.set('acknowledgeTerms', 'yes')
     const manageForm = new FormData()
     manageForm.set('intent', 'manage')
 

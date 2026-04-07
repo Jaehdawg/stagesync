@@ -58,17 +58,26 @@ function getBillingRedirectUrls(request: NextRequest) {
   }
 }
 
+function requiresTermsAcknowledgment(intent: string) {
+  return intent === 'upgrade'
+}
+
 export async function POST(request: NextRequest) {
   const testSession = await getTestSession()
   const testSupabase = getSupabase(request)
   const serviceSupabase = createServiceClient()
   const formData = await request.formData()
   const intent = String(formData.get('intent') ?? '').trim()
+  const acknowledgeTerms = String(formData.get('acknowledgeTerms') ?? '').trim()
   const stripeBillingConfig = getStripeBillingConfig()
   const hostedBillingConfig = getHostedBillingConfig()
 
   if (!['upgrade', 'manage', 'downgrade', 'stay', 'invoices'].includes(intent)) {
     return NextResponse.json({ message: 'Unknown billing intent.' }, { status: 400 })
+  }
+
+  if (requiresTermsAcknowledgment(intent) && acknowledgeTerms !== 'yes') {
+    return redirectWithNotice(request, 'terms-required')
   }
 
   if (testSession?.role === 'band') {
