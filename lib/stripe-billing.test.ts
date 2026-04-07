@@ -4,6 +4,7 @@ import {
   buildStripePortalRequest,
   getStripeBillingConfig,
   hasStripeCheckoutConfig,
+  getStripeWebhookCoverage,
   resolveStripeBillingLifecycleUpdate,
 } from './stripe-billing'
 
@@ -96,5 +97,35 @@ describe('stripe billing helpers', () => {
       paymentCustomerId: 'cus_1',
       paymentSubscriptionId: 'sub_1',
     })
+  })
+
+  it('lists the covered stripe webhook events', () => {
+    expect(getStripeWebhookCoverage()).toEqual([
+      {
+        event: 'checkout.session.completed',
+        status: 'covered',
+        description: 'Activates the subscription after hosted checkout completes.',
+      },
+      {
+        event: 'customer.subscription.created',
+        status: 'covered',
+        description: 'Syncs a newly created subscription into the billing ledger.',
+      },
+      {
+        event: 'customer.subscription.updated',
+        status: 'covered',
+        description: 'Keeps status, customer, and subscription IDs in sync.',
+      },
+      {
+        event: 'customer.subscription.deleted',
+        status: 'covered',
+        description: 'Marks a subscription canceled when it is removed at Stripe.',
+      },
+      {
+        event: 'invoice.payment_failed',
+        status: 'covered',
+        description: 'Moves the account into past_due when invoice payment fails.',
+      },
+    ])
   })
 })

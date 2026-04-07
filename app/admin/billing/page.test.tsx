@@ -14,6 +14,9 @@ vi.mock('@/lib/admin-access', () => ({
 
 vi.mock('@/lib/stripe-billing', () => ({
   getStripeBillingConfig: () => ({ secretKey: 'sk_test_123', webhookSecret: 'whsec_123', professionalPriceId: 'price_123' }),
+  getStripeWebhookCoverage: () => ([
+    { event: 'checkout.session.completed', status: 'covered', description: 'Activates the subscription after hosted checkout completes.' },
+  ]),
 }))
 
 vi.mock('@/lib/stripe-billing-readiness', () => ({
@@ -56,5 +59,7 @@ describe('AdminBillingPage', () => {
     expect(screen.getByRole('heading', { name: /billing schema and resolver contract/i })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: /resolver snapshot/i })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: /audit \/ event log/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /stripe webhook coverage/i })).toBeInTheDocument()
+    expect(screen.getByText('checkout.session.completed')).toBeInTheDocument()
   })
 })
