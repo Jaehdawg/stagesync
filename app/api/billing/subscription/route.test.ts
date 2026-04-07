@@ -251,4 +251,61 @@ describe('billing subscription route', () => {
     expect((await POST(request(manageForm))).headers.get('location')).toBe('https://billing.stripe.com/session/portal')
     expect((await POST(request(invoicesForm))).headers.get('location')).toBe('https://billing.example.com/invoices')
   })
+
+  it('uses stripe checkout and billing portal for test sessions when stripe config is present', async () => {
+    getTestSessionMock.mockResolvedValue({ role: 'band', username: 'northside', activeBandId: 'band-1' })
+    getTestLoginMock.mockResolvedValue({
+      role: 'band',
+      username: 'northside',
+      band_access_level: 'admin',
+      band_name: 'Northside',
+      active_band_id: 'band-1',
+    })
+    getLiveBandAccessContextMock.mockResolvedValue(null)
+    getStripeBillingConfigMock.mockReturnValue({
+      secretKey: 'sk_test_123',
+      webhookSecret: 'whsec_123',
+      professionalPriceId: 'price_123',
+    })
+    stubBillingUrls({})
+    createServiceClientMock.mockReturnValue({
+      from: () => ({
+        select: () => ({
+          eq: () => ({
+            maybeSingle: async () => ({ data: { id: 'account-1', payment_customer_id: 'cus_123' }, error: null }),
+          }),
+        }),
+        update: vi.fn(),
+      }),
+    })
+    createStripeClientMock.mockReturnValue({
+      checkout: {
+        sessions: {
+          create: vi.fn(async () => ({ url: 'https://checkout.stripe.com/session/test-abc' })),
+        },
+      },
+      billingPortal: {
+        sessions: {
+          create: vi.fn(async () => ({ url: 'https://billing.stripe.com/session/test-portal' })),
+        },
+      },
+    })
+
+    const { POST } = await loadRoute()
+
+    const checkoutForm = new FormData()
+    checkoutForm.set('intent', 'upgrade')
+    const manageForm = new FormData()
+    manageForm.set('intent', 'manage')
+
+    const request = (formData: FormData) => ({
+      formData: async () => formData,
+      url: 'https://example.com/api/billing/subscription',
+      cookies: { getAll: () => [], set: vi.fn() },
+      headers: { get: () => null },
+    }) as unknown as NextRequest
+
+    expect((await POST(request(checkoutForm))).headers.get('location')).toBe('https://checkout.stripe.com/session/test-abc')
+    expect((await POST(request(manageForm))).headers.get('location')).toBe('https://billing.stripe.com/session/test-portal')
+  })
 })

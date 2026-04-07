@@ -117,7 +117,7 @@ describe('BandAccountPage', () => {
     expect(screen.getAllByRole('button', { name: /downgrade to free/i }).length).toBeGreaterThanOrEqual(1)
     expect(screen.getByText(/payment methods and invoices/i)).toBeInTheDocument()
     expect(screen.getAllByRole('link', { name: /billing support/i }).length).toBeGreaterThanOrEqual(2)
-    expect(screen.getAllByText(/hosted checkout is not wired yet/i).length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText(/hosted checkout is unavailable in this environment yet/i).length).toBeGreaterThanOrEqual(1)
     expect(screen.getAllByText(/2 of 3 remaining/i).length).toBeGreaterThanOrEqual(2)
   })
 
