@@ -113,6 +113,38 @@ Code-ready starting points:
 - Do not make venue logic leak into the self-serve band flow.
 - Track every major monetization step with analytics.
 
+## Stripe launch checklist
+
+Use this checklist when preparing a live billing rollout:
+
+### Required configuration
+- `STRIPE_SECRET_KEY`
+- `STRIPE_WEBHOOK_SECRET`
+- `STAGESYNC_PRO_MONTHLY_PRICE_ID`
+- `STAGESYNC_BILLING_CHECKOUT_URL` when using hosted checkout
+- `STAGESYNC_BILLING_PORTAL_URL` when using hosted portal actions
+- `STAGESYNC_BILLING_INVOICES_URL` when exposing hosted invoices
+
+### Covered webhook events
+- `checkout.session.completed` → activate the subscription after hosted checkout completes
+- `customer.subscription.created` → sync the new subscription into StageSync
+- `customer.subscription.updated` → keep status, customer, and subscription IDs aligned
+- `customer.subscription.deleted` → mark the subscription canceled
+- `invoice.payment_failed` → move the account into `past_due`
+
+### Operator checklist
+1. Verify the current Professional monthly price ID in Stripe.
+2. Confirm the webhook secret matches the live Stripe endpoint.
+3. Confirm checkout, portal, and invoices URLs if hosted flows are in use.
+4. Verify the admin billing readiness surface reports the expected state.
+5. Make sure terms and privacy pages are visible before payment entry points.
+6. Keep all card details and provider secrets outside StageSync.
+
+### Compliance notes
+- StageSync only stores provider IDs, statuses, and billing references it needs to operate.
+- Card data stays with the hosted provider.
+- Launch notes should never include secrets, raw webhooks, or exported payment credentials.
+
 ## Suggested first sprint
 If an implementation agent starts tomorrow, the order should be:
 1. Implement the legal pages (#42, #57, #58)
