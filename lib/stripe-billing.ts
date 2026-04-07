@@ -22,6 +22,12 @@ export type StripePortalRequest = {
   returnUrl: string
 }
 
+export type StripeWebhookCoverageEntry = {
+  event: string
+  status: 'covered' | 'not-covered'
+  description: string
+}
+
 export function getStripeBillingConfig(env: NodeJS.ProcessEnv = process.env): StripeBillingConfig {
   return {
     secretKey: env.STRIPE_SECRET_KEY ?? null,
@@ -117,6 +123,36 @@ export function resolveStripeBillingLifecycleUpdate(event: StripeWebhookLikeEven
 
 export function createStripeClient(secretKey: string) {
   return new Stripe(secretKey)
+}
+
+export function getStripeWebhookCoverage(): StripeWebhookCoverageEntry[] {
+  return [
+    {
+      event: 'checkout.session.completed',
+      status: 'covered',
+      description: 'Activates the subscription after hosted checkout completes.',
+    },
+    {
+      event: 'customer.subscription.created',
+      status: 'covered',
+      description: 'Syncs a newly created subscription into the billing ledger.',
+    },
+    {
+      event: 'customer.subscription.updated',
+      status: 'covered',
+      description: 'Keeps status, customer, and subscription IDs in sync.',
+    },
+    {
+      event: 'customer.subscription.deleted',
+      status: 'covered',
+      description: 'Marks a subscription canceled when it is removed at Stripe.',
+    },
+    {
+      event: 'invoice.payment_failed',
+      status: 'covered',
+      description: 'Moves the account into past_due when invoice payment fails.',
+    },
+  ]
 }
 
 export type StripeBillingIntent = SubscriptionBillingIntent
