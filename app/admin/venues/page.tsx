@@ -11,11 +11,23 @@ export default async function AdminVenuesPage() {
   const liveAdminAccess = await getAdminAccess(supabase)
   const sections = buildVenueOperatorSections()
   const provisioningPlan = getVenueProvisioningPlan()
-  const { data: recentLeads } = await supabase
-    .from('venue_leads')
-    .select('id, company_name, contact_name, interest_level, follow_up_queue, status, created_at')
-    .order('created_at', { ascending: false })
-    .limit(5)
+  const [
+    { count: leadCount },
+    { count: reviewCount },
+    { count: qualifiedCount },
+    { count: closedCount },
+    { data: recentLeads },
+  ] = await Promise.all([
+    supabase.from('venue_leads').select('id', { count: 'exact', head: true }),
+    supabase.from('venue_leads').select('id', { count: 'exact', head: true }).eq('status', 'reviewing'),
+    supabase.from('venue_leads').select('id', { count: 'exact', head: true }).eq('status', 'qualified'),
+    supabase.from('venue_leads').select('id', { count: 'exact', head: true }).eq('status', 'closed'),
+    supabase
+      .from('venue_leads')
+      .select('id, company_name, contact_name, interest_level, follow_up_queue, status, operator_notes, commercial_terms, created_at')
+      .order('created_at', { ascending: false })
+      .limit(5),
+  ])
 
   if (!liveAdminAccess) {
     return (
@@ -62,10 +74,10 @@ export default async function AdminVenuesPage() {
 
         <section className="grid gap-4 md:grid-cols-2">
           {[
-            { label: 'Venues onboarded', value: '0' },
-            { label: 'Rooms configured', value: '0' },
-            { label: 'Bands attached', value: '0' },
-            { label: 'Needs review', value: '0' },
+            { label: 'Leads captured', value: String(leadCount ?? 0) },
+            { label: 'In review', value: String(reviewCount ?? 0) },
+            { label: 'Qualified', value: String(qualifiedCount ?? 0) },
+            { label: 'Closed', value: String(closedCount ?? 0) },
           ].map((item) => (
             <div key={item.label} className="rounded-3xl border border-white/10 bg-white/5 p-5">
               <p className="text-xs uppercase tracking-[0.22em] text-slate-400">{item.label}</p>
@@ -92,6 +104,36 @@ export default async function AdminVenuesPage() {
                       <span className="rounded-full border border-white/10 px-3 py-1">{lead.follow_up_queue}</span>
                     </div>
                   </div>
+                  <form action={`/api/admin/venue-leads/${lead.id}`} method="post" className="mt-4 grid gap-3 rounded-2xl border border-white/10 bg-white/5 p-4">
+                    <input type="hidden" name="action" value="update" />
+                    <div className="grid gap-3 md:grid-cols-[0.7fr_1fr]">
+                      <label className="space-y-2 text-sm text-slate-300">
+                        <span className="block text-xs uppercase tracking-[0.2em] text-slate-400">Status</span>
+                        <select name="status" defaultValue={lead.status} className="w-full rounded-xl border border-white/10 bg-slate-950/70 px-3 py-2 text-white">
+                          {['new', 'reviewing', 'contacted', 'qualified', 'closed'].map((status) => (
+                            <option key={status} value={status}>{status}</option>
+                          ))}
+                        </select>
+                      </label>
+                      <label className="space-y-2 text-sm text-slate-300">
+                        <span className="block text-xs uppercase tracking-[0.2em] text-slate-400">Follow-up queue</span>
+                        <input name="followUpQueue" defaultValue={lead.follow_up_queue} className="w-full rounded-xl border border-white/10 bg-slate-950/70 px-3 py-2 text-white" />
+                      </label>
+                    </div>
+                    <label className="space-y-2 text-sm text-slate-300">
+                      <span className="block text-xs uppercase tracking-[0.2em] text-slate-400">Commercial terms</span>
+                      <textarea name="commercialTerms" defaultValue={lead.commercial_terms ?? ''} rows={2} placeholder="Custom base price, discount, negotiated term notes..." className="w-full rounded-xl border border-white/10 bg-slate-950/70 px-3 py-2 text-white placeholder:text-slate-500" />
+                    </label>
+                    <label className="space-y-2 text-sm text-slate-300">
+                      <span className="block text-xs uppercase tracking-[0.2em] text-slate-400">Operator notes</span>
+                      <textarea name="operatorNotes" defaultValue={lead.operator_notes ?? ''} rows={3} placeholder="Call summary, provisioning notes, next step..." className="w-full rounded-xl border border-white/10 bg-slate-950/70 px-3 py-2 text-white placeholder:text-slate-500" />
+                    </label>
+                    <div className="flex flex-wrap gap-3">
+                      <button type="submit" className="rounded-xl border border-cyan-400/30 bg-cyan-400/10 px-4 py-2 text-sm font-medium text-cyan-100">
+                        Save review
+                      </button>
+                    </div>
+                  </form>
                 </article>
               ))
             ) : (
