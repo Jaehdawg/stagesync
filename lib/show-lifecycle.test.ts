@@ -16,7 +16,7 @@ describe('show lifecycle helpers', () => {
       showId: 'event-1',
       isPaidWindow: true,
       restartCount: 0,
-      consumedCreditAt: null,
+      consumedCreditAt: '2026-04-05T14:00:00.000Z',
       undoGraceUntil: null,
     })
   })

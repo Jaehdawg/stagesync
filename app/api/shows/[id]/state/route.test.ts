@@ -7,7 +7,18 @@ const createServiceClientMock = vi.fn()
 const authGetUserMock = vi.fn()
 const profileMaybeSingleMock = vi.fn().mockResolvedValue({ data: { role: 'band' }, error: null })
 const eventUpdateMock = vi.fn().mockResolvedValue({ error: null })
+const ledgerInsertMock = vi.fn().mockResolvedValue({ error: null })
 const windowUpsertMock = vi.fn().mockResolvedValue({ error: null })
+const currentWindowMaybeSingleMock = vi.fn().mockResolvedValue({
+  data: {
+    started_at: '2026-04-05T14:00:00.000Z',
+    expires_at: '2026-04-06T14:00:00.000Z',
+    consumed_credit_at: '2026-04-05T14:00:05.000Z',
+    undo_grace_until: null,
+    restart_count: 1,
+  },
+  error: null,
+})
 const fromMock = vi.fn((table: string) => {
   if (table === 'profiles') {
     return {
@@ -42,20 +53,17 @@ const fromMock = vi.fn((table: string) => {
     }
   }
 
+  if (table === 'billing_credit_ledger') {
+    return {
+      insert: ledgerInsertMock,
+    }
+  }
+
   if (table === 'billing_show_windows') {
     return {
       select: vi.fn(() => ({
         eq: vi.fn(() => ({
-          maybeSingle: vi.fn().mockResolvedValue({
-            data: {
-              started_at: '2026-04-05T14:00:00.000Z',
-              expires_at: '2026-04-06T14:00:00.000Z',
-              consumed_credit_at: '2026-04-05T14:00:05.000Z',
-              undo_grace_until: null,
-              restart_count: 1,
-            },
-            error: null,
-          }),
+          maybeSingle: currentWindowMaybeSingleMock,
         })),
       })),
       upsert: windowUpsertMock,
@@ -85,7 +93,18 @@ beforeEach(() => {
   profileMaybeSingleMock.mockReset()
   profileMaybeSingleMock.mockResolvedValue({ data: { role: 'band' }, error: null })
   eventUpdateMock.mockClear()
+  ledgerInsertMock.mockClear()
   windowUpsertMock.mockClear()
+  currentWindowMaybeSingleMock.mockResolvedValue({
+    data: {
+      started_at: '2026-04-05T14:00:00.000Z',
+      expires_at: '2026-04-06T14:00:00.000Z',
+      consumed_credit_at: '2026-04-05T14:00:05.000Z',
+      undo_grace_until: null,
+      restart_count: 1,
+    },
+    error: null,
+  })
 })
 
 async function loadRoute() {
@@ -115,5 +134,22 @@ describe('show state route', () => {
     expect(undoResponse.status).toBe(307)
     expect(windowUpsertMock).toHaveBeenCalledWith(expect.objectContaining({ undo_grace_until: expect.any(String) }), { onConflict: 'event_id' })
     expect(eventUpdateMock).toHaveBeenCalled()
+  })
+
+  it('records the first paid show start as a credit consumption entry', async () => {
+    currentWindowMaybeSingleMock.mockResolvedValue({ data: null, error: null })
+    const { POST } = await loadRoute()
+
+    await POST(makeRequest('start'), { params: Promise.resolve({ id: 'event-1' }) })
+
+    expect(ledgerInsertMock).toHaveBeenCalledWith(expect.objectContaining({
+      bandId: 'band-1',
+      eventId: 'event-1',
+      billingAccountId: 'acct-1',
+      entryType: 'credit_consumed',
+      amount: 1,
+      provider: 'internal',
+      note: 'First show start consumed one paid access credit.',
+    }))
   })
 })

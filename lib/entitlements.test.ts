@@ -59,6 +59,13 @@ describe('entitlement helpers', () => {
     expect(consumedWindow.restartCount).toBe(1)
   })
 
+  it('consumes the first show start immediately', () => {
+    const startedAt = new Date('2026-04-05T14:00:00.000Z')
+    const window = buildPaidShowWindow('show-1', startedAt)
+
+    expect(window.consumedCreditAt).toBe('2026-04-05T14:00:00.000Z')
+  })
+
   it('treats undo grace as active only until the grace deadline', () => {
     expect(isWithinUndoGrace({ undoGraceUntil: '2026-04-05T14:15:00.000Z' }, new Date('2026-04-05T14:14:59.000Z'))).toBe(true)
     expect(isWithinUndoGrace({ undoGraceUntil: '2026-04-05T14:15:00.000Z' }, new Date('2026-04-05T14:15:00.001Z'))).toBe(false)

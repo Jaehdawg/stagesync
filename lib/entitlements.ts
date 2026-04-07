@@ -30,7 +30,7 @@ export function buildPaidShowWindow(showId: string, startedAt: Date = new Date()
     showId,
     startedAt: startedAt.toISOString(),
     expiresAt: expiresAt.toISOString(),
-    consumedCreditAt: null,
+    consumedCreditAt: startedAt.toISOString(),
     undoGraceUntil: null,
     restartCount: 0,
   } satisfies PaidShowWindow
