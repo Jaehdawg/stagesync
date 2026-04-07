@@ -102,5 +102,6 @@ describe('AdminAnalyticsPage', () => {
     expect(screen.getByText(/analytics_events/i)).toBeInTheDocument()
     expect(screen.getByText(/analytics_daily_rollups/i)).toBeInTheDocument()
     expect(screen.getByText(/pricing.checkout.started/i)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /export csv/i })).toHaveAttribute('href', '/api/admin/analytics/export')
   })
 })

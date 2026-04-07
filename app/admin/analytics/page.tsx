@@ -75,9 +75,14 @@ export default async function AdminAnalyticsPage() {
                 {adminCopy.analyticsPage.description}
               </p>
             </div>
-            <Link href="/admin" className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-white hover:border-cyan-400/50">
-              {adminCopy.backToAdmin}
-            </Link>
+            <div className="flex flex-wrap gap-3">
+              <a href="/api/admin/analytics/export" className="rounded-xl border border-cyan-400/30 bg-cyan-400/10 px-4 py-3 text-sm font-medium text-cyan-100 hover:border-cyan-400/50">
+                Export CSV
+              </a>
+              <Link href="/admin" className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-white hover:border-cyan-400/50">
+                {adminCopy.backToAdmin}
+              </Link>
+            </div>
           </div>
           <form className="mt-4" action="/api/auth/logout" method="post">
             <button type="submit" className="rounded-full border border-white/10 px-4 py-2 text-sm font-medium text-white hover:border-cyan-400/50">
