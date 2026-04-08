@@ -12,6 +12,9 @@ import {
 import { createTidalPlaylistImportJob, queueTidalPlaylistImport } from '@/lib/song-import-jobs'
 import { getLiveBandAccessContext } from '@/lib/band-access'
 
+const GOOGLE_SHEET_FETCH_TIMEOUT_MS = 10_000
+const GOOGLE_SHEET_MAX_CHARS = 2_000_000
+
 function getSupabase(request: NextRequest) {
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -47,12 +50,29 @@ async function readImportSongs(formData: FormData): Promise<SongImportRecord[]> 
       throw new Error('Invalid Google Sheet URL.')
     }
 
-    const response = await fetch(exportUrl)
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), GOOGLE_SHEET_FETCH_TIMEOUT_MS)
+
+    let response: Response
+    try {
+      response = await fetch(exportUrl, { signal: controller.signal })
+    } finally {
+      clearTimeout(timeout)
+    }
+
     if (!response.ok) {
       throw new Error('Unable to fetch the Google Sheet export.')
     }
 
+    const contentLength = Number(response.headers.get('content-length') ?? '0')
+    if (Number.isFinite(contentLength) && contentLength > GOOGLE_SHEET_MAX_CHARS) {
+      throw new Error('Google Sheet export is too large.')
+    }
+
     const text = await response.text()
+    if (text.length > GOOGLE_SHEET_MAX_CHARS) {
+      throw new Error('Google Sheet export is too large.')
+    }
     return parseSongsCsv(text, 'google_sheet', extractGoogleSheetId(sheetUrl))
   }
 
