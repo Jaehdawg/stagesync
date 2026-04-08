@@ -14,6 +14,8 @@ export type TidalSearchResult = {
 type TidalJson = Record<string, unknown>
 type TidalCredentials = { clientId?: string | null; clientSecret?: string | null }
 
+const TIDAL_FETCH_TIMEOUT_MS = 10_000
+
 function getTidalBaseUrl() {
   const base = process.env.TIDAL_API_BASE_URL?.trim() || 'https://openapi.tidal.com/v2/'
   return base.endsWith('/') ? base : `${base}/`
@@ -423,9 +425,18 @@ async function fetchTidalJson(
       ...(extraHeaders ?? {}),
     }
 
-    const response = await fetch(url, {
-      headers,
-    })
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), TIDAL_FETCH_TIMEOUT_MS)
+
+    let response: Response
+    try {
+      response = await fetch(url, {
+        headers,
+        signal: controller.signal,
+      })
+    } finally {
+      clearTimeout(timeout)
+    }
 
     if (response.status === 429 && retries > 0) {
       const retryAfterHeader = response.headers.get('retry-after')
