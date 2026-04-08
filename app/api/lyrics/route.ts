@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 
 const cache = new Map<string, { lyrics: string; cachedAt: number }>()
 const CACHE_TTL_MS = 1000 * 60 * 30
+const LYRICS_FETCH_TIMEOUT_MS = 8_000
 
 function keyFor(artist: string, title: string) {
   return `${artist.toLowerCase().trim()}::${title.toLowerCase().trim()}`
@@ -21,7 +22,20 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ lyrics: cached.lyrics, cached: true })
   }
 
-  const response = await fetch(`https://api.lyrics.ovh/v1/${encodeURIComponent(artist)}/${encodeURIComponent(title)}`)
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), LYRICS_FETCH_TIMEOUT_MS)
+
+  let response: Response
+  try {
+    response = await fetch(`https://api.lyrics.ovh/v1/${encodeURIComponent(artist)}/${encodeURIComponent(title)}`, {
+      signal: controller.signal,
+    })
+  } catch {
+    return NextResponse.json({ lyrics: '', cached: false })
+  } finally {
+    clearTimeout(timeout)
+  }
+
   if (!response.ok) {
     return NextResponse.json({ lyrics: '', cached: false })
   }
