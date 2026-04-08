@@ -5,6 +5,8 @@ import { recordAnalyticsEvent } from '@/lib/analytics-events'
 function safeNextPath(value: string | null) {
   if (!value) return '/'
   if (!value.startsWith('/')) return '/'
+  if (value.startsWith('//')) return '/'
+  if (value.includes('\\')) return '/'
   return value
 }
 

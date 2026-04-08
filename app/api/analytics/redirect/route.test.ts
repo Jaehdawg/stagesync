@@ -38,4 +38,20 @@ describe('analytics redirect route', () => {
       properties: { next: '/band' },
     }))
   })
+
+  it('blocks protocol-relative open redirects', async () => {
+    const { GET } = await loadRoute()
+    const request = {
+      nextUrl: new URL('https://example.com/api/analytics/redirect?eventName=trial.started&source=homepage.hero.start-free-trial&next=//evil.com'),
+      url: 'https://example.com/api/analytics/redirect?eventName=trial.started&source=homepage.hero.start-free-trial&next=//evil.com',
+    } as unknown as NextRequest
+
+    const response = await GET(request)
+
+    expect(response.status).toBe(303)
+    expect(response.headers.get('location')).toBe('https://example.com/')
+    expect(insertMock).toHaveBeenCalledWith(expect.objectContaining({
+      properties: { next: '/' },
+    }))
+  })
 })
