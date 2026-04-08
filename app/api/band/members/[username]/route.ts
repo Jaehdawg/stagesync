@@ -1,27 +1,8 @@
-import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { createServiceClient } from '@/utils/supabase/service'
 import { getTestSession } from '@/lib/test-session'
 import { getTestLoginPasswordHash } from '@/lib/test-login'
 import { getTestLogin } from '@/lib/test-login-list'
-
-function getSupabase(request: NextRequest) {
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll()
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) => {
-            request.cookies.set(name, value)
-          })
-        },
-      },
-    }
-  )
-}
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ username: string }> }) {
   const testSession = await getTestSession()
@@ -29,7 +10,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return NextResponse.json({ message: 'Band test login required.' }, { status: 401 })
   }
 
-  const supabase = getSupabase(request)
+  const supabase = createServiceClient()
   const current = await getTestLogin(supabase, testSession.username)
   if (!current || current.role !== 'band' || current.band_access_level !== 'admin') {
     return NextResponse.json({ message: 'Band admin access required.' }, { status: 403 })
@@ -46,7 +27,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
   try {
     if (action === 'delete') {
-      const { error } = await supabase.from('test_logins').delete().eq('username', originalUsername)
+    const { error } = await supabase.from('test_logins').delete().eq('username', originalUsername)
       if (error) throw error
     } else if (action === 'update') {
       const newUsername = String(formData.get('username') ?? '').trim().toLowerCase()

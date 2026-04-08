@@ -154,9 +154,9 @@ export default async function BandMembersPage() {
   const serviceSupabase = createServiceClient()
 
   if (testSession?.role === 'band') {
-    const current = await getTestLogin(supabase, testSession.username)
+    const current = await getTestLogin(serviceSupabase, testSession.username)
     if (current?.band_access_level === 'admin') {
-      const logins = await listTestLogins(supabase)
+      const logins = await listTestLogins(serviceSupabase)
       const members = logins.filter((login) => login.role === 'band' && login.active_band_id === testSession?.activeBandId && login.username !== current.username)
 
       return (

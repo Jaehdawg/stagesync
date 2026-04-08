@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server'
-import { createClient } from '@/utils/supabase/server'
+import { createServiceClient } from '@/utils/supabase/service'
 import { getTestLoginCookieName, signTestSession } from '@/lib/test-login'
 import { listBandsForTestLogin, setActiveBandForTestLogin } from '@/lib/band-tenancy'
 
@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: 'bandId is required.' }, { status: 400 })
   }
 
-  const supabase = await createClient()
+  const supabase = createServiceClient()
   const accessibleBands = session.role === 'admin'
     ? (await supabase.from('bands').select('id, band_name, created_at').order('band_name', { ascending: true })).data ?? []
     : await listBandsForTestLogin(supabase, { role: session.role, username: session.username })

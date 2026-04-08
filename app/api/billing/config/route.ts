@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
   }
 
   if (testSession?.role === 'band') {
-    const current = await getTestLogin(supabase, testSession.username)
+    const current = await getTestLogin(serviceSupabase, testSession.username)
     if (!current || current.role !== 'band' || current.band_access_level !== 'admin') {
       return NextResponse.json({ message: 'Band admin access required.' }, { status: 403 })
     }

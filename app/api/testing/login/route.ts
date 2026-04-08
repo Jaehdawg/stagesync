@@ -1,4 +1,3 @@
-import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import {
   getTestLoginCookieName,
@@ -7,6 +6,7 @@ import {
   signTestSession,
   type TestLoginRole,
 } from '@/lib/test-login'
+import { createServiceClient } from '@/utils/supabase/service'
 import { listBandsForTestLogin } from '@/lib/band-tenancy'
 
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 7
@@ -30,22 +30,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: 'Username, password, and role are required.' }, { status: 400 })
   }
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll()
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) => {
-            request.cookies.set(name, value)
-          })
-        },
-      },
-    }
-  )
+  const supabase = createServiceClient()
 
   const lookup = await supabase
     .from('test_logins')

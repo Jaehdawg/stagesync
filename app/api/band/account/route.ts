@@ -38,14 +38,14 @@ export async function POST(request: NextRequest) {
   }
 
   if (testSession?.role === 'band') {
-    const current = await getTestLogin(testSupabase, testSession.username)
+    const current = await getTestLogin(serviceSupabase, testSession.username)
     if (!current || current.role !== 'band' || current.band_access_level !== 'admin') {
       return NextResponse.json({ message: 'Band admin access required.' }, { status: 403 })
     }
 
     const activeBandId = testSession.activeBandId ?? current.active_band_id ?? null
 
-    const { error } = await testSupabase
+    const { error } = await serviceSupabase
       .from('test_logins')
       .update({
         username,

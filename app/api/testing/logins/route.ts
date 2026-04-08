@@ -1,26 +1,7 @@
-import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { createServiceClient } from '@/utils/supabase/service'
 import { getTestSession } from '@/lib/test-session'
 import { getTestLoginPasswordHash } from '@/lib/test-login'
-
-function getSupabase(request: NextRequest) {
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll()
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) => {
-            request.cookies.set(name, value)
-          })
-        },
-      },
-    }
-  )
-}
 
 export async function POST(request: NextRequest) {
   const testSession = await getTestSession()
@@ -28,7 +9,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: 'Admin test login required.' }, { status: 401 })
   }
 
-  const supabase = getSupabase(request)
+  const supabase = createServiceClient()
   const formData = await request.formData()
   const action = String(formData.get('action') ?? '')
   const username = String(formData.get('username') ?? '').trim()

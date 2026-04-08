@@ -480,7 +480,7 @@ export default async function BandAccountPage({ searchParams }: { searchParams?:
   }
 
   if (testSession?.role === 'band') {
-    const current = await getTestLogin(supabase, testSession.username)
+    const current = await getTestLogin(serviceSupabase, testSession.username)
     if (current?.band_access_level === 'admin') {
       const { data: tidalSettings } = await serviceSupabase
         .from('band_profiles')

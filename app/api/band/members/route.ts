@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
   const action = String(formData.get('action') ?? '')
 
   if (testSession?.role === 'band') {
-    const current = await getTestLogin(testSupabase, testSession.username)
+    const current = await getTestLogin(serviceSupabase, testSession.username)
     if (!current || current.role !== 'band' || current.band_access_level !== 'admin') {
       return NextResponse.json({ message: 'Band admin access required.' }, { status: 403 })
     }
@@ -59,13 +59,13 @@ export async function POST(request: NextRequest) {
 
     try {
       if (action === 'delete') {
-        await testSupabase.from('test_logins').delete().eq('username', username)
+        await serviceSupabase.from('test_logins').delete().eq('username', username)
       } else if (action === 'upsert') {
         if (!username || !password) {
           return NextResponse.json({ message: 'Username and password are required.' }, { status: 400 })
         }
 
-        await testSupabase.from('test_logins').upsert({
+        await serviceSupabase.from('test_logins').upsert({
           username: username.toLowerCase(),
           role: 'band',
           password_hash: getTestLoginPasswordHash(username, password),
@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
           active_band_id: activeBandId,
         })
 
-        await testSupabase.from('band_memberships').upsert(
+        await serviceSupabase.from('band_memberships').upsert(
           {
             band_id: activeBandId,
             member_type: 'test_login',
