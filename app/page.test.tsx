@@ -65,6 +65,22 @@ describe('Singer dashboard', () => {
     expect(screen.queryByRole('heading', { name: /saas admin/i })).not.toBeInTheDocument()
   })
 
+  it('surfaces the active Tidal playlist mode in the singer view', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ tracks: [{ id: 'song-1', title: 'Dreams', artist: 'Fleetwood Mac' }] }),
+    })
+
+    vi.stubGlobal('fetch', fetchMock)
+
+    render(<SingerDashboardView {...state} songSourceMode="tidal_playlist" tidalPlaylistUrl="https://tidal.com/playlist/abc123" />)
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining('/api/songs/search?bandId=')))
+
+    expect(screen.getByText(/browsing imported tidal playlist/i)).toBeInTheDocument()
+    expect(screen.getByText(/imported tidal playlist available/i)).toBeInTheDocument()
+  })
+
   it('hides the auth buttons when the singer is signed in', () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ lyrics: '' }), { status: 200 })))
 
