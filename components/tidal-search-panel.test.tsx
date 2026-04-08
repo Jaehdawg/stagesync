@@ -51,6 +51,21 @@ describe('TidalSearchPanel', () => {
     await screen.findByText('Second')
   })
 
+  it('shows the imported playlist hint when playlist mode is active', async () => {
+    fetchMock.mockImplementation(async (input: RequestInfo | URL) => {
+      const url = String(input)
+      if (url.startsWith('/api/songs/search')) {
+        return new Response(JSON.stringify({ songs: [] }), { status: 200 })
+      }
+      return new Response(JSON.stringify({ message: 'ok' }), { status: 200 })
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    render(<TidalSearchPanel sourceMode="tidal_playlist" playlistUrl="https://tidal.com/playlist/abc123" bandId="band-1" showId="show-1" />)
+
+    await screen.findByText('Imported Tidal playlist available. https://tidal.com/playlist/abc123')
+  })
+
   it('queues catalog selections with catalog source metadata', async () => {
     fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input)

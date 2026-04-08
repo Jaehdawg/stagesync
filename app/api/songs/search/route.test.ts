@@ -7,7 +7,7 @@ type QueryResponse = {
 }
 
 type Builder = {
-  eq: () => Builder
+  eq: (column: string, value: string) => Builder
   is: () => Builder
   order: () => Builder
   limit: () => Builder
@@ -20,9 +20,10 @@ type Builder = {
 
 const createServiceClientMock = vi.fn(() => {
   const response: QueryResponse = { data: [{ id: 'song-1', title: 'My Song', artist: 'The Band' }], error: null }
+  const songsEqMock = vi.fn(() => builder)
 
   const builder: Builder = {
-    eq: vi.fn(() => builder),
+    eq: songsEqMock,
     is: vi.fn(() => builder),
     order: vi.fn(() => builder),
     limit: vi.fn(() => builder),
@@ -34,6 +35,7 @@ const createServiceClientMock = vi.fn(() => {
     from: vi.fn(() => ({
       select: vi.fn(() => builder),
     })),
+    songsEqMock,
   }
 })
 
@@ -93,6 +95,15 @@ describe('songs search api route', () => {
 
     expect(response.status).toBe(200)
     expect(payload.songs).toHaveLength(1)
+  })
+
+  it('filters playlist mode to imported playlist songs', async () => {
+    const { GET } = await loadRoute()
+    const response = await GET(makeRequest('https://example.com/api/songs/search?bandId=band-1&sourceMode=tidal_playlist&query=my'))
+
+    expect(response.status).toBe(200)
+    const client = createServiceClientMock.mock.results[0]?.value as { songsEqMock?: ReturnType<typeof vi.fn> }
+    expect(client.songsEqMock).toHaveBeenCalledWith('source_type', 'tidal_playlist')
   })
 
   it('returns a retryable error when tidal credentials are missing or invalid', async () => {
