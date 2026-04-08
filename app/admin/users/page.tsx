@@ -83,13 +83,30 @@ export default async function AdminUsersPage({
   ])
 
   const bandsById = new Map((bands ?? []).map((band) => [band.id, band]))
-  const rolesByProfileId = new Map(
-    await Promise.all(
-      (liveUsers ?? []).map(async (user) => [user.id, await listBandRolesForProfileId(serviceSupabase, user.id)] as const)
-    )
-  )
+  const liveUserIds = [...new Set((liveUsers ?? []).map((user) => user.id))]
+  const rolesByProfileId = new Map<string, Awaited<ReturnType<typeof listBandRolesForProfileId>>>()
+
+  if (liveUserIds.length) {
+    const { data: bandRoles, error: bandRolesError } = await serviceSupabase
+      .from('band_roles')
+      .select('id, band_id, profile_id, band_role, active, created_at, updated_at')
+      .in('profile_id', liveUserIds)
+      .order('band_role', { ascending: true })
+      .order('created_at', { ascending: true })
+
+    if (bandRolesError) {
+      throw new Error(bandRolesError.message)
+    }
+
+    for (const roleRow of (bandRoles ?? []) as Awaited<ReturnType<typeof listBandRolesForProfileId>>) {
+      const current = rolesByProfileId.get(roleRow.profile_id) ?? []
+      current.push(roleRow)
+      rolesByProfileId.set(roleRow.profile_id, current)
+    }
+  }
 
   const bandOptions = bands ?? []
+
   const legacyLogins = await listTestLogins(supabase)
   const bandLogins = legacyLogins.filter((login) => login.role === 'band')
 
