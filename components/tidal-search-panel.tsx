@@ -151,8 +151,10 @@ export function TidalSearchPanel({ disabled = false, statusMessage, sourceMode =
   return (
     <section className="rounded-2xl border border-white/10 bg-white/5 p-5">
       <h3 className="text-lg font-semibold text-white">{tidalSearchPanelCopy.title}</h3>
-      {sourceMode === 'tidal_playlist' && playlistUrl ? (
-        <p className="mt-2 text-sm text-cyan-200">{tidalSearchPanelCopy.importedPlaylist}</p>
+      {sourceMode === 'tidal_playlist' ? (
+        <p className="mt-2 text-sm text-cyan-200">
+          {playlistUrl ? `${tidalSearchPanelCopy.importedPlaylist} ${playlistUrl}` : tidalSearchPanelCopy.importedPlaylist}
+        </p>
       ) : null}
       {sourceMode === 'tidal_catalog' ? <p className="mt-2 text-sm text-cyan-200">{tidalSearchPanelCopy.catalogMode}</p> : null}
       <input

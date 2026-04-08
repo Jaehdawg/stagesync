@@ -55,6 +55,10 @@ export async function GET(request: NextRequest) {
     .order('title', { ascending: true })
     .limit(30)
 
+  if (sourceMode === 'tidal_playlist') {
+    builder = builder.eq('source_type', 'tidal_playlist')
+  }
+
   if (safeQuery) {
     builder = builder.or(`title.ilike.%${safeQuery}%,artist.ilike.%${safeQuery}%`)
   }
