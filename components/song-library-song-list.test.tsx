@@ -23,4 +23,19 @@ describe('SongLibrarySongList', () => {
     const hiddenSongIds = Array.from(container.querySelectorAll('input[type="hidden"][name="songIds"]')).map((input) => (input as HTMLInputElement).value)
     expect(hiddenSongIds).toEqual(['song-1', 'song-2', 'song-1', 'song-2'])
   })
+
+  it('shows human-friendly source labels for imported songs', () => {
+    render(
+      <SongLibrarySongList
+        songs={[
+          { id: 'song-1', artist: 'Fleetwood Mac', title: 'Dreams', duration_ms: 300000, source_type: 'tidal_catalog' },
+          { id: 'song-2', artist: 'Yeah Yeah Yeahs', title: 'Maps', duration_ms: 240000 },
+        ]}
+        setLists={[]}
+      />
+    )
+
+    expect(screen.getByText('Tidal catalog')).toBeInTheDocument()
+    expect(screen.getByText('Uploaded')).toBeInTheDocument()
+  })
 })

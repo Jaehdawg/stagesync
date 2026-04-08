@@ -21,6 +21,26 @@ type SetListOption = {
   is_active?: boolean | null
 }
 
+function getSongSourceLabel(sourceType: string | null | undefined) {
+  switch (sourceType) {
+    case 'tidal_playlist':
+      return 'Tidal playlist'
+    case 'tidal_catalog':
+      return 'Tidal catalog'
+    case 'google_sheet':
+      return 'Google sheet'
+    case 'manual':
+      return 'Manual'
+    case 'uploaded':
+    case null:
+    case undefined:
+      return 'Uploaded'
+    default:
+      return sourceType.replace(/_/g, ' ')
+        .replace(/\b\w/g, (char) => char.toUpperCase())
+    }
+}
+
 type SongLibrarySongListProps = {
   songs: Song[]
   setLists: SetListOption[]
@@ -193,7 +213,9 @@ export function SongLibrarySongList({ songs, setLists }: SongLibrarySongListProp
               <div>
                 <p className="text-xs uppercase tracking-[0.22em] text-slate-400">{bandCopy.songsPage.rowArtistLabel}</p>
                 <p className="mt-1 text-base font-semibold text-white">{song.artist}</p>
-                <p className="mt-2 text-xs uppercase tracking-[0.18em] text-slate-500">{song.source_type ?? bandCopy.songsPage.sourceUploaded}</p>
+                <p className="mt-2 inline-flex rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-slate-300">
+                  {getSongSourceLabel(song.source_type)}
+                </p>
               </div>
               <div>
                 <p className="text-xs uppercase tracking-[0.22em] text-slate-400">{bandCopy.songsPage.rowSongTitleLabel}</p>
