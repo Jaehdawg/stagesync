@@ -145,7 +145,21 @@ export function SingerDashboardView(state: DashboardState) {
     cashappUrl: state.paymentLinks?.find((link) => link.label === 'CashApp')?.href ?? null,
     customMessage: state.customMessage ?? null,
   }
-  const songSourceMode = state.songSourceMode === 'tidal_playlist' ? 'tidal_playlist' : state.songSourceMode === 'tidal_catalog' ? 'tidal_catalog' : 'uploaded'
+  const songSourceMode = state.songSourceMode === 'tidal_playlist'
+    ? 'tidal_playlist'
+    : state.songSourceMode === 'tidal_catalog'
+      ? 'tidal_catalog'
+      : state.songSourceMode === 'set_list'
+        ? 'set_list'
+        : 'uploaded'
+  const sourceModeLabel =
+    songSourceMode === 'tidal_playlist'
+      ? 'Browsing imported Tidal playlist.'
+      : songSourceMode === 'tidal_catalog'
+        ? 'Searching the live Tidal catalog.'
+        : songSourceMode === 'set_list'
+          ? 'Browsing the band’s active set list.'
+          : 'Browsing the uploaded song library.'
   const currentTrack = liveQueueItems[0] ?? currentRequest ?? lyricsTrack ?? null
 
   return (
@@ -259,30 +273,35 @@ export function SingerDashboardView(state: DashboardState) {
                   }}
                 />
               ) : authMode === 'signup' ? (
-                <TidalSearchPanel
-                  disabled={!state.signupEnabled}
-                  statusMessage={state.signupStatusMessage}
-                  sourceMode={songSourceMode}
-                  playlistUrl={state.tidalPlaylistUrl ?? null}
-                  bandId={state.bandId ?? ''}
-                  showId={state.showId ?? ''}
-                  onQueued={(track) => {
-                    const queued = { artist: track.artist, title: track.title }
-                    setCurrentRequest(queued)
-                    setLyricsTrack(queued)
-                    setLiveQueueItems((items) => [
-                      ...items,
-                      {
-                        id: `queued-${Date.now()}`,
-                        position: items.length + 1,
-                        artist: track.artist,
-                        title: track.title,
-                        singerName: state.singerName ?? null,
-                        status: 'queued',
-                      },
-                    ])
-                  }}
-                />
+                <div className="space-y-3">
+                  <p className="rounded-2xl border border-white/10 bg-slate-950/50 px-4 py-3 text-sm text-cyan-100">
+                    {sourceModeLabel}
+                  </p>
+                  <TidalSearchPanel
+                    disabled={!state.signupEnabled}
+                    statusMessage={state.signupStatusMessage}
+                    sourceMode={songSourceMode === 'set_list' ? 'uploaded' : songSourceMode}
+                    playlistUrl={state.tidalPlaylistUrl ?? null}
+                    bandId={state.bandId ?? ''}
+                    showId={state.showId ?? ''}
+                    onQueued={(track) => {
+                      const queued = { artist: track.artist, title: track.title }
+                      setCurrentRequest(queued)
+                      setLyricsTrack(queued)
+                      setLiveQueueItems((items) => [
+                        ...items,
+                        {
+                          id: `queued-${Date.now()}`,
+                          position: items.length + 1,
+                          artist: track.artist,
+                          title: track.title,
+                          singerName: state.singerName ?? null,
+                          status: 'queued',
+                        },
+                      ])
+                    }}
+                  />
+                </div>
               ) : null}
             </div>
           </Panel>
