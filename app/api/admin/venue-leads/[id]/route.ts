@@ -73,33 +73,31 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return NextResponse.json({ message: updateError.message }, { status: 500 })
   }
 
-  if (action === 'create-draft') {
-    const draft = buildVenueProvisioningDraft({
-      venueLeadId: leadId,
-      companyName: existingLead.company_name,
-      contactName: existingLead.contact_name,
-      createdBy: adminAccess.username,
-      followUpQueue: nextQueue,
-      operatorNotes: nextNotes,
-    })
+  const draft = buildVenueProvisioningDraft({
+    venueLeadId: leadId,
+    companyName: existingLead.company_name,
+    contactName: existingLead.contact_name,
+    createdBy: adminAccess.username,
+    followUpQueue: nextQueue,
+    operatorNotes: nextNotes,
+  })
 
-    const { error: draftError } = await supabase.from('venue_provisioning_drafts').upsert(
-      {
-        venue_lead_id: draft.venue_lead_id,
-        company_name: draft.company_name,
-        contact_name: draft.contact_name,
-        status: draft.status,
-        follow_up_queue: draft.follow_up_queue,
-        operator_notes: draft.operator_notes,
-        created_by: draft.created_by,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: 'venue_lead_id' }
-    )
+  const { error: draftError } = await supabase.from('venue_provisioning_drafts').upsert(
+    {
+      venue_lead_id: draft.venue_lead_id,
+      company_name: draft.company_name,
+      contact_name: draft.contact_name,
+      status: action === 'create-draft' ? 'draft' : nextStatus,
+      follow_up_queue: draft.follow_up_queue,
+      operator_notes: draft.operator_notes,
+      created_by: draft.created_by,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: 'venue_lead_id' }
+  )
 
-    if (draftError) {
-      return NextResponse.json({ message: draftError.message }, { status: 500 })
-    }
+  if (draftError) {
+    return NextResponse.json({ message: draftError.message }, { status: 500 })
   }
 
   return redirectWithNotice(request, 'updated')
