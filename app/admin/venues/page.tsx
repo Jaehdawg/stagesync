@@ -17,23 +17,28 @@ export default async function AdminVenuesPage({ searchParams }: { searchParams?:
   const liveAdminAccess = await getAdminAccess(supabase)
   const sections = buildVenueOperatorSections()
   const provisioningPlan = getVenueProvisioningPlan()
+
   const [
     { count: leadCount },
     { count: reviewCount },
     { count: qualifiedCount },
     { count: closedCount },
+    { count: draftCount },
     { data: recentLeads },
   ] = await Promise.all([
     supabase.from('venue_leads').select('id', { count: 'exact', head: true }),
     supabase.from('venue_leads').select('id', { count: 'exact', head: true }).eq('status', 'reviewing'),
     supabase.from('venue_leads').select('id', { count: 'exact', head: true }).eq('status', 'qualified'),
     supabase.from('venue_leads').select('id', { count: 'exact', head: true }).eq('status', 'closed'),
+    supabase.from('venue_provisioning_drafts').select('id', { count: 'exact', head: true }),
     supabase
       .from('venue_leads')
       .select('id, company_name, contact_name, interest_level, follow_up_queue, status, operator_notes, commercial_terms, created_at')
       .order('created_at', { ascending: false })
       .limit(5),
   ])
+
+  const venueLeads = recentLeads ?? []
 
   if (!liveAdminAccess) {
     return (
@@ -92,7 +97,6 @@ export default async function AdminVenuesPage({ searchParams }: { searchParams?:
             <div key={item.label} className="rounded-3xl border border-white/10 bg-white/5 p-5">
               <p className="text-xs uppercase tracking-[0.22em] text-slate-400">{item.label}</p>
               <p className="mt-3 text-3xl font-semibold text-white">{item.value}</p>
-              <p className="mt-2 text-sm text-slate-300">{item.detail}</p>
             </div>
           ))}
         </section>
@@ -103,12 +107,8 @@ export default async function AdminVenuesPage({ searchParams }: { searchParams?:
               <h2 className="text-2xl font-semibold text-white">Recent venue leads</h2>
               <p className="mt-2 max-w-2xl text-sm text-slate-300">New inquiries land here for sales follow-up and qualification routing.</p>
             </div>
-            <div className="grid grid-cols-2 gap-2 text-xs uppercase tracking-[0.2em] text-slate-300 sm:grid-cols-4">
-              {leadQueueSummary.map((item) => (
-                <span key={item.label} className="rounded-full border border-white/10 px-3 py-1 text-center">
-                  {item.label}: {item.value}
-                </span>
-              ))}
+            <div className="rounded-full border border-white/10 px-3 py-1 text-xs uppercase tracking-[0.2em] text-slate-300">
+              Provisioning drafts: {String(draftCount ?? 0)}
             </div>
           </div>
           <div className="mt-4 space-y-3">
@@ -155,6 +155,7 @@ export default async function AdminVenuesPage({ searchParams }: { searchParams?:
                         Save review
                       </button>
                     </div>
+                  </form>
                   <form action={`/api/admin/venue-leads/${lead.id}`} method="post" className="mt-3 flex flex-wrap items-center gap-3">
                     <input type="hidden" name="action" value="create-draft" />
                     <button type="submit" className="rounded-xl border border-emerald-400/40 bg-emerald-400/10 px-4 py-2 text-sm font-medium text-emerald-100 hover:bg-emerald-400/20">Create provisioning draft</button>

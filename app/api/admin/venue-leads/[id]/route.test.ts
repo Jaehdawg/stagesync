@@ -5,6 +5,7 @@ const getRequestAdminAccessMock = vi.fn()
 const venueLeadMaybeSingleMock = vi.fn()
 const venueLeadUpdateEqMock = vi.fn(() => ({ error: null }))
 const venueLeadUpdateMock = vi.fn(() => ({ eq: venueLeadUpdateEqMock }))
+const venueDraftUpsertMock = vi.fn(() => Promise.resolve({ error: null }))
 
 const createServiceClientMock = vi.fn(() => ({
   from(table: string) {
@@ -15,6 +16,12 @@ const createServiceClientMock = vi.fn(() => ({
           maybeSingle: venueLeadMaybeSingleMock,
         })),
         update: venueLeadUpdateMock,
+      }
+    }
+
+    if (table === 'venue_provisioning_drafts') {
+      return {
+        upsert: venueDraftUpsertMock,
       }
     }
 
@@ -39,6 +46,7 @@ beforeEach(() => {
   venueLeadMaybeSingleMock.mockReset()
   venueLeadUpdateEqMock.mockClear()
   venueLeadUpdateMock.mockClear()
+  venueDraftUpsertMock.mockClear()
   createServiceClientMock.mockClear()
   getRequestAdminAccessMock.mockResolvedValue({ source: 'live', username: 'stagesync-admin', userId: 'admin-1' })
 })
@@ -46,7 +54,7 @@ beforeEach(() => {
 describe('admin venue lead route', () => {
   it('updates the lead status and operator notes', async () => {
     venueLeadMaybeSingleMock.mockResolvedValue({
-      data: { id: 'lead-1', follow_up_queue: 'venue-sales-demo', status: 'new', operator_notes: null },
+      data: { id: 'lead-1', company_name: 'The River House', contact_name: 'Ava', follow_up_queue: 'venue-sales-demo', status: 'new', operator_notes: null },
       error: null,
     })
 
@@ -77,7 +85,7 @@ describe('admin venue lead route', () => {
 
   it('creates a provisioning draft from a venue lead', async () => {
     venueLeadMaybeSingleMock.mockResolvedValue({
-      data: { id: 'lead-2', follow_up_queue: 'venue-sales-demo', status: 'new', operator_notes: 'Initial note' },
+      data: { id: 'lead-2', company_name: 'Sunset Social', contact_name: 'Noah', follow_up_queue: 'venue-sales-demo', status: 'new', operator_notes: 'Initial note' },
       error: null,
     })
 
@@ -94,19 +102,29 @@ describe('admin venue lead route', () => {
     const response = await POST(request, { params: Promise.resolve({ id: 'lead-2' }) })
 
     expect(response.status).toBe(303)
+    expect(venueDraftUpsertMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        venue_lead_id: 'lead-2',
+        company_name: 'Sunset Social',
+        contact_name: 'Noah',
+        status: 'draft',
+        follow_up_queue: 'venue-sales-hot',
+        created_by: 'stagesync-admin',
+      }),
+      { onConflict: 'venue_lead_id' }
+    )
     expect(venueLeadUpdateMock).toHaveBeenCalledWith(
       expect.objectContaining({
         status: 'reviewing',
         follow_up_queue: 'venue-sales-hot',
-        operator_notes: expect.stringContaining('Initial note'),
+        operator_notes: 'Initial note',
       })
     )
-    expect(venueLeadUpdateMock.mock.calls[0][0].operator_notes).toContain('Provisioning draft created by stagesync-admin')
   })
 
   it('rejects an invalid status', async () => {
     venueLeadMaybeSingleMock.mockResolvedValue({
-      data: { id: 'lead-1', follow_up_queue: 'venue-sales-demo', status: 'new', operator_notes: null },
+      data: { id: 'lead-1', company_name: 'The River House', contact_name: 'Ava', follow_up_queue: 'venue-sales-demo', status: 'new', operator_notes: null },
       error: null,
     })
 
