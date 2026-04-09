@@ -34,6 +34,8 @@ export function getVenueLeadStatusMessage(notice?: string | null) {
   switch (notice) {
     case 'submitted':
       return 'Thanks — your venue inquiry was saved and routed for follow-up.'
+    case 'updated':
+      return 'Venue lead updated and queued for follow-up.'
     case 'missing-fields':
       return 'Please fill in the required venue inquiry fields before sending the request.'
     default:
