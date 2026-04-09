@@ -156,11 +156,14 @@ export default async function AdminVenuesPage({ searchParams }: { searchParams?:
                       </button>
                     </div>
                   </form>
-                  <form action={`/api/admin/venue-leads/${lead.id}`} method="post" className="mt-3 flex flex-wrap items-center gap-3">
-                    <input type="hidden" name="action" value="create-draft" />
-                    <button type="submit" className="rounded-xl border border-emerald-400/40 bg-emerald-400/10 px-4 py-2 text-sm font-medium text-emerald-100 hover:bg-emerald-400/20">Create provisioning draft</button>
+                  <div className="mt-3 flex flex-wrap items-center gap-3">
+                    <form action={`/api/admin/venue-leads/${lead.id}`} method="post">
+                      <input type="hidden" name="action" value="create-draft" />
+                      <button type="submit" className="rounded-xl border border-emerald-400/40 bg-emerald-400/10 px-4 py-2 text-sm font-medium text-emerald-100 hover:bg-emerald-400/20">Create provisioning draft</button>
+                    </form>
+                    <Link href={`/admin/venue-provisioning/${lead.id}`} className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white hover:border-cyan-400/50">Open draft view</Link>
                     <p className="text-xs text-slate-400">Marks the lead as reviewing and seeds a provisioning note for the next handoff.</p>
-                  </form>
+                  </div>
                 </article>
               ))
             ) : (
