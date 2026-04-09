@@ -80,6 +80,17 @@ describe('admin venue lead route', () => {
         operator_notes: 'Spoke with the GM',
       })
     )
+    expect(venueDraftUpsertMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        venue_lead_id: 'lead-1',
+        company_name: 'The River House',
+        contact_name: 'Ava',
+        status: 'contacted',
+        follow_up_queue: 'venue-sales-pricing',
+        created_by: 'stagesync-admin',
+      }),
+      { onConflict: 'venue_lead_id' }
+    )
     expect(venueLeadUpdateEqMock).toHaveBeenCalledWith('id', 'lead-1')
   })
 
