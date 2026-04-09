@@ -81,6 +81,7 @@ describe('AdminVenueProvisioningPage', () => {
     expect(screen.getByRole('heading', { name: /current draft/i })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: /lead snapshot/i })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: /provisioning notes/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /update handoff/i })).toBeInTheDocument()
     expect(screen.getByText(/provisioning draft updated/i)).toBeInTheDocument()
     expect(screen.getAllByText(/the river house/i).length).toBeGreaterThan(0)
   })

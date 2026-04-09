@@ -47,6 +47,10 @@ export default async function AdminVenueProvisioningPage({ params, searchParams 
       .maybeSingle(),
   ])
 
+  const editableStatus = draft?.status ?? lead?.status ?? 'new'
+  const editableQueue = draft?.follow_up_queue ?? lead?.follow_up_queue ?? 'venue-sales-hot'
+  const editableNotes = draft?.operator_notes ?? lead?.operator_notes ?? ''
+
   return (
     <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100 sm:px-6 lg:px-8">
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
@@ -103,6 +107,50 @@ export default async function AdminVenueProvisioningPage({ params, searchParams 
           <h2 className="text-2xl font-semibold text-white">Provisioning notes</h2>
           <p className="mt-2 text-sm text-slate-300">These notes should capture setup, pricing, room scope, and the next handoff step.</p>
           <pre className="mt-4 overflow-x-auto rounded-2xl border border-white/10 bg-slate-950/60 p-4 text-sm text-slate-200">{draft?.operator_notes ?? lead?.operator_notes ?? 'No notes yet.'}</pre>
+        </section>
+
+        <section className="rounded-3xl border border-white/10 bg-white/5 p-6">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="text-2xl font-semibold text-white">Update handoff</h2>
+              <p className="mt-2 text-sm text-slate-300">Keep the lead and provisioning draft in sync from this page.</p>
+            </div>
+            <form action={`/api/admin/venue-leads/${leadId}`} method="post">
+              <input type="hidden" name="action" value="create-draft" />
+              <button type="submit" className="rounded-xl border border-emerald-400/40 bg-emerald-400/10 px-4 py-2 text-sm font-medium text-emerald-100 hover:bg-emerald-400/20">
+                Sync draft from lead
+              </button>
+            </form>
+          </div>
+
+          <form action={`/api/admin/venue-leads/${leadId}`} method="post" className="mt-4 grid gap-3 rounded-2xl border border-white/10 bg-slate-900/70 p-4 lg:grid-cols-[1fr_1fr_1.5fr_auto] lg:items-end">
+            <label className="text-sm text-slate-300">
+              <span className="mb-1 block text-xs uppercase tracking-[0.2em] text-slate-400">Status</span>
+              <select name="status" defaultValue={editableStatus} className="w-full rounded-xl border border-white/10 bg-slate-950/80 px-3 py-2 text-sm text-white outline-none">
+                <option value="new">new</option>
+                <option value="reviewing">reviewing</option>
+                <option value="contacted">contacted</option>
+                <option value="qualified">qualified</option>
+                <option value="closed">closed</option>
+              </select>
+            </label>
+            <label className="text-sm text-slate-300">
+              <span className="mb-1 block text-xs uppercase tracking-[0.2em] text-slate-400">Queue</span>
+              <select name="followUpQueue" defaultValue={editableQueue} className="w-full rounded-xl border border-white/10 bg-slate-950/80 px-3 py-2 text-sm text-white outline-none">
+                <option value="venue-sales-hot">venue-sales-hot</option>
+                <option value="venue-sales-pricing">venue-sales-pricing</option>
+                <option value="venue-sales-demo">venue-sales-demo</option>
+                <option value="venue-sales-nurture">venue-sales-nurture</option>
+              </select>
+            </label>
+            <label className="text-sm text-slate-300 lg:col-span-2">
+              <span className="mb-1 block text-xs uppercase tracking-[0.2em] text-slate-400">Operator notes</span>
+              <textarea name="operatorNotes" defaultValue={editableNotes} rows={4} placeholder="Setup details, pricing notes, room scope, next handoff step" className="w-full rounded-xl border border-white/10 bg-slate-950/80 px-3 py-2 text-sm text-white outline-none placeholder:text-slate-500" />
+            </label>
+            <button type="submit" className="rounded-xl border border-cyan-400/40 bg-cyan-400/10 px-4 py-2 text-sm font-medium text-cyan-100 hover:bg-cyan-400/20">
+              Save changes
+            </button>
+          </form>
         </section>
       </div>
     </main>
