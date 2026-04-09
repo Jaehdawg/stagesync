@@ -5,8 +5,7 @@ import { BandAccessForm } from '@/components/band-access-form'
 import { AdminRowDialog } from '@/components/admin-row-dialog'
 import { getAdminAccess } from '@/lib/admin-access'
 import { listTestLogins } from '@/lib/test-login-list'
-import { getBandProfileForBandId } from '@/lib/band-tenancy'
-import { listBandRolesWithProfilesForBandId } from '@/lib/band-roles'
+import type { BandRoleWithProfile } from '@/lib/band-roles'
 import { adminCopy } from '@/content/en/admin'
 
 type SearchParams = Record<string, string | string[] | undefined>
@@ -62,13 +61,51 @@ export default async function AdminBandsPage({
 
   const { data: liveBands, count: liveBandCount } = await bandQuery.range(offset, offset + pageSize - 1)
   const liveBandIds = (liveBands ?? []).map((band) => band.id)
-  const liveBandDetails = await Promise.all(
-    liveBandIds.map(async (bandId) => ({
-      bandId,
-      profile: await getBandProfileForBandId(serviceSupabase, bandId),
-      roles: await listBandRolesWithProfilesForBandId(serviceSupabase, bandId),
-    }))
-  )
+  const [bandProfilesResult, bandRolesResult] = liveBandIds.length
+    ? await Promise.all([
+        serviceSupabase
+          .from('band_profiles')
+          .select('id, band_name, website_url, facebook_url, instagram_url, tiktok_url, paypal_url, venmo_url, cashapp_url, custom_message, logo_url, created_at, band_id')
+          .in('band_id', liveBandIds),
+        serviceSupabase
+          .from('band_roles')
+          .select('id, band_id, profile_id, band_role, active, created_at, updated_at')
+          .in('band_id', liveBandIds)
+          .order('band_role', { ascending: true })
+          .order('created_at', { ascending: true }),
+      ])
+    : [{ data: [], error: null }, { data: [], error: null }]
+
+  if (bandProfilesResult.error) {
+    throw new Error(bandProfilesResult.error.message)
+  }
+  if (bandRolesResult.error) {
+    throw new Error(bandRolesResult.error.message)
+  }
+
+  const bandRoles = (bandRolesResult.data ?? []) as BandRoleWithProfile[]
+  const profileIds = [...new Set(bandRoles.map((role) => role.profile_id))]
+  const profiles = profileIds.length
+    ? (await serviceSupabase
+        .from('profiles')
+        .select('id, username, display_name, first_name, last_name, role')
+        .in('id', profileIds)).data ?? []
+    : []
+
+  const profilesById = new Map(profiles.map((profile) => [profile.id, profile]))
+  const rolesByBandId = new Map<string, BandRoleWithProfile[]>()
+  for (const role of bandRoles) {
+    const current = rolesByBandId.get(role.band_id) ?? []
+    current.push({ ...role, profile: (profilesById.get(role.profile_id) as BandRoleWithProfile['profile']) ?? null })
+    rolesByBandId.set(role.band_id, current)
+  }
+
+  const bandProfilesById = new Map((bandProfilesResult.data ?? []).map((profile) => [profile.band_id, profile]))
+  const liveBandDetails = liveBandIds.map((bandId) => ({
+    bandId,
+    profile: bandProfilesById.get(bandId) ?? null,
+    roles: rolesByBandId.get(bandId) ?? [],
+  }))
   const liveBandDetailsById = new Map(liveBandDetails.map((item) => [item.bandId, item]))
   const profileSearch = query
     ? await serviceSupabase
