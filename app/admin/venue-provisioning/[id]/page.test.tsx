@@ -47,6 +47,29 @@ beforeEach(() => {
         }
       }
 
+      if (table === 'venue_provisioning_events') {
+        return {
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              order: vi.fn(() => ({
+                limit: vi.fn(() => Promise.resolve({
+                  data: [
+                    {
+                      id: 'event-1',
+                      milestone: 'drafted',
+                      note: 'Initial note',
+                      created_by: 'stagesync-admin',
+                      created_at: '2026-04-08T19:00:00.000Z',
+                    },
+                  ],
+                  error: null,
+                })),
+              })),
+            })),
+          })),
+        }
+      }
+
       return {
         select: vi.fn(() => ({
           eq: vi.fn(() => ({
@@ -81,8 +104,10 @@ describe('AdminVenueProvisioningPage', () => {
     expect(screen.getByRole('heading', { name: /current draft/i })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: /lead snapshot/i })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: /provisioning notes/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /status trail/i })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: /update handoff/i })).toBeInTheDocument()
     expect(screen.getByText(/provisioning draft updated/i)).toBeInTheDocument()
     expect(screen.getAllByText(/the river house/i).length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/drafted/i).length).toBeGreaterThan(0)
   })
 })

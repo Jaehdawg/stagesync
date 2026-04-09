@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { createServiceClient } from '../../../../../utils/supabase/service'
 import { getRequestAdminAccess } from '../../../../../lib/admin-access'
 import { buildVenueProvisioningDraft } from '../../../../../lib/venue-provisioning-drafts'
+import { getVenueProvisioningMilestoneOptions, type VenueProvisioningMilestone } from '../../../../../lib/venue-provisioning-trail'
 
 const ALLOWED_STATUSES = ['new', 'reviewing', 'contacted', 'qualified', 'closed'] as const
 const ALLOWED_QUEUES = ['venue-sales-hot', 'venue-sales-pricing', 'venue-sales-demo', 'venue-sales-nurture'] as const
@@ -23,6 +24,11 @@ function parseQueue(value: FormDataEntryValue | null): VenueLeadQueue | null {
   return (ALLOWED_QUEUES as readonly string[]).includes(queue) ? (queue as VenueLeadQueue) : null
 }
 
+function parseMilestone(value: FormDataEntryValue | null): VenueProvisioningMilestone | null {
+  const milestone = String(value ?? '').trim()
+  return getVenueProvisioningMilestoneOptions().some((option) => option.milestone === milestone) ? (milestone as VenueProvisioningMilestone) : null
+}
+
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const adminAccess = await getRequestAdminAccess(request)
   if (!adminAccess) {
@@ -35,6 +41,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const action = String(formData.get('action') ?? 'update')
   const status = parseStatus(formData.get('status'))
   const followUpQueue = parseQueue(formData.get('followUpQueue'))
+  const milestone = parseMilestone(formData.get('milestone'))
   const operatorNotes = String(formData.get('operatorNotes') ?? '').trim()
 
   const { data: existingLead, error: lookupError } = await supabase
@@ -98,6 +105,32 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
   if (draftError) {
     return NextResponse.json({ message: draftError.message }, { status: 500 })
+  }
+
+  const { data: persistedDraft, error: draftLookupError } = await supabase
+    .from('venue_provisioning_drafts')
+    .select('id')
+    .eq('venue_lead_id', leadId)
+    .maybeSingle()
+
+  if (draftLookupError) {
+    return NextResponse.json({ message: draftLookupError.message }, { status: 500 })
+  }
+
+  const selectedMilestone = milestone ?? (action === 'create-draft' ? 'drafted' : status === 'qualified' ? 'pricing_approved' : status === 'contacted' ? 'terms_reviewed' : 'drafted')
+
+  if (persistedDraft) {
+    const { error: eventError } = await supabase.from('venue_provisioning_events').insert({
+      venue_provisioning_draft_id: persistedDraft.id,
+      venue_lead_id: leadId,
+      milestone: selectedMilestone,
+      note: draft.operator_notes,
+      created_by: adminAccess.username,
+    })
+
+    if (eventError) {
+      return NextResponse.json({ message: eventError.message }, { status: 500 })
+    }
   }
 
   return redirectWithNotice(request, 'updated')
