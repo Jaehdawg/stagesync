@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { createServiceClient } from '../../../../../utils/supabase/service'
 import { getRequestAdminAccess } from '../../../../../lib/admin-access'
+import { buildVenueProvisioningDraft } from '../../../../../lib/venue-provisioning-drafts'
 
 const ALLOWED_STATUSES = ['new', 'reviewing', 'contacted', 'qualified', 'closed'] as const
 const ALLOWED_QUEUES = ['venue-sales-hot', 'venue-sales-pricing', 'venue-sales-demo', 'venue-sales-nurture'] as const
@@ -38,7 +39,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
   const { data: existingLead, error: lookupError } = await supabase
     .from('venue_leads')
-    .select('id, follow_up_queue, status, operator_notes')
+    .select('id, company_name, contact_name, follow_up_queue, status, operator_notes')
     .eq('id', leadId)
     .maybeSingle()
 
@@ -50,10 +51,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return NextResponse.json({ message: 'Venue lead not found.' }, { status: 404 })
   }
 
-  const draftNote = `Provisioning draft created by ${adminAccess.username} on ${new Date().toISOString()}`
   const nextStatus: VenueLeadStatus = action === 'create-draft' ? 'reviewing' : status ?? (existingLead.status as VenueLeadStatus)
   const nextQueue = action === 'create-draft' ? ('venue-sales-hot' as VenueLeadQueue) : followUpQueue ?? (existingLead.follow_up_queue as VenueLeadQueue)
-  const nextNotes = [existingLead.operator_notes?.trim(), operatorNotes, action === 'create-draft' ? draftNote : null].filter(Boolean).join('\n') || null
+  const nextNotes = operatorNotes || existingLead.operator_notes || null
 
   if (action !== 'create-draft' && !status) {
     return NextResponse.json({ message: 'Valid lead status is required.' }, { status: 400 })
@@ -71,6 +71,35 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
   if (updateError) {
     return NextResponse.json({ message: updateError.message }, { status: 500 })
+  }
+
+  if (action === 'create-draft') {
+    const draft = buildVenueProvisioningDraft({
+      venueLeadId: leadId,
+      companyName: existingLead.company_name,
+      contactName: existingLead.contact_name,
+      createdBy: adminAccess.username,
+      followUpQueue: nextQueue,
+      operatorNotes: nextNotes,
+    })
+
+    const { error: draftError } = await supabase.from('venue_provisioning_drafts').upsert(
+      {
+        venue_lead_id: draft.venue_lead_id,
+        company_name: draft.company_name,
+        contact_name: draft.contact_name,
+        status: draft.status,
+        follow_up_queue: draft.follow_up_queue,
+        operator_notes: draft.operator_notes,
+        created_by: draft.created_by,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'venue_lead_id' }
+    )
+
+    if (draftError) {
+      return NextResponse.json({ message: draftError.message }, { status: 500 })
+    }
   }
 
   return redirectWithNotice(request, 'updated')

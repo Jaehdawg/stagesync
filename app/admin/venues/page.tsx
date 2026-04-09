@@ -17,8 +17,9 @@ export default async function AdminVenuesPage({ searchParams }: { searchParams?:
   const liveAdminAccess = await getAdminAccess(supabase)
   const sections = buildVenueOperatorSections()
   const provisioningPlan = getVenueProvisioningPlan()
-  const [{ count: totalLeadCount }, { data: recentLeads }] = await Promise.all([
+  const [{ count: totalLeadCount }, { count: totalDraftCount }, { data: recentLeads }] = await Promise.all([
     supabase.from('venue_leads').select('id', { count: 'exact', head: true }),
+    supabase.from('venue_provisioning_drafts').select('id', { count: 'exact', head: true }),
     supabase
       .from('venue_leads')
       .select('id, company_name, contact_name, interest_level, follow_up_queue, status, created_at')
@@ -87,8 +88,8 @@ export default async function AdminVenuesPage({ searchParams }: { searchParams?:
         <section className="grid gap-4 md:grid-cols-2">
           {[
             { label: 'Venue leads captured', value: String(totalLeadCount ?? 0), detail: 'All venue inquiries saved so far' },
+            { label: 'Provisioning drafts', value: String(totalDraftCount ?? 0), detail: 'Persisted handoffs ready for setup' },
             { label: 'Recent needs review', value: String(recentNeedsReviewCount), detail: 'New or reviewing leads in the latest queue slice' },
-            { label: 'Recent qualified', value: String(recentQualifiedCount), detail: 'Latest leads marked qualified' },
             { label: 'Recent hot leads', value: String(recentHotCount), detail: 'Latest leads routed to the hot sales queue' },
           ].map((item) => (
             <div key={item.label} className="rounded-3xl border border-white/10 bg-white/5 p-5">
