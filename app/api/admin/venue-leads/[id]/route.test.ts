@@ -1,10 +1,25 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import type { NextRequest } from 'next/server'
+import { NextRequest } from 'next/server'
 
 const getRequestAdminAccessMock = vi.fn()
-const createServiceClientMock = vi.fn()
-const updateMock = vi.fn(() => ({
-  eq: async () => ({ error: null }),
+const venueLeadMaybeSingleMock = vi.fn()
+const venueLeadUpdateEqMock = vi.fn(() => ({ error: null }))
+const venueLeadUpdateMock = vi.fn(() => ({ eq: venueLeadUpdateEqMock }))
+
+const createServiceClientMock = vi.fn(() => ({
+  from(table: string) {
+    if (table === 'venue_leads') {
+      return {
+        select: vi.fn(() => ({
+          eq: vi.fn(() => ({ maybeSingle: venueLeadMaybeSingleMock })),
+          maybeSingle: venueLeadMaybeSingleMock,
+        })),
+        update: venueLeadUpdateMock,
+      }
+    }
+
+    return {}
+  },
 }))
 
 vi.mock('../../../../../lib/admin-access', () => ({
@@ -19,62 +34,93 @@ async function loadRoute() {
   return await import('./route')
 }
 
-function makeRequest(fields: Record<string, string>) {
-  const formData = new FormData()
-  for (const [key, value] of Object.entries(fields)) {
-    formData.append(key, value)
-  }
-
-  return {
-    formData: async () => formData,
-    url: 'https://example.com/api/admin/venue-leads/lead-1',
-    cookies: { getAll: () => [], set: vi.fn() },
-  } as unknown as NextRequest
-}
-
 beforeEach(() => {
   getRequestAdminAccessMock.mockReset()
-  createServiceClientMock.mockReset()
-  createServiceClientMock.mockReturnValue({
-    from: () => ({
-      update: updateMock,
-    }),
-  })
-  updateMock.mockClear()
+  venueLeadMaybeSingleMock.mockReset()
+  venueLeadUpdateEqMock.mockClear()
+  venueLeadUpdateMock.mockClear()
+  createServiceClientMock.mockClear()
+  getRequestAdminAccessMock.mockResolvedValue({ source: 'live', username: 'stagesync-admin', userId: 'admin-1' })
 })
 
-describe('admin venue leads route', () => {
-  it('updates venue lead review fields', async () => {
-    getRequestAdminAccessMock.mockResolvedValue({ source: 'live', username: 'albert' })
-    const { POST } = await loadRoute()
+describe('admin venue lead route', () => {
+  it('updates the lead status and operator notes', async () => {
+    venueLeadMaybeSingleMock.mockResolvedValue({
+      data: { id: 'lead-1', follow_up_queue: 'venue-sales-demo', status: 'new', operator_notes: null },
+      error: null,
+    })
 
-    const response = await POST(makeRequest({
-      action: 'update',
-      status: 'qualified',
-      operatorNotes: 'Ready for provisioning.',
-      commercialTerms: 'Custom base price $499 / month.',
-      followUpQueue: 'venue-sales-hot',
-    }), { params: Promise.resolve({ id: 'lead-1' }) })
+    const { POST } = await loadRoute()
+    const request = {
+      formData: async () => {
+        const formData = new FormData()
+        formData.set('status', 'contacted')
+        formData.set('followUpQueue', 'venue-sales-pricing')
+        formData.set('operatorNotes', 'Spoke with the GM')
+        return formData
+      },
+      url: 'https://example.com/api/admin/venue-leads/lead-1',
+    } as unknown as NextRequest
+
+    const response = await POST(request, { params: Promise.resolve({ id: 'lead-1' }) })
 
     expect(response.status).toBe(303)
-    expect(response.headers.get('location')).toBe('https://example.com/admin/venues')
-    expect(updateMock).toHaveBeenCalledWith(expect.objectContaining({
-      status: 'qualified',
-      operator_notes: 'Ready for provisioning.',
-      commercial_terms: 'Custom base price $499 / month.',
-      follow_up_queue: 'venue-sales-hot',
-      updated_at: expect.any(String),
-    }))
+    expect(venueLeadUpdateMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: 'contacted',
+        follow_up_queue: 'venue-sales-pricing',
+        operator_notes: 'Spoke with the GM',
+      })
+    )
+    expect(venueLeadUpdateEqMock).toHaveBeenCalledWith('id', 'lead-1')
   })
 
-  it('rejects invalid statuses', async () => {
-    getRequestAdminAccessMock.mockResolvedValue({ source: 'live', username: 'albert' })
-    const { POST } = await loadRoute()
+  it('creates a provisioning draft from a venue lead', async () => {
+    venueLeadMaybeSingleMock.mockResolvedValue({
+      data: { id: 'lead-2', follow_up_queue: 'venue-sales-demo', status: 'new', operator_notes: 'Initial note' },
+      error: null,
+    })
 
-    const response = await POST(makeRequest({
-      action: 'update',
-      status: 'broken',
-    }), { params: Promise.resolve({ id: 'lead-1' }) })
+    const { POST } = await loadRoute()
+    const request = {
+      formData: async () => {
+        const formData = new FormData()
+        formData.set('action', 'create-draft')
+        return formData
+      },
+      url: 'https://example.com/api/admin/venue-leads/lead-2',
+    } as unknown as NextRequest
+
+    const response = await POST(request, { params: Promise.resolve({ id: 'lead-2' }) })
+
+    expect(response.status).toBe(303)
+    expect(venueLeadUpdateMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: 'reviewing',
+        follow_up_queue: 'venue-sales-hot',
+        operator_notes: expect.stringContaining('Initial note'),
+      })
+    )
+    expect(venueLeadUpdateMock.mock.calls[0][0].operator_notes).toContain('Provisioning draft created by stagesync-admin')
+  })
+
+  it('rejects an invalid status', async () => {
+    venueLeadMaybeSingleMock.mockResolvedValue({
+      data: { id: 'lead-1', follow_up_queue: 'venue-sales-demo', status: 'new', operator_notes: null },
+      error: null,
+    })
+
+    const { POST } = await loadRoute()
+    const request = {
+      formData: async () => {
+        const formData = new FormData()
+        formData.set('status', 'bogus')
+        return formData
+      },
+      url: 'https://example.com/api/admin/venue-leads/lead-1',
+    } as unknown as NextRequest
+
+    const response = await POST(request, { params: Promise.resolve({ id: 'lead-1' }) })
 
     expect(response.status).toBe(400)
   })

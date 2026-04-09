@@ -3,19 +3,28 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const createClientMock = vi.fn()
 const getAdminAccessMock = vi.fn()
-const selectMock = vi.fn()
-
 const recentLeads = [
   {
-    id: 'lead-1',
-    company_name: 'Northside Tavern',
-    contact_name: 'Avery',
-    interest_level: 'demo',
-    follow_up_queue: 'venue-sales-demo',
-    status: 'reviewing',
-    operator_notes: 'Needs room-by-room pricing.',
-    commercial_terms: 'Custom base price $499 / month.',
-    created_at: '2026-04-07T18:00:00Z',
+    id: 'lead_1',
+    company_name: 'The River House',
+    contact_name: 'Ava',
+    interest_level: 'ready',
+    follow_up_queue: 'venue-sales-hot',
+    status: 'new',
+    operator_notes: 'Need a follow-up.',
+    commercial_terms: null,
+    created_at: '2026-04-08T16:00:00.000Z',
+  },
+  {
+    id: 'lead_2',
+    company_name: 'Sunset Social',
+    contact_name: 'Noah',
+    interest_level: 'pricing',
+    follow_up_queue: 'venue-sales-pricing',
+    status: 'qualified',
+    operator_notes: null,
+    commercial_terms: null,
+    created_at: '2026-04-08T15:00:00.000Z',
   },
 ]
 
@@ -38,7 +47,6 @@ async function loadPage() {
 beforeEach(() => {
   createClientMock.mockReset()
   getAdminAccessMock.mockReset()
-  selectMock.mockReset()
   createClientMock.mockResolvedValue({
     from: vi.fn(() => ({
       select: vi.fn((columns: string, options?: { count?: string; head?: boolean }) => {
@@ -61,13 +69,6 @@ beforeEach(() => {
         }
 
         return {
-          eq: vi.fn(() => ({
-            select: vi.fn(() => ({
-              order: vi.fn(() => ({
-                limit: vi.fn(() => Promise.resolve({ data: recentLeads, error: null })),
-              })),
-            })),
-          })),
           order: vi.fn(() => ({
             limit: vi.fn(() => Promise.resolve({ data: recentLeads, error: null })),
           })),
@@ -81,7 +82,7 @@ describe('AdminVenuesPage', () => {
   it('renders the venue operations reporting shell for an admin', async () => {
     getAdminAccessMock.mockResolvedValue({ username: 'albert' })
     const { default: AdminVenuesPage } = await loadPage()
-    const element = await AdminVenuesPage()
+    const element = await AdminVenuesPage({ searchParams: Promise.resolve({}) })
 
     render(element)
 
@@ -93,5 +94,16 @@ describe('AdminVenuesPage', () => {
     expect(screen.getByRole('heading', { name: /support and admin tools/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /save review/i })).toBeInTheDocument()
     expect(screen.getByText(/leads captured/i)).toBeInTheDocument()
+    expect(screen.getByText(/the river house/i)).toBeInTheDocument()
+  })
+
+  it('shows the updated lead notice when redirected from a lead save', async () => {
+    getAdminAccessMock.mockResolvedValue({ username: 'albert' })
+    const { default: AdminVenuesPage } = await loadPage()
+    const element = await AdminVenuesPage({ searchParams: Promise.resolve({ leadNotice: 'updated' }) })
+
+    render(element)
+
+    expect(screen.getByText(/venue lead updated and queued for follow-up/i)).toBeInTheDocument()
   })
 })

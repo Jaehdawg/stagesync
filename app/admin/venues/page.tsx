@@ -4,9 +4,15 @@ import { BandAccessForm } from '@/components/band-access-form'
 import { getAdminAccess } from '@/lib/admin-access'
 import { buildVenueOperatorSections } from '@/lib/venue-ops'
 import { getVenueProvisioningPlan } from '@/lib/venue-provisioning'
+import { getVenueLeadStatusMessage } from '@/lib/venue-leads'
 import { adminCopy } from '@/content/en/admin'
 
-export default async function AdminVenuesPage() {
+type SearchParams = Record<string, string | string[] | undefined>
+
+export default async function AdminVenuesPage({ searchParams }: { searchParams?: Promise<SearchParams> }) {
+  const params = await searchParams
+  const leadNotice = typeof params?.leadNotice === 'string' ? params.leadNotice : undefined
+  const leadMessage = getVenueLeadStatusMessage(leadNotice) ?? undefined
   const supabase = await createClient()
   const liveAdminAccess = await getAdminAccess(supabase)
   const sections = buildVenueOperatorSections()
@@ -72,6 +78,10 @@ export default async function AdminVenuesPage() {
           </form>
         </header>
 
+        {leadMessage ? (
+          <div className="rounded-2xl border border-cyan-400/20 bg-cyan-400/10 px-4 py-3 text-sm text-cyan-50">{leadMessage}</div>
+        ) : null}
+
         <section className="grid gap-4 md:grid-cols-2">
           {[
             { label: 'Leads captured', value: String(leadCount ?? 0) },
@@ -82,18 +92,30 @@ export default async function AdminVenuesPage() {
             <div key={item.label} className="rounded-3xl border border-white/10 bg-white/5 p-5">
               <p className="text-xs uppercase tracking-[0.22em] text-slate-400">{item.label}</p>
               <p className="mt-3 text-3xl font-semibold text-white">{item.value}</p>
+              <p className="mt-2 text-sm text-slate-300">{item.detail}</p>
             </div>
           ))}
         </section>
 
         <section className="rounded-3xl border border-white/10 bg-white/5 p-6">
-          <h2 className="text-2xl font-semibold text-white">Recent venue leads</h2>
-          <p className="mt-2 max-w-2xl text-sm text-slate-300">New inquiries land here for sales follow-up and qualification routing.</p>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="text-2xl font-semibold text-white">Recent venue leads</h2>
+              <p className="mt-2 max-w-2xl text-sm text-slate-300">New inquiries land here for sales follow-up and qualification routing.</p>
+            </div>
+            <div className="grid grid-cols-2 gap-2 text-xs uppercase tracking-[0.2em] text-slate-300 sm:grid-cols-4">
+              {leadQueueSummary.map((item) => (
+                <span key={item.label} className="rounded-full border border-white/10 px-3 py-1 text-center">
+                  {item.label}: {item.value}
+                </span>
+              ))}
+            </div>
+          </div>
           <div className="mt-4 space-y-3">
-            {(recentLeads ?? []).length ? (
-              (recentLeads ?? []).map((lead) => (
+            {venueLeads.length ? (
+              venueLeads.map((lead) => (
                 <article key={lead.id} className="rounded-2xl border border-white/10 bg-slate-950/50 p-4">
-                  <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
                       <p className="text-lg font-semibold text-white">{lead.company_name}</p>
                       <p className="text-sm text-slate-400">{lead.contact_name} · {lead.created_at}</p>
@@ -133,6 +155,10 @@ export default async function AdminVenuesPage() {
                         Save review
                       </button>
                     </div>
+                  <form action={`/api/admin/venue-leads/${lead.id}`} method="post" className="mt-3 flex flex-wrap items-center gap-3">
+                    <input type="hidden" name="action" value="create-draft" />
+                    <button type="submit" className="rounded-xl border border-emerald-400/40 bg-emerald-400/10 px-4 py-2 text-sm font-medium text-emerald-100 hover:bg-emerald-400/20">Create provisioning draft</button>
+                    <p className="text-xs text-slate-400">Marks the lead as reviewing and seeds a provisioning note for the next handoff.</p>
                   </form>
                 </article>
               ))

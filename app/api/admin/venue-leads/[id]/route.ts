@@ -1,12 +1,25 @@
 import { NextResponse, type NextRequest } from 'next/server'
-import { createServiceClient } from '@/utils/supabase/service'
-import { getRequestAdminAccess } from '@/lib/admin-access'
+import { createServiceClient } from '../../../../../utils/supabase/service'
+import { getRequestAdminAccess } from '../../../../../lib/admin-access'
 
-const VALID_STATUSES = ['new', 'reviewing', 'contacted', 'qualified', 'closed'] as const
+const ALLOWED_STATUSES = ['new', 'reviewing', 'contacted', 'qualified', 'closed'] as const
+const ALLOWED_QUEUES = ['venue-sales-hot', 'venue-sales-pricing', 'venue-sales-demo', 'venue-sales-nurture'] as const
 
-function getFormValue(formData: FormData, key: string) {
-  const value = String(formData.get(key) ?? '').trim()
-  return value.length ? value : null
+type VenueLeadStatus = (typeof ALLOWED_STATUSES)[number]
+type VenueLeadQueue = (typeof ALLOWED_QUEUES)[number]
+
+function redirectWithNotice(request: NextRequest, notice: string) {
+  return NextResponse.redirect(new URL(`/admin/venues?leadNotice=${encodeURIComponent(notice)}`, request.url), 303)
+}
+
+function parseStatus(value: FormDataEntryValue | null): VenueLeadStatus | null {
+  const status = String(value ?? '').trim()
+  return (ALLOWED_STATUSES as readonly string[]).includes(status) ? (status as VenueLeadStatus) : null
+}
+
+function parseQueue(value: FormDataEntryValue | null): VenueLeadQueue | null {
+  const queue = String(value ?? '').trim()
+  return (ALLOWED_QUEUES as readonly string[]).includes(queue) ? (queue as VenueLeadQueue) : null
 }
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -15,38 +28,50 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return NextResponse.json({ message: 'Admin login required.' }, { status: 401 })
   }
 
-  const { id } = await params
+  const { id: leadId } = await params
+  const supabase = createServiceClient()
   const formData = await request.formData()
-  const action = String(formData.get('action') ?? '').trim()
+  const action = String(formData.get('action') ?? 'update')
+  const status = parseStatus(formData.get('status'))
+  const followUpQueue = parseQueue(formData.get('followUpQueue'))
+  const operatorNotes = String(formData.get('operatorNotes') ?? '').trim()
 
-  if (action !== 'update') {
-    return NextResponse.json({ message: 'Unknown action.' }, { status: 400 })
+  const { data: existingLead, error: lookupError } = await supabase
+    .from('venue_leads')
+    .select('id, follow_up_queue, status, operator_notes')
+    .eq('id', leadId)
+    .maybeSingle()
+
+  if (lookupError) {
+    return NextResponse.json({ message: lookupError.message }, { status: 500 })
   }
 
-  const status = String(formData.get('status') ?? '').trim()
-  if (!VALID_STATUSES.includes(status as typeof VALID_STATUSES[number])) {
+  if (!existingLead) {
+    return NextResponse.json({ message: 'Venue lead not found.' }, { status: 404 })
+  }
+
+  const draftNote = `Provisioning draft created by ${adminAccess.username} on ${new Date().toISOString()}`
+  const nextStatus: VenueLeadStatus = action === 'create-draft' ? 'reviewing' : status ?? (existingLead.status as VenueLeadStatus)
+  const nextQueue = action === 'create-draft' ? ('venue-sales-hot' as VenueLeadQueue) : followUpQueue ?? (existingLead.follow_up_queue as VenueLeadQueue)
+  const nextNotes = [existingLead.operator_notes?.trim(), operatorNotes, action === 'create-draft' ? draftNote : null].filter(Boolean).join('\n') || null
+
+  if (action !== 'create-draft' && !status) {
     return NextResponse.json({ message: 'Valid lead status is required.' }, { status: 400 })
   }
 
-  const operatorNotes = getFormValue(formData, 'operatorNotes')
-  const commercialTerms = getFormValue(formData, 'commercialTerms')
-  const followUpQueue = getFormValue(formData, 'followUpQueue')
-
-  const supabase = createServiceClient()
-  const { error } = await supabase
+  const { error: updateError } = await supabase
     .from('venue_leads')
     .update({
-      status,
-      operator_notes: operatorNotes,
-      commercial_terms: commercialTerms,
-      ...(followUpQueue ? { follow_up_queue: followUpQueue } : {}),
+      status: nextStatus,
+      follow_up_queue: nextQueue,
+      operator_notes: nextNotes,
       updated_at: new Date().toISOString(),
     })
-    .eq('id', id)
+    .eq('id', leadId)
 
-  if (error) {
-    return NextResponse.json({ message: error.message }, { status: 400 })
+  if (updateError) {
+    return NextResponse.json({ message: updateError.message }, { status: 500 })
   }
 
-  return NextResponse.redirect(new URL('/admin/venues', request.url), 303)
+  return redirectWithNotice(request, 'updated')
 }
