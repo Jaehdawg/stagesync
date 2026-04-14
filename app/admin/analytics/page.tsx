@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { createClient } from '@/utils/supabase/server'
+import { createServiceClient } from '@/utils/supabase/service'
 import { BandAccessForm } from '@/components/band-access-form'
 import { getAdminAccess } from '@/lib/admin-access'
 import { buildAnalyticsSections } from '@/lib/analytics-reporting'
@@ -32,34 +33,28 @@ export default async function AdminAnalyticsPage() {
       )
   }
 
-  const [
-    { count: bandCount },
-    { count: showCount },
-    { count: activeShowCount },
-    { count: singerCount },
-    { count: tracksPlayedCount },
-    { data: recentShows },
-  ] = await Promise.all([
-    supabase.from('bands').select('id', { count: 'exact', head: true }),
-    supabase.from('events').select('id', { count: 'exact', head: true }),
-    supabase.from('events').select('id', { count: 'exact', head: true }).eq('is_active', true),
-    supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('role', 'singer'),
-    supabase.from('queue_items').select('id', { count: 'exact', head: true }).eq('status', 'completed'),
-    supabase
-      .from('events')
-      .select('id, name, is_active, allow_signups, created_at')
-      .gte('created_at', new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString())
-      .order('created_at', { ascending: false })
-      .limit(5),
+  const serviceSupabase = createServiceClient()
+  const [summaryResult, recentShowsResult] = await Promise.all([
+    serviceSupabase.rpc('get_admin_analytics_summary'),
+    serviceSupabase.rpc('get_admin_recent_shows', { limit_count: 5 }),
   ])
 
+  const summary = summaryResult.data?.[0] ?? {
+    band_count: 0,
+    show_count: 0,
+    active_show_count: 0,
+    singer_count: 0,
+    tracks_played_count: 0,
+    recent_show_count: 0,
+  }
+
   const analyticsSections = buildAnalyticsSections({
-    bandCount: bandCount ?? 0,
-    showCount: showCount ?? 0,
-    activeShowCount: activeShowCount ?? 0,
-    recentShowCount: recentShows?.length ?? 0,
-    singerCount: singerCount ?? 0,
-    tracksPlayedCount: tracksPlayedCount ?? 0,
+    bandCount: summary.band_count ?? 0,
+    showCount: summary.show_count ?? 0,
+    activeShowCount: summary.active_show_count ?? 0,
+    recentShowCount: summary.recent_show_count ?? 0,
+    singerCount: summary.singer_count ?? 0,
+    tracksPlayedCount: summary.tracks_played_count ?? 0,
   })
   const trackingPlan = getAnalyticsTrackingPlan()
 
@@ -93,10 +88,10 @@ export default async function AdminAnalyticsPage() {
 
         <section className="grid gap-4 md:grid-cols-4">
           {[
-            { label: adminCopy.analyticsPage.metrics.bandShows, value: String(bandCount ?? 0) },
-            { label: adminCopy.analyticsPage.metrics.activeShow, value: String(activeShowCount ?? 0) },
-            { label: adminCopy.analyticsPage.metrics.singerCount, value: String(singerCount ?? 0) },
-            { label: adminCopy.analyticsPage.metrics.tracksPlayed, value: String(tracksPlayedCount ?? 0) },
+            { label: adminCopy.analyticsPage.metrics.bandShows, value: String(summary.band_count ?? 0) },
+            { label: adminCopy.analyticsPage.metrics.activeShow, value: String(summary.active_show_count ?? 0) },
+            { label: adminCopy.analyticsPage.metrics.singerCount, value: String(summary.singer_count ?? 0) },
+            { label: adminCopy.analyticsPage.metrics.tracksPlayed, value: String(summary.tracks_played_count ?? 0) },
           ].map((item) => (
             <div key={item.label} className="rounded-3xl border border-white/10 bg-white/5 p-5">
               <p className="text-xs uppercase tracking-[0.22em] text-slate-400">{item.label}</p>
@@ -173,7 +168,7 @@ export default async function AdminAnalyticsPage() {
         <section className="rounded-3xl border border-white/10 bg-white/5 p-6">
           <h2 className="text-2xl font-semibold text-white">{adminCopy.analyticsPage.recentShowsTitle}</h2>
           <div className="mt-4 space-y-3">
-            {(recentShows ?? []).map((show) => (
+            {(recentShowsResult.data ?? []).map((show) => (
               <div key={show.id} className="rounded-2xl border border-white/10 bg-slate-950/50 p-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>

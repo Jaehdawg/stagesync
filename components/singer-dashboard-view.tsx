@@ -1,13 +1,21 @@
 'use client'
 
 import type { ReactNode } from 'react'
-import { useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { SingerRegistrationForm } from './singer-registration-form'
-import { TidalSearchPanel } from './tidal-search-panel'
 import { SingerCurrentRequestCard } from './singer-current-request-card'
-import { SongLyricsPanel } from './song-lyrics-panel'
 import { AutoRefresh } from './auto-refresh'
 import { singerDashboardViewCopy } from '@/content/en/components/singer-dashboard-view'
+
+const LazyTidalSearchPanel = lazy(async () => {
+  const mod = await import('./tidal-search-panel')
+  return { default: mod.TidalSearchPanel }
+})
+
+const LazySongLyricsPanel = lazy(async () => {
+  const mod = await import('./song-lyrics-panel')
+  return { default: mod.SongLyricsPanel }
+})
 
 type QueueEntry = {
   id: string
@@ -61,6 +69,14 @@ function Panel({ title, children }: { title: string; children: ReactNode }) {
       <h2 className="text-2xl font-semibold text-white">{title}</h2>
       <div className="mt-5">{children}</div>
     </section>
+  )
+}
+
+function PanelSkeleton({ title, label }: { title: string; label: string }) {
+  return (
+    <Panel title={title}>
+      <p className="text-sm text-slate-400">Loading {label}…</p>
+    </Panel>
   )
 }
 
@@ -249,30 +265,32 @@ export function SingerDashboardView(state: DashboardState) {
                   }}
                 />
               ) : authMode === 'signup' ? (
-                <TidalSearchPanel
-                  disabled={!state.signupEnabled}
-                  statusMessage={state.signupStatusMessage}
-                  sourceMode={songSourceMode}
-                  playlistUrl={state.tidalPlaylistUrl ?? null}
-                  bandId={state.bandId ?? ''}
-                  showId={state.showId ?? ''}
-                  onQueued={(track) => {
-                    const queued = { artist: track.artist, title: track.title }
-                    setCurrentRequest(queued)
-                    setLyricsTrack(queued)
-                    setLiveQueueItems((items) => [
-                      ...items,
-                      {
-                        id: `queued-${Date.now()}`,
-                        position: items.length + 1,
-                        artist: track.artist,
-                        title: track.title,
-                        singerName: state.singerName ?? null,
-                        status: 'queued',
-                      },
-                    ])
-                  }}
-                />
+                <Suspense fallback={<p className="text-sm text-slate-400">Loading search…</p>}>
+                  <LazyTidalSearchPanel
+                    disabled={!state.signupEnabled}
+                    statusMessage={state.signupStatusMessage}
+                    sourceMode={songSourceMode}
+                    playlistUrl={state.tidalPlaylistUrl ?? null}
+                    bandId={state.bandId ?? ''}
+                    showId={state.showId ?? ''}
+                    onQueued={(track) => {
+                      const queued = { artist: track.artist, title: track.title }
+                      setCurrentRequest(queued)
+                      setLyricsTrack(queued)
+                      setLiveQueueItems((items) => [
+                        ...items,
+                        {
+                          id: `queued-${Date.now()}`,
+                          position: items.length + 1,
+                          artist: track.artist,
+                          title: track.title,
+                          singerName: state.singerName ?? null,
+                          status: 'queued',
+                        },
+                      ])
+                    }}
+                  />
+                </Suspense>
               ) : null}
             </div>
           </Panel>
@@ -327,7 +345,9 @@ export function SingerDashboardView(state: DashboardState) {
         </div>
 
         <div className="space-y-6">
-          <SongLyricsPanel artist={currentTrack?.artist ?? null} title={currentTrack?.title ?? null} openByDefault={Boolean(currentTrack)} />
+          <Suspense fallback={<PanelSkeleton title={singerDashboardViewCopy.nowPlaying} label="lyrics" />}>
+            <LazySongLyricsPanel artist={currentTrack?.artist ?? null} title={currentTrack?.title ?? null} openByDefault={Boolean(currentTrack)} />
+          </Suspense>
         </div>
       </div>
 

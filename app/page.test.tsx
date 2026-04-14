@@ -66,6 +66,8 @@ describe('Singer dashboard', () => {
   })
 
   it('hides the auth buttons when the singer is signed in', () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ lyrics: '' }), { status: 200 })))
+
     render(<SingerDashboardView {...state} singerName="Maya Chen" currentRequest={{ artist: 'Fleetwood Mac', title: 'Dreams' }} />)
 
     expect(screen.queryByRole('button', { name: /^sign-up$/i })).not.toBeInTheDocument()

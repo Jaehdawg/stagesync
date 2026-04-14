@@ -2,10 +2,15 @@ import { render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const createClientMock = vi.fn()
+const createServiceClientMock = vi.fn()
 const getAdminAccessMock = vi.fn()
 
 vi.mock('@/utils/supabase/server', () => ({
   createClient: createClientMock,
+}))
+
+vi.mock('@/utils/supabase/service', () => ({
+  createServiceClient: createServiceClientMock,
 }))
 
 vi.mock('@/lib/admin-access', () => ({
@@ -58,7 +63,7 @@ vi.mock('@/lib/analytics-schema', () => ({
 
 function buildSupabaseClient() {
   return {
-    from(table: string) {
+    from() {
       const terminal = Promise.resolve({ data: [], count: 0, error: null })
       const chain = {
         eq: vi.fn(() => chain),
@@ -75,14 +80,45 @@ function buildSupabaseClient() {
   }
 }
 
+function buildServiceClient() {
+  return {
+    rpc: vi.fn(async (fn: string) => {
+      if (fn === 'get_admin_analytics_summary') {
+        return {
+          data: [{
+            band_count: 5,
+            show_count: 7,
+            active_show_count: 1,
+            singer_count: 9,
+            tracks_played_count: 11,
+            recent_show_count: 1,
+          }],
+          error: null,
+        }
+      }
+
+      if (fn === 'get_admin_recent_shows') {
+        return {
+          data: [{ id: 'show-1', name: 'Launch Night', is_active: true, allow_signups: true, created_at: '2026-04-01T00:00:00Z' }],
+          error: null,
+        }
+      }
+
+      throw new Error(`Unexpected rpc: ${fn}`)
+    }),
+  }
+}
+
 async function loadPage() {
   return await import('./page')
 }
 
 beforeEach(() => {
   createClientMock.mockReset()
+  createServiceClientMock.mockReset()
   getAdminAccessMock.mockReset()
   createClientMock.mockResolvedValue(buildSupabaseClient())
+  createServiceClientMock.mockReturnValue(buildServiceClient())
 })
 
 describe('AdminAnalyticsPage', () => {
