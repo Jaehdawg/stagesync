@@ -1,9 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { extractTidalTracks, fetchTidalPlaylistTracks, searchTidalTracks } from './tidal'
+import { __resetTidalAccessTokenCache, extractTidalTracks, fetchTidalPlaylistTracks, searchTidalTracks } from './tidal'
 
 afterEach(() => {
   vi.unstubAllGlobals()
   vi.restoreAllMocks()
+  __resetTidalAccessTokenCache()
 })
 
 describe('tidal helpers', () => {
@@ -264,6 +265,97 @@ describe('tidal helpers', () => {
   it('returns empty results when no token is configured', async () => {
     const result = await searchTidalTracks('Dreams')
     expect(result).toEqual({ tracks: [], nextCursor: null })
+  })
+
+  it('reuses the same Tidal access token for repeated searches with the same credentials', async () => {
+    const originalClientId = process.env.TIDAL_CLIENT_ID
+    const originalClientSecret = process.env.TIDAL_CLIENT_SECRET
+    delete process.env.TIDAL_BROWSER_TOKEN
+    process.env.TIDAL_CLIENT_ID = 'client-id'
+    process.env.TIDAL_CLIENT_SECRET = 'client-secret'
+
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input)
+
+      if (url === 'https://auth.tidal.com/v1/oauth2/token') {
+        return {
+          ok: true,
+          json: async () => ({ access_token: 'tidal-bearer-token', expires_in: 3600 }),
+        } as Response
+      }
+
+      if (url.includes('/searchSuggestions/Shake%20It%20Off')) {
+        return {
+          ok: true,
+          json: async () => ({
+            data: {
+              relationships: {
+                directHits: {
+                  data: [{ id: '121444600', type: 'tracks' }],
+                },
+              },
+            },
+            included: [
+              {
+                id: '121444600',
+                type: 'tracks',
+                attributes: {
+                  title: 'Shake It Off',
+                  duration: 'PT3M39S',
+                },
+                relationships: {
+                  artists: {
+                    data: [{ id: '3557299', type: 'artists' }],
+                  },
+                },
+              },
+              { id: '3557299', type: 'artists', attributes: { name: 'Taylor Swift' } },
+            ],
+          }),
+        } as Response
+      }
+
+      if (url.includes('/tracks/121444600/relationships/artists')) {
+        return {
+          ok: true,
+          json: async () => ({ data: [{ id: '3557299', type: 'artists' }] }),
+        } as Response
+      }
+
+      if (url.includes('/artists/3557299')) {
+        return {
+          ok: true,
+          json: async () => ({ data: { attributes: { name: 'Taylor Swift' } } }),
+        } as Response
+      }
+
+      throw new Error(`Unexpected fetch: ${url}`)
+    })
+
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(searchTidalTracks('Shake It Off')).resolves.toEqual({
+      tracks: [{ id: '121444600', title: 'Shake It Off', artist: 'Taylor Swift', album: null, duration: 219 }],
+      nextCursor: null,
+    })
+    await expect(searchTidalTracks('Shake It Off')).resolves.toEqual({
+      tracks: [{ id: '121444600', title: 'Shake It Off', artist: 'Taylor Swift', album: null, duration: 219 }],
+      nextCursor: null,
+    })
+
+    expect(fetchMock.mock.calls.filter(([calledUrl]) => String(calledUrl) === 'https://auth.tidal.com/v1/oauth2/token')).toHaveLength(1)
+
+    if (originalClientId === undefined) {
+      delete process.env.TIDAL_CLIENT_ID
+    } else {
+      process.env.TIDAL_CLIENT_ID = originalClientId
+    }
+
+    if (originalClientSecret === undefined) {
+      delete process.env.TIDAL_CLIENT_SECRET
+    } else {
+      process.env.TIDAL_CLIENT_SECRET = originalClientSecret
+    }
   })
 
   it('resolves artist names for track hits via the track artist relationship', async () => {

@@ -19,6 +19,9 @@
 /public/sw.js
 /public/workbox-*.js
 
+# supabase cli
+/supabase/.temp/
+
 # production
 /build
 

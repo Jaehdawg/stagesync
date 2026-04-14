@@ -14,6 +14,34 @@ export type TidalSearchResult = {
 type TidalJson = Record<string, unknown>
 type TidalCredentials = { clientId?: string | null; clientSecret?: string | null }
 
+type CachedTidalToken = {
+  token: string
+  expiresAt: number
+}
+
+const TIDAL_TOKEN_CACHE = new Map<string, CachedTidalToken>()
+const TIDAL_TOKEN_IN_FLIGHT = new Map<string, Promise<string | null>>()
+
+function getTidalTokenCacheKey(clientId: string, clientSecret: string) {
+  return `${clientId}\n${clientSecret}`
+}
+
+function cacheTidalToken(key: string, token: string, expiresInSeconds?: number) {
+  const ttlSeconds = Number.isFinite(expiresInSeconds) && (expiresInSeconds ?? 0) > 0
+    ? Math.max((expiresInSeconds ?? 0) - 60, 60)
+    : 60 * 50
+
+  TIDAL_TOKEN_CACHE.set(key, {
+    token,
+    expiresAt: Date.now() + ttlSeconds * 1000,
+  })
+}
+
+export function __resetTidalAccessTokenCache() {
+  TIDAL_TOKEN_CACHE.clear()
+  TIDAL_TOKEN_IN_FLIGHT.clear()
+}
+
 function getTidalBaseUrl() {
   const base = process.env.TIDAL_API_BASE_URL?.trim() || 'https://openapi.tidal.com/v2/'
   return base.endsWith('/') ? base : `${base}/`
@@ -27,21 +55,44 @@ export async function getTidalAccessToken(credentials?: TidalCredentials) {
     return null
   }
 
-  const response = await fetch('https://auth.tidal.com/v1/oauth2/token', {
-    method: 'POST',
-    headers: {
-      authorization: `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString('base64')}`,
-      'content-type': 'application/x-www-form-urlencoded',
-    },
-    body: new URLSearchParams({ grant_type: 'client_credentials' }),
-  })
-
-  if (!response.ok) {
-    return null
+  const cacheKey = getTidalTokenCacheKey(clientId, clientSecret)
+  const cached = TIDAL_TOKEN_CACHE.get(cacheKey)
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.token
   }
 
-  const payload = (await response.json().catch(() => ({}))) as { access_token?: string }
-  return payload.access_token ?? null
+  const inFlight = TIDAL_TOKEN_IN_FLIGHT.get(cacheKey)
+  if (inFlight) {
+    return inFlight
+  }
+
+  const promise = (async () => {
+    const response = await fetch('https://auth.tidal.com/v1/oauth2/token', {
+      method: 'POST',
+      headers: {
+        authorization: `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString('base64')}`,
+        'content-type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({ grant_type: 'client_credentials' }),
+    })
+
+    if (!response.ok) {
+      return null
+    }
+
+    const payload = (await response.json().catch(() => ({}))) as { access_token?: string; expires_in?: number }
+    const token = payload.access_token ?? null
+    if (token) {
+      cacheTidalToken(cacheKey, token, payload.expires_in)
+    }
+
+    return token
+  })().finally(() => {
+    TIDAL_TOKEN_IN_FLIGHT.delete(cacheKey)
+  })
+
+  TIDAL_TOKEN_IN_FLIGHT.set(cacheKey, promise)
+  return promise
 }
 
 function readString(value: unknown): string {
