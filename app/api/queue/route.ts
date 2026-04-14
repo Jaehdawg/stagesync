@@ -65,28 +65,32 @@ export async function POST(request: NextRequest) {
   }
 
   const serviceSupabase = createServiceClient()
-  const { data: currentShow, error: showError } = await serviceSupabase
-    .from('events')
-    .select('id, band_id, is_active, allow_signups')
-    .eq('id', showId)
-    .eq('band_id', bandId)
-    .maybeSingle()
+  const [showResult, currentRequestResult] = await Promise.all([
+    serviceSupabase
+      .from('events')
+      .select('id, band_id, is_active, allow_signups')
+      .eq('id', showId)
+      .eq('band_id', bandId)
+      .maybeSingle(),
+    serviceSupabase
+      .from('queue_items')
+      .select('id, song_id, status, position')
+      .eq('event_id', showId)
+      .eq('band_id', bandId)
+      .eq('performer_id', user.id)
+      .in('status', ['pending', 'queued'])
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+  ])
 
-  if (showError) {
-    return NextResponse.json({ message: showError.message }, { status: 500 })
+  if (showResult.error) {
+    return NextResponse.json({ message: showResult.error.message }, { status: 500 })
   }
 
+  const currentShow = showResult.data
+  const currentSingerRequest = currentRequestResult.data
   const showState = getShowState(currentShow)
-  const { data: currentSingerRequest } = await serviceSupabase
-    .from('queue_items')
-    .select('id, song_id, status, position')
-    .eq('event_id', showId)
-    .eq('band_id', bandId)
-    .eq('performer_id', user.id)
-    .in('status', ['pending', 'queued'])
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle()
 
   if (action === 'cancel') {
     if (!currentSingerRequest?.id) {
