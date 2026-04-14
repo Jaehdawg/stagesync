@@ -105,7 +105,7 @@ export async function POST(request: NextRequest) {
   response.cookies.set(getTestLoginCookieName(), signTestSession({ role, username, activeBandId }), {
     httpOnly: true,
     sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
+    secure: false,
     path: '/',
     maxAge: COOKIE_MAX_AGE,
   })
