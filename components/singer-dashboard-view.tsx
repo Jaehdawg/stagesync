@@ -171,45 +171,35 @@ export function SingerDashboardView(state: DashboardState) {
           {bandProfile.customMessage ?? 'Pick a song, sing your heart out, and keep the queue moving.'}
         </p>
         {state.currentShowName ? <p className="mt-4 text-sm text-cyan-100">Show: {state.currentShowName}</p> : null}
+        <div className="mt-6 flex flex-wrap gap-3 text-slate-200">
+          <div className="min-w-[11rem] flex-1">
+            <LinkList label={singerDashboardViewCopy.website} links={[{ href: bandProfile.websiteUrl ?? null, text: singerDashboardViewCopy.website }]} />
+          </div>
+          <div className="min-w-[11rem] flex-1">
+            <LinkList
+              label={singerDashboardViewCopy.social}
+              links={[
+                { href: bandProfile.facebookUrl ?? null, text: 'Facebook' },
+                { href: bandProfile.instagramUrl ?? null, text: 'Instagram' },
+                { href: bandProfile.tiktokUrl ?? null, text: 'TikTok' },
+              ]}
+            />
+          </div>
+          <div className="min-w-[11rem] flex-1">
+            <LinkList
+              label={singerDashboardViewCopy.tips}
+              links={[
+                { href: bandProfile.paypalUrl ?? null, text: 'PayPal' },
+                { href: bandProfile.venmoUrl ?? null, text: 'Venmo' },
+                { href: bandProfile.cashappUrl ?? null, text: 'Cash App' },
+              ]}
+            />
+          </div>
+        </div>
       </section>
 
       <div className="mx-auto grid max-w-7xl gap-6 xl:grid-cols-[1.15fr_0.85fr]">
         <div className="space-y-6">
-          <section className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-2xl shadow-black/10">
-            <div className="space-y-4 text-slate-200">
-              <div className="rounded-2xl border border-white/10 bg-slate-950/60 p-4">
-                <p className="text-sm uppercase tracking-[0.25em] text-cyan-300">{singerDashboardViewCopy.bandProfile}</p>
-                <p className="mt-2 text-xl font-semibold text-white">{bandProfile.bandName}</p>
-                <p className="mt-2 text-sm leading-6 text-slate-300">
-                  {bandProfile.customMessage ?? singerDashboardViewCopy.bandProfileEmpty}
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-3">
-                <div className="min-w-[11rem] flex-1"><LinkList label={singerDashboardViewCopy.website} links={[{ href: bandProfile.websiteUrl ?? null, text: singerDashboardViewCopy.website }]} /></div>
-                <div className="min-w-[11rem] flex-1">
-                  <LinkList
-                    label={singerDashboardViewCopy.social}
-                    links={[
-                      { href: bandProfile.facebookUrl ?? null, text: 'Facebook' },
-                      { href: bandProfile.instagramUrl ?? null, text: 'Instagram' },
-                      { href: bandProfile.tiktokUrl ?? null, text: 'TikTok' },
-                    ]}
-                  />
-                </div>
-                <div className="min-w-[11rem] flex-1">
-                  <LinkList
-                    label={singerDashboardViewCopy.tips}
-                    links={[
-                      { href: bandProfile.paypalUrl ?? null, text: 'PayPal' },
-                      { href: bandProfile.venmoUrl ?? null, text: 'Venmo' },
-                      { href: bandProfile.cashappUrl ?? null, text: 'Cash App' },
-                    ]}
-                  />
-                </div>
-              </div>
-            </div>
-          </section>
-
           <div className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-2xl shadow-black/10">
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">{singerDashboardViewCopy.nowPlaying}</p>
             <p className="mt-3 text-2xl font-semibold text-white">
