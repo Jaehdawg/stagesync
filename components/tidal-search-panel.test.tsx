@@ -43,7 +43,7 @@ describe('TidalSearchPanel', () => {
 
     render(<TidalSearchPanel sourceMode="tidal_catalog" bandId="band-1" showId="show-1" />)
 
-    await screen.findByText('Searching the live Tidal catalog.')
+    await screen.findByLabelText('Searching')
     expect(screen.getByPlaceholderText('Search the Tidal catalog')).toBeInTheDocument()
     fireEvent.change(screen.getByPlaceholderText('Search the Tidal catalog'), { target: { value: 'first' } })
     await screen.findByText('First')

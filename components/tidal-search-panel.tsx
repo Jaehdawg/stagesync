@@ -16,6 +16,19 @@ type SearchResponse = {
   message?: string
 }
 
+function SearchingIndicator() {
+  return (
+    <div className="flex items-center gap-2 text-sm text-slate-400" aria-live="polite" aria-label="Searching">
+      <span>Searching</span>
+      <span className="flex items-center gap-1" aria-hidden="true">
+        <span className="h-2 w-2 animate-bounce rounded-full bg-cyan-300 [animation-delay:-0.3s]" />
+        <span className="h-2 w-2 animate-bounce rounded-full bg-cyan-300 [animation-delay:-0.15s]" />
+        <span className="h-2 w-2 animate-bounce rounded-full bg-cyan-300" />
+      </span>
+    </div>
+  )
+}
+
 type TidalSearchPanelProps = {
   disabled?: boolean
   statusMessage?: string
@@ -168,7 +181,7 @@ export function TidalSearchPanel({ disabled = false, statusMessage, sourceMode =
         </div>
       ) : null}
       <div ref={listRef} onScroll={maybeLoadMore} className="mt-4 max-h-96 space-y-3 overflow-y-auto pr-1">
-        {loading ? <p className="text-sm text-slate-400">{tidalSearchPanelCopy.searching}</p> : null}
+        {loading ? <SearchingIndicator /> : null}
         {tracks.length ? tracks.map((track) => (
           <div key={track.id} className="flex w-full items-center justify-between gap-3 rounded-xl border border-white/10 bg-slate-900/60 p-4">
             <div className="min-w-0 flex-1">
@@ -185,7 +198,7 @@ export function TidalSearchPanel({ disabled = false, statusMessage, sourceMode =
             </button>
           </div>
         )) : !loading ? <p className="text-sm text-slate-400">{tidalSearchPanelCopy.noMatches}</p> : null}
-        {loadingMore ? <p className="text-sm text-slate-400">{tidalSearchPanelCopy.searching}</p> : null}
+        {loadingMore ? <SearchingIndicator /> : null}
         {nextCursor && !loadingMore ? <button type="button" onClick={() => void loadPage(nextCursor, true)} className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-white hover:border-cyan-400/50">Load more</button> : null}
       </div>
 

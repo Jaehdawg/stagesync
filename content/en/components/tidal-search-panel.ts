@@ -4,7 +4,7 @@ export const tidalSearchPanelCopy = {
   catalogMode: 'Searching the live Tidal catalog.',
   placeholder: 'Search the band song list',
   catalogPlaceholder: 'Search the Tidal catalog',
-  searching: 'Searching…',
+  searching: 'Searching',
   queueing: 'Queueing…',
   queueSong: 'Queue song',
   noMatches: 'No matches yet.',
