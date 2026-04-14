@@ -7,6 +7,23 @@ import { buildAnalyticsSections } from '@/lib/analytics-reporting'
 import { getAnalyticsTrackingPlan } from '@/lib/analytics-schema'
 import { adminCopy } from '@/content/en/admin'
 
+type AdminAnalyticsSummary = {
+  band_count: number
+  show_count: number
+  active_show_count: number
+  singer_count: number
+  tracks_played_count: number
+  recent_show_count: number
+}
+
+type AdminRecentShow = {
+  id: string
+  name: string
+  is_active: boolean
+  allow_signups: boolean
+  created_at: string
+}
+
 export default async function AdminAnalyticsPage() {
   const supabase = await createClient()
   const liveAdminAccess = await getAdminAccess(supabase)
@@ -39,7 +56,7 @@ export default async function AdminAnalyticsPage() {
     serviceSupabase.rpc('get_admin_recent_shows', { limit_count: 5 }),
   ])
 
-  const summary = summaryResult.data?.[0] ?? {
+  const summary: AdminAnalyticsSummary = summaryResult.data?.[0] ?? {
     band_count: 0,
     show_count: 0,
     active_show_count: 0,
@@ -57,6 +74,7 @@ export default async function AdminAnalyticsPage() {
     tracksPlayedCount: summary.tracks_played_count ?? 0,
   })
   const trackingPlan = getAnalyticsTrackingPlan()
+  const recentShows = (recentShowsResult.data ?? []) as AdminRecentShow[]
 
   return (
     <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100 sm:px-6 lg:px-8">
@@ -168,7 +186,7 @@ export default async function AdminAnalyticsPage() {
         <section className="rounded-3xl border border-white/10 bg-white/5 p-6">
           <h2 className="text-2xl font-semibold text-white">{adminCopy.analyticsPage.recentShowsTitle}</h2>
           <div className="mt-4 space-y-3">
-            {(recentShowsResult.data ?? []).map((show) => (
+            {recentShows.map((show) => (
               <div key={show.id} className="rounded-2xl border border-white/10 bg-slate-950/50 p-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
