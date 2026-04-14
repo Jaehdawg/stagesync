@@ -18,6 +18,8 @@ type Builder = {
   ) => Promise<TResult1 | TResult2>
 }
 
+const orMock = vi.fn()
+
 const createServiceClientMock = vi.fn(() => {
   const response: QueryResponse = { data: [{ id: 'song-1', title: 'My Song', artist: 'The Band' }], error: null }
 
@@ -26,7 +28,7 @@ const createServiceClientMock = vi.fn(() => {
     is: vi.fn(() => builder),
     order: vi.fn(() => builder),
     limit: vi.fn(() => builder),
-    or: vi.fn(() => builder),
+    or: orMock.mockImplementation(() => builder),
     then: (onFulfilled, onRejected) => Promise.resolve(response).then(onFulfilled, onRejected),
   }
 
@@ -64,6 +66,7 @@ function makeRequest(url: string) {
 
 beforeEach(() => {
   createServiceClientMock.mockClear()
+  orMock.mockClear()
   getBandTidalCredentialsMock.mockClear()
   getTidalAccessTokenMock.mockClear()
   searchTidalTracksMock.mockClear()
@@ -93,6 +96,14 @@ describe('songs search api route', () => {
 
     expect(response.status).toBe(200)
     expect(payload.songs).toHaveLength(1)
+  })
+
+  it('sanitizes search queries before building the database filter', async () => {
+    const { GET } = await loadRoute()
+    const response = await GET(makeRequest('https://example.com/api/songs/search?bandId=band-1&sourceMode=uploaded&query=%28my%2Csong%29'))
+
+    expect(response.status).toBe(200)
+    expect(orMock).toHaveBeenCalledWith('title.ilike.%my song%,artist.ilike.%my song%')
   })
 
   it('returns a retryable error when tidal credentials are missing or invalid', async () => {

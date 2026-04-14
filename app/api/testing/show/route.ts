@@ -23,6 +23,10 @@ function getSupabase(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ message: 'Testing show controls are disabled.' }, { status: 404 })
+  }
+
   const testSession = await getTestSession()
   if (!testSession || (testSession.role !== 'band' && testSession.role !== 'admin')) {
     return NextResponse.json({ message: 'Testing login required.' }, { status: 401 })

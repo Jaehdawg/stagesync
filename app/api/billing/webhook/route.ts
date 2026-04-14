@@ -1,34 +1,20 @@
-import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { createServiceClient } from '@/utils/supabase/service'
 import { recordAnalyticsEvent } from '@/lib/analytics-events'
 import { resolveBillingLifecycleUpdate } from '@/lib/billing-lifecycle'
 import { createStripeClient, getStripeBillingConfig, resolveStripeBillingLifecycleUpdate, type StripeWebhookLikeEvent } from '@/lib/stripe-billing'
 
-function getSupabase(request: NextRequest) {
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll()
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) => {
-            request.cookies.set(name, value)
-          })
-        },
-      },
-    }
-  )
+type WebhookPayload = {
+  billingAccountId?: string | null
+  bandId?: string | null
 }
 
 export async function POST(request: NextRequest) {
   const stripeConfig = getStripeBillingConfig()
   const stripeSignature = request.headers?.get?.('stripe-signature') ?? null
+  const isProduction = process.env.NODE_ENV === 'production'
 
-  let payload: any = null
+  let payload: WebhookPayload | null = null
   let update = null
 
   if (stripeConfig.webhookSecret && stripeConfig.secretKey && stripeSignature) {
@@ -45,6 +31,8 @@ export async function POST(request: NextRequest) {
     } catch (error) {
       return NextResponse.json({ message: error instanceof Error ? error.message : 'Invalid Stripe webhook signature.' }, { status: 400 })
     }
+  } else if (isProduction) {
+    return NextResponse.json({ message: 'Stripe webhook signature is required.' }, { status: 400 })
   } else {
     payload = await request.json().catch(() => null)
     update = resolveBillingLifecycleUpdate(payload ?? {})
@@ -61,7 +49,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: 'Missing billing account identifier.' }, { status: 400 })
   }
 
-  const supabase = getSupabase(request)
   const serviceSupabase = createServiceClient()
 
   const query = serviceSupabase.from('billing_accounts').update({

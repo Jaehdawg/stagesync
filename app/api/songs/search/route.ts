@@ -3,6 +3,20 @@ import { createServiceClient } from '@/utils/supabase/service'
 import { getTidalAccessToken, searchTidalTracks } from '@/lib/tidal'
 import { getBandTidalCredentials } from '@/lib/band-tidal'
 
+function sanitizeSearchQuery(input: string) {
+  const trimmed = input.trim()
+  if (!trimmed) return ''
+
+  const normalized = trimmed
+    .replace(/[(),]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+
+  return normalized
+    .replace(/[\\%_]/g, '\\$&')
+    .slice(0, 80)
+}
+
 export async function GET(request: NextRequest) {
   const query = request.nextUrl.searchParams.get('query')?.trim() || ''
   const bandId = request.nextUrl.searchParams.get('bandId')?.trim() || ''
@@ -13,10 +27,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ songs: [] })
   }
 
+  const safeQuery = sanitizeSearchQuery(query)
+
   const supabase = createServiceClient()
 
   if (sourceMode === 'tidal_catalog') {
-    if (!query) {
+    if (!safeQuery) {
       return NextResponse.json({ songs: [] })
     }
 
@@ -26,7 +42,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ message: 'Tidal Catalog is unavailable right now. Check the band credentials and try again.' }, { status: 503 })
     }
 
-    const { tracks, nextCursor } = await searchTidalTracks(query, { limit: 30, credentials: credentials ?? undefined, cursor, accessToken: token })
+    const { tracks, nextCursor } = await searchTidalTracks(safeQuery, { limit: 30, credentials: credentials ?? undefined, cursor, accessToken: token })
     return NextResponse.json({ songs: tracks, nextCursor })
   }
 
@@ -39,8 +55,8 @@ export async function GET(request: NextRequest) {
     .order('title', { ascending: true })
     .limit(30)
 
-  if (query) {
-    builder = builder.or(`title.ilike.%${query}%,artist.ilike.%${query}%`)
+  if (safeQuery) {
+    builder = builder.or(`title.ilike.%${safeQuery}%,artist.ilike.%${safeQuery}%`)
   }
 
   const { data, error } = await builder

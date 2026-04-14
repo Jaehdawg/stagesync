@@ -16,6 +16,10 @@ function normalizeRole(role: unknown): TestLoginRole | null {
 }
 
 export async function POST(request: NextRequest) {
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ message: 'Testing login is disabled.' }, { status: 404 })
+  }
+
   const body = (await request.json().catch(() => ({}))) as {
     role?: unknown
     username?: unknown

@@ -146,4 +146,23 @@ describe('billing webhook route', () => {
       updated_at: expect.any(String),
     }))
   })
+
+  it('requires a stripe signature in production', async () => {
+    const originalNodeEnv = process.env.NODE_ENV
+    process.env.NODE_ENV = 'production'
+
+    try {
+      const { POST } = await loadRoute()
+      const request = {
+        json: async () => ({ status: 'trialing' }),
+        cookies: { getAll: () => [], set: vi.fn() },
+        headers: { get: () => null },
+      } as unknown as NextRequest
+
+      const response = await POST(request)
+      expect(response.status).toBe(400)
+    } finally {
+      process.env.NODE_ENV = originalNodeEnv
+    }
+  })
 })
