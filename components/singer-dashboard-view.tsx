@@ -224,7 +224,7 @@ export function SingerDashboardView(state: DashboardState) {
             </p>
           </div>
 
-          <Panel title={singerDashboardViewCopy.singerSignUp}>
+          <Panel title={state.requestModeEnabled ? singerDashboardViewCopy.requestModeTitle : singerDashboardViewCopy.singerSignUp}>
             <div className="space-y-4">
               {!state.singerName ? (
                 <div className="flex flex-wrap gap-3">
@@ -233,27 +233,27 @@ export function SingerDashboardView(state: DashboardState) {
                     onClick={() => setAuthMode('signup')}
                     className={authMode === 'signup' ? 'rounded-full bg-cyan-400 px-4 py-2 text-sm font-semibold text-slate-950' : 'rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white'}
                   >
-                    {singerDashboardViewCopy.signUp}
+                    {state.requestModeEnabled ? singerDashboardViewCopy.requestModeRequest : singerDashboardViewCopy.signUp}
                   </button>
                   <button
                     type="button"
                     onClick={() => setAuthMode('login')}
                     className={authMode === 'login' ? 'rounded-full bg-cyan-400 px-4 py-2 text-sm font-semibold text-slate-950' : 'rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white'}
                   >
-                    {singerDashboardViewCopy.login}
+                    {state.requestModeEnabled ? singerDashboardViewCopy.requestModeLogin : singerDashboardViewCopy.login}
                   </button>
                 </div>
               ) : null}
 
               {state.singerName ? (
                 <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-                  <h3 className="text-lg font-semibold text-white">{singerDashboardViewCopy.singerDetails}</h3>
+                  <h3 className="text-lg font-semibold text-white">{state.requestModeEnabled ? singerDashboardViewCopy.requestModeDetails : singerDashboardViewCopy.singerDetails}</h3>
                   <p className="mt-3 text-2xl font-semibold text-white">{state.singerName}</p>
                 </div>
               ) : authMode === 'signup' ? (
-                <SingerRegistrationForm mode="signup" disabled={!state.signupEnabled} statusMessage={state.signupStatusMessage} />
+                <SingerRegistrationForm mode="signup" variant={state.requestModeEnabled ? 'request' : 'singer'} disabled={!state.signupEnabled} statusMessage={state.signupStatusMessage} />
               ) : (
-                <SingerRegistrationForm mode="login" />
+                <SingerRegistrationForm mode="login" variant={state.requestModeEnabled ? 'request' : 'singer'} />
               )}
 
               {currentRequest ? (

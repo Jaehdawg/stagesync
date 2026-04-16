@@ -2,10 +2,14 @@ export const singerRegistrationFormCopy = {
   titles: {
     signup: 'Singer Sign-up',
     login: 'Singer Login',
+    requestSignup: 'Request Sign-up',
+    requestLogin: 'Request Login',
   },
   descriptions: {
     signup: 'Create your singer account with a password so you can join the queue right away.',
     login: 'Welcome back!',
+    requestSignup: 'Create your request account with a password so you can jump into the queue.',
+    requestLogin: 'Welcome back! Sign in to keep making requests.',
   },
   labels: {
     firstName: 'First name',
@@ -29,6 +33,8 @@ export const singerRegistrationFormCopy = {
     signingIn: 'Signing in...',
     signup: 'Sign-up',
     login: 'Login',
+    requestSignup: 'Request sign-up',
+    requestLogin: 'Request login',
   },
   errors: {
     invalidEmail: 'Enter a valid email address.',

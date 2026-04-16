@@ -16,6 +16,7 @@ type SupabaseAuthClient = {
 
 type SingerRegistrationFormProps = {
   mode?: 'signup' | 'login'
+  variant?: 'singer' | 'request'
   supabaseClient?: SupabaseAuthClient
   disabled?: boolean
   statusMessage?: string
@@ -24,7 +25,7 @@ type SingerRegistrationFormProps = {
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const PASSWORD_REGEX = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/
 
-export function SingerRegistrationForm({ mode = 'signup', supabaseClient, disabled = false, statusMessage }: SingerRegistrationFormProps) {
+export function SingerRegistrationForm({ mode = 'signup', variant = 'singer', supabaseClient, disabled = false, statusMessage }: SingerRegistrationFormProps) {
   const router = useRouter()
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
@@ -130,9 +131,23 @@ export function SingerRegistrationForm({ mode = 'signup', supabaseClient, disabl
 
   return (
     <form className="rounded-2xl border border-white/10 bg-white/5 p-5" onSubmit={handleSubmit}>
-      <h3 className="text-lg font-semibold text-white">{mode === 'signup' ? singerRegistrationFormCopy.titles.signup : singerRegistrationFormCopy.titles.login}</h3>
+      <h3 className="text-lg font-semibold text-white">
+        {mode === 'signup'
+          ? variant === 'request'
+            ? singerRegistrationFormCopy.titles.requestSignup
+            : singerRegistrationFormCopy.titles.signup
+          : variant === 'request'
+            ? singerRegistrationFormCopy.titles.requestLogin
+            : singerRegistrationFormCopy.titles.login}
+      </h3>
       <p className="mt-1 text-slate-400">
-        {mode === 'signup' ? singerRegistrationFormCopy.descriptions.signup : singerRegistrationFormCopy.descriptions.login}
+        {mode === 'signup'
+          ? variant === 'request'
+            ? singerRegistrationFormCopy.descriptions.requestSignup
+            : singerRegistrationFormCopy.descriptions.signup
+          : variant === 'request'
+            ? singerRegistrationFormCopy.descriptions.requestLogin
+            : singerRegistrationFormCopy.descriptions.login}
       </p>
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
         {mode === 'signup' ? (
@@ -205,7 +220,17 @@ export function SingerRegistrationForm({ mode = 'signup', supabaseClient, disabl
         disabled={loading || disabled}
         className="mt-4 inline-flex rounded-full bg-cyan-400 px-5 py-3 font-semibold text-slate-950 transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:bg-cyan-200"
       >
-        {disabled ? singerRegistrationFormCopy.buttons.paused : loading ? singerRegistrationFormCopy.buttons.signingIn : mode === 'signup' ? singerRegistrationFormCopy.buttons.signup : singerRegistrationFormCopy.buttons.login}
+        {disabled
+          ? singerRegistrationFormCopy.buttons.paused
+          : loading
+            ? singerRegistrationFormCopy.buttons.signingIn
+            : mode === 'signup'
+              ? variant === 'request'
+                ? singerRegistrationFormCopy.buttons.requestSignup
+                : singerRegistrationFormCopy.buttons.signup
+              : variant === 'request'
+                ? singerRegistrationFormCopy.buttons.requestLogin
+                : singerRegistrationFormCopy.buttons.login}
       </button>
       {statusMessage ? <p className="mt-3 text-sm text-slate-300">{statusMessage}</p> : null}
       {message ? <p className="mt-3 text-sm text-emerald-300">{message}</p> : null}

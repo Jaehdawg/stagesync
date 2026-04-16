@@ -86,4 +86,11 @@ describe('SingerRegistrationForm', () => {
     expect(screen.getByRole('button', { name: /signups paused/i })).toBeDisabled()
     expect(screen.getByText(/paused for signups/i)).toBeInTheDocument()
   })
+
+  it('uses request copy in request mode', () => {
+    render(<SingerRegistrationForm variant="request" />)
+
+    expect(screen.getByRole('heading', { name: /request sign-up/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /request sign-up/i })).toBeInTheDocument()
+  })
 })
