@@ -45,12 +45,31 @@ export async function POST(request: NextRequest) {
   const showDurationMinutes = Number(formData.get('showDurationMinutes'))
   const signupBufferMinutes = Number(formData.get('signupBufferMinutes'))
   const songSourceMode = String(formData.get('songSourceMode') ?? '')
+  const requestModeEnabled = String(formData.get('requestModeEnabled') ?? '').trim().toLowerCase() === 'true' || String(formData.get('requestModeEnabled') ?? '').trim().toLowerCase() === 'on'
+  const requestSourceMode = String(formData.get('requestSourceMode') ?? 'set_list').trim()
   const playlistUrl = String(formData.get('tidalPlaylistUrl') ?? '').trim()
 
   try {
     if (action === 'create') {
       const { data: band } = await supabase.from('bands').select('band_name').eq('id', testSession.activeBandId).maybeSingle()
-      await createTestShow(supabase, { band_id: testSession.activeBandId, band_name: band?.band_name ?? null, name, description })
+      const createdShow = await createTestShow(supabase, {
+        band_id: testSession.activeBandId,
+        band_name: band?.band_name ?? null,
+        name,
+        description,
+      })
+      if (createdShow?.id) {
+        await updateTestShowSettings(supabase, {
+          band_id: testSession.activeBandId,
+          event_id: createdShow.id,
+          showDurationMinutes: Number.isFinite(showDurationMinutes) ? showDurationMinutes : 60,
+          signupBufferMinutes: Number.isFinite(signupBufferMinutes) ? signupBufferMinutes : 1,
+          songSourceMode: songSourceMode === 'set_list' || songSourceMode === 'tidal_playlist' || songSourceMode === 'tidal_catalog' ? songSourceMode : 'uploaded',
+          requestModeEnabled,
+          requestSourceMode: requestSourceMode === 'uploaded' || requestSourceMode === 'tidal_catalog' ? requestSourceMode : 'set_list',
+          tidalPlaylistUrl: songSourceMode === 'tidal_playlist' ? playlistUrl || null : null,
+        })
+      }
     } else if (action === 'settings') {
       const mode = songSourceMode === 'set_list' || songSourceMode === 'tidal_playlist' || songSourceMode === 'tidal_catalog' ? songSourceMode : 'uploaded'
       const { data: currentSettings } = await supabase
@@ -70,6 +89,8 @@ export async function POST(request: NextRequest) {
         showDurationMinutes: Number.isFinite(showDurationMinutes) ? showDurationMinutes : 60,
         signupBufferMinutes: Number.isFinite(signupBufferMinutes) ? signupBufferMinutes : 1,
         songSourceMode: mode,
+        requestModeEnabled,
+        requestSourceMode: requestSourceMode === 'uploaded' || requestSourceMode === 'tidal_catalog' ? requestSourceMode : 'set_list',
         tidalPlaylistUrl: nextPlaylistUrl,
       })
     } else if (action === 'start' || action === 'pause' || action === 'resume' || action === 'end') {

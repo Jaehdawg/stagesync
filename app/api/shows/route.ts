@@ -28,6 +28,11 @@ function normalizeSongSourceMode(value: string) {
   return value === 'set_list' || value === 'tidal_playlist' || value === 'tidal_catalog' ? value : 'uploaded'
 }
 
+function parseBooleanField(value: FormDataEntryValue | null) {
+  const normalized = String(value ?? '').trim().toLowerCase()
+  return normalized === 'true' || normalized === 'on' || normalized === '1'
+}
+
 export async function POST(request: NextRequest) {
   const testSession = await getTestSession()
   const authSupabase = getSupabase(request)
@@ -40,6 +45,8 @@ export async function POST(request: NextRequest) {
   const showDurationMinutes = Number(formData.get('showDurationMinutes'))
   const signupBufferMinutes = Number(formData.get('signupBufferMinutes'))
   const songSourceMode = normalizeSongSourceMode(String(formData.get('songSourceMode') ?? ''))
+  const requestModeEnabled = parseBooleanField(formData.get('requestModeEnabled'))
+  const requestSourceMode = String(formData.get('requestSourceMode') ?? 'set_list').trim()
   const playlistUrl = String(formData.get('tidalPlaylistUrl') ?? '').trim()
 
   if (testSession?.role === 'band') {
@@ -80,6 +87,8 @@ export async function POST(request: NextRequest) {
             show_duration_minutes: Number.isFinite(showDurationMinutes) ? showDurationMinutes : 60,
             signup_buffer_minutes: Number.isFinite(signupBufferMinutes) ? signupBufferMinutes : 1,
             song_source_mode: songSourceMode,
+            request_mode_enabled: requestModeEnabled,
+            request_source_mode: requestSourceMode === 'uploaded' || requestSourceMode === 'tidal_catalog' ? requestSourceMode : 'set_list',
             tidal_playlist_url: songSourceMode === 'tidal_playlist' ? playlistUrl || null : null,
             allow_tips: true,
           },
@@ -115,6 +124,8 @@ export async function POST(request: NextRequest) {
           show_duration_minutes: Number.isFinite(showDurationMinutes) ? showDurationMinutes : 60,
           signup_buffer_minutes: Number.isFinite(signupBufferMinutes) ? signupBufferMinutes : 1,
           song_source_mode: songSourceMode,
+          request_mode_enabled: requestModeEnabled,
+          request_source_mode: requestSourceMode === 'uploaded' || requestSourceMode === 'tidal_catalog' ? requestSourceMode : 'set_list',
           tidal_playlist_url: nextPlaylistUrl,
           allow_tips: true,
         },
@@ -180,6 +191,8 @@ export async function POST(request: NextRequest) {
         signup_buffer_minutes: Number.isFinite(signupBufferMinutes) ? signupBufferMinutes : 1,
         show_duration_minutes: Number.isFinite(showDurationMinutes) ? showDurationMinutes : 60,
         song_source_mode: songSourceMode,
+        request_mode_enabled: requestModeEnabled,
+        request_source_mode: requestSourceMode === 'uploaded' || requestSourceMode === 'tidal_catalog' ? requestSourceMode : 'set_list',
         tidal_playlist_url: songSourceMode === 'tidal_playlist' ? playlistUrl || null : null,
       })
       if (settingsError) {
@@ -222,6 +235,8 @@ export async function POST(request: NextRequest) {
         signup_buffer_minutes: Number.isFinite(signupBufferMinutes) ? signupBufferMinutes : 1,
         show_duration_minutes: Number.isFinite(showDurationMinutes) ? showDurationMinutes : 60,
         song_source_mode: songSourceMode,
+        request_mode_enabled: requestModeEnabled,
+        request_source_mode: requestSourceMode === 'uploaded' || requestSourceMode === 'tidal_catalog' ? requestSourceMode : 'set_list',
         tidal_playlist_url:
           songSourceMode === 'tidal_playlist'
             ? playlistUrl || currentSettings?.tidal_playlist_url || null

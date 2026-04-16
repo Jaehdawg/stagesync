@@ -79,9 +79,11 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
 
   const nextStatus = action === 'play' || action === 'played'
     ? 'played'
-    : action === 'remove' || action === 'cancel' || action === 'cancelled'
+    : action === 'remove' || action === 'cancel' || action === 'cancelled' || action === 'deny' || action === 'denied'
       ? 'cancelled'
-      : null
+      : action === 'approve' || action === 'approved'
+        ? 'queued'
+        : null
 
   if (!nextStatus) {
     return NextResponse.json({ message: 'Unknown queue action.' }, { status: 400 })
@@ -92,5 +94,13 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
     return NextResponse.json({ message: error.message }, { status: 500 })
   }
 
-  return NextResponse.json({ message: `Queue item marked ${nextStatus}.` })
+  const message = nextStatus === 'queued'
+    ? 'Queue item approved.'
+    : nextStatus === 'cancelled'
+      ? action === 'deny' || action === 'denied'
+        ? 'Queue item denied.'
+        : 'Queue item marked cancelled.'
+      : `Queue item marked ${nextStatus}.`
+
+  return NextResponse.json({ message })
 }

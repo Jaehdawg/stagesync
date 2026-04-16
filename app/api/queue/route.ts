@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
   }
 
   const serviceSupabase = createServiceClient()
-  const [showResult, currentRequestResult] = await Promise.all([
+  const [showResult, settingsResult, currentRequestResult] = await Promise.all([
     serviceSupabase
       .from('events')
       .select('id, band_id, is_active, allow_signups')
@@ -73,12 +73,17 @@ export async function POST(request: NextRequest) {
       .eq('band_id', bandId)
       .maybeSingle(),
     serviceSupabase
+      .from('show_settings')
+      .select('request_mode_enabled')
+      .eq('event_id', showId)
+      .maybeSingle(),
+    serviceSupabase
       .from('queue_items')
       .select('id, song_id, status, position')
       .eq('event_id', showId)
       .eq('band_id', bandId)
       .eq('performer_id', user.id)
-      .in('status', ['pending', 'queued'])
+      .in('status', ['pending', 'queued', 'requested'])
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle(),
@@ -89,6 +94,7 @@ export async function POST(request: NextRequest) {
   }
 
   const currentShow = showResult.data
+  const requestModeEnabled = Boolean(settingsResult.data?.request_mode_enabled)
   const currentSingerRequest = currentRequestResult.data
   const showState = getShowState(currentShow)
 
@@ -158,7 +164,7 @@ export async function POST(request: NextRequest) {
       .from('queue_items')
       .update({
         song_id: songId,
-        status: 'queued',
+        status: requestModeEnabled ? 'requested' : 'queued',
         event_id: showId,
         band_id: bandId,
       })
@@ -176,7 +182,7 @@ export async function POST(request: NextRequest) {
     .select('position')
     .eq('event_id', showId)
     .eq('band_id', bandId)
-    .in('status', ['pending', 'queued'])
+    .in('status', ['pending', 'queued', 'requested'])
     .order('position', { ascending: false })
     .limit(1)
     .maybeSingle()
@@ -188,7 +194,7 @@ export async function POST(request: NextRequest) {
     band_id: bandId,
     performer_id: user.id,
     song_id: songId,
-    status: 'queued',
+    status: requestModeEnabled ? 'requested' : 'queued',
     position: nextPosition,
   })
 

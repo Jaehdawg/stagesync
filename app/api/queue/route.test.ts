@@ -4,6 +4,7 @@ import { NextRequest } from 'next/server'
 const authGetUserMock = vi.fn()
 const profileMaybeSingleMock = vi.fn()
 const showMaybeSingleMock = vi.fn()
+const showSettingsMaybeSingleMock = vi.fn()
 const currentSingerMaybeSingleMock = vi.fn()
 const existingMaybeSingleMock = vi.fn()
 const songUpsertMock = vi.fn()
@@ -67,6 +68,16 @@ const createServiceClientMock = vi.fn(() => {
         }
       }
 
+      if (table === 'show_settings') {
+        return {
+          select: () => ({
+            eq: () => ({
+              maybeSingle: showSettingsMaybeSingleMock,
+            }),
+          }),
+        }
+      }
+
       if (table === 'queue_items') {
         return {
           select: () => makeQueryChain(async () => {
@@ -108,6 +119,7 @@ beforeEach(() => {
   authGetUserMock.mockReset()
   profileMaybeSingleMock.mockReset()
   showMaybeSingleMock.mockReset()
+  showSettingsMaybeSingleMock.mockReset()
   currentSingerMaybeSingleMock.mockReset()
   existingMaybeSingleMock.mockReset()
   songUpsertMock.mockReset()
@@ -127,6 +139,7 @@ describe('queue route', () => {
       data: { id: 'show-1', band_id: 'band-1', is_active: true, allow_signups: true },
       error: null,
     })
+    showSettingsMaybeSingleMock.mockResolvedValue({ data: { request_mode_enabled: false }, error: null })
     currentSingerMaybeSingleMock.mockResolvedValue({ data: null, error: null })
     existingMaybeSingleMock.mockResolvedValue({ data: null, error: null })
     songUpsertMock.mockResolvedValue({ error: null })
@@ -184,6 +197,7 @@ describe('queue route', () => {
       data: { id: 'show-1', band_id: 'band-1', is_active: true, allow_signups: true },
       error: null,
     })
+    showSettingsMaybeSingleMock.mockResolvedValue({ data: { request_mode_enabled: false }, error: null })
     currentSingerMaybeSingleMock.mockResolvedValue({ data: null, error: null })
     existingMaybeSingleMock.mockResolvedValue({ data: null, error: null })
     songUpsertMock.mockResolvedValue({ error: null })
@@ -217,6 +231,40 @@ describe('queue route', () => {
         source_ref: 'catalog-track-1',
       }),
       { onConflict: 'band_id,id' }
+    )
+  })
+
+  it('marks queue items as requested when the show is in request mode', async () => {
+    authGetUserMock.mockResolvedValue({ data: { user: { id: 'user-1', user_metadata: { role: 'singer' } } } })
+    profileMaybeSingleMock.mockResolvedValue({ data: { role: 'singer' }, error: null })
+    showMaybeSingleMock.mockResolvedValue({ data: { id: 'show-1', band_id: 'band-1', is_active: true, allow_signups: true }, error: null })
+    showSettingsMaybeSingleMock.mockResolvedValue({ data: { request_mode_enabled: true }, error: null })
+    currentSingerMaybeSingleMock.mockResolvedValue({ data: null, error: null })
+    existingMaybeSingleMock.mockResolvedValue({ data: null, error: null })
+    songUpsertMock.mockResolvedValue({ error: null })
+    queueInsertMock.mockResolvedValue({ error: null })
+
+    const { POST } = await loadRoute()
+    const request = {
+      json: async () => ({
+        title: 'My Song',
+        artist: 'The Band',
+        bandId: 'band-1',
+        showId: 'show-1',
+      }),
+      cookies: {
+        getAll: () => [],
+        set: vi.fn(),
+      },
+    } as unknown as NextRequest
+
+    const response = await POST(request)
+
+    expect(response.status).toBe(200)
+    expect(queueInsertMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: 'requested',
+      })
     )
   })
 })

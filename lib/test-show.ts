@@ -26,6 +26,8 @@ export type TestShowSettingsRow = {
   lyrics_enabled?: boolean | null
   allow_tips?: boolean | null
   song_source_mode?: 'uploaded' | 'tidal_playlist' | 'tidal_catalog' | 'set_list' | null
+  request_mode_enabled?: boolean | null
+  request_source_mode?: 'set_list' | 'uploaded' | 'tidal_catalog' | null
   tidal_playlist_url?: string | null
   created_at?: string | null
 }
@@ -80,7 +82,12 @@ export async function getLatestTestShowSettings(supabase: SupabaseLike, bandId?:
   return (data ?? [null])[0] as TestShowSettingsRow | null
 }
 
-export async function createTestShow(supabase: SupabaseLike, payload: Partial<TestShowRow> & { band_name?: string | null }) {
+export async function createTestShow(
+  supabase: SupabaseLike,
+  payload: Partial<TestShowRow> & {
+    band_name?: string | null
+  }
+) {
   const bandId = normalizeBandId(payload.band_id)
   if (!bandId) {
     throw new Error('band_id is required.')
@@ -115,6 +122,10 @@ export async function updateTestShowSettings(
       showDurationMinutes?: number | null
       signupBufferMinutes?: number | null
       songSourceMode?: 'uploaded' | 'tidal_playlist' | 'tidal_catalog' | 'set_list' | string | null
+      requestModeEnabled?: boolean | null
+      request_source_mode?: 'set_list' | 'uploaded' | 'tidal_catalog' | string | null
+      requestSourceMode?: 'set_list' | 'uploaded' | 'tidal_catalog' | string | null
+      request_mode_enabled?: boolean | null
       tidalPlaylistUrl?: string | null
     }
 ) {
@@ -123,6 +134,8 @@ export async function updateTestShowSettings(
   const showDurationMinutes = payload.show_duration_minutes ?? payload.showDurationMinutes ?? null
   const signupBufferMinutes = payload.signup_buffer_minutes ?? payload.signupBufferMinutes ?? null
   const songSourceMode = (payload.song_source_mode ?? payload.songSourceMode ?? 'uploaded') as TestShowSettingsRow['song_source_mode']
+  const requestModeEnabled = payload.request_mode_enabled ?? payload.requestModeEnabled ?? false
+  const requestSourceMode = (payload.request_source_mode ?? payload.requestSourceMode ?? 'set_list') as TestShowSettingsRow['request_source_mode']
   const tidalPlaylistUrl = payload.tidal_playlist_url ?? payload.tidalPlaylistUrl ?? null
   const { data: existing, error: findError } = normalizedBandId
     ? await supabase.from('test_show_settings').select('*').eq('band_id', normalizedBandId).maybeSingle()
@@ -137,6 +150,8 @@ export async function updateTestShowSettings(
     show_duration_minutes: showDurationMinutes ?? existing?.show_duration_minutes ?? null,
     signup_buffer_minutes: signupBufferMinutes ?? existing?.signup_buffer_minutes ?? null,
     song_source_mode: songSourceMode ?? existing?.song_source_mode ?? null,
+    request_mode_enabled: requestModeEnabled ?? existing?.request_mode_enabled ?? false,
+    request_source_mode: requestSourceMode ?? existing?.request_source_mode ?? 'set_list',
     tidal_playlist_url: tidalPlaylistUrl ?? existing?.tidal_playlist_url ?? null,
   }
 

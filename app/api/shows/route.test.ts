@@ -216,4 +216,33 @@ describe('shows api route', () => {
       { onConflict: 'band_id' }
     )
   })
+
+  it('persists song request mode and request source when saving show settings', async () => {
+    getTestSessionMock.mockResolvedValue({ role: 'band', activeBandId: 'band-1' })
+    showSettingsSelectEqMock.mockResolvedValue({ data: { tidal_playlist_url: null }, error: null })
+    showSettingsUpsertMock.mockResolvedValue({ error: null })
+    eventUpdateEqMock.mockResolvedValue({ error: null })
+
+    const { POST } = await loadRoute()
+    const response = await POST(makeRequest({
+      action: 'settings',
+      eventId: 'event-1',
+      name: 'Saturday Night',
+      description: 'Live karaoke show',
+      showDurationMinutes: '120',
+      signupBufferMinutes: '1',
+      songSourceMode: 'set_list',
+      requestModeEnabled: 'true',
+      requestSourceMode: 'uploaded',
+    }))
+
+    expect(response.status).toBe(307)
+    expect(showSettingsUpsertMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        request_mode_enabled: true,
+        request_source_mode: 'uploaded',
+      }),
+      { onConflict: 'band_id' }
+    )
+  })
 })
