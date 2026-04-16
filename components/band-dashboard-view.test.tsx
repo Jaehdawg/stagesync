@@ -80,6 +80,7 @@ describe('BandDashboardView', () => {
         currentShowId="show-1"
         currentShowName="Saturday Night"
         testMode
+        hasTidalCredentials
         showDurationMinutes={90}
         signupBufferMinutes={2}
         songSourceMode="set_list"
@@ -89,9 +90,9 @@ describe('BandDashboardView', () => {
     expect(screen.getByRole('button', { name: /save settings/i })).toBeInTheDocument()
     expect(screen.getByLabelText(/show duration/i)).toHaveValue(90)
     expect(screen.getByLabelText(/buffer between songs/i)).toHaveValue(2)
-    expect(screen.getByRole('option', { name: /tidal playlist/i })).toBeInTheDocument()
-    expect(screen.getByRole('option', { name: /tidal catalog/i })).toBeInTheDocument()
-    expect(screen.getByRole('option', { name: /set list/i })).toBeInTheDocument()
+    expect(screen.getAllByRole('option', { name: /tidal playlist/i }).length).toBeGreaterThan(0)
+    expect(screen.getAllByRole('option', { name: /tidal catalog/i }).length).toBeGreaterThan(0)
+    expect(screen.getAllByRole('option', { name: /set list/i }).length).toBeGreaterThan(0)
     expect(screen.getByText(/active set list/i)).toBeInTheDocument()
   })
 
@@ -102,6 +103,7 @@ describe('BandDashboardView', () => {
         currentShowId="show-1"
         currentShowName="Saturday Night"
         testMode
+        hasTidalCredentials
         songSourceMode="tidal_playlist"
         tidalPlaylistUrl="https://tidal.com/playlist/abc123"
       />
@@ -111,11 +113,28 @@ describe('BandDashboardView', () => {
     expect(screen.getByText(/imported Tidal playlist instead of the live catalog/i)).toBeInTheDocument()
   })
 
+  it('shows request mode controls when requests are enabled', () => {
+    render(
+      <BandDashboardView
+        {...state}
+        currentShowId="show-1"
+        currentShowName="Saturday Night"
+        testMode
+        requestModeEnabled
+        requestSourceMode="set_list"
+      />
+    )
+
+    expect(screen.getByRole('radio', { name: /requests/i })).toBeChecked()
+    expect(screen.getByLabelText(/request source/i)).toBeInTheDocument()
+    expect(screen.getByText(/requests will use this source/i)).toBeInTheDocument()
+  })
+
   it('falls back when no active set list exists', () => {
     render(<BandDashboardView {...state} setLists={[]} />)
 
     expect(screen.queryByRole('option', { name: /set list/i })).not.toBeInTheDocument()
-    expect(screen.getByText(/activate a set list to use set list mode/i)).toBeInTheDocument()
+    expect(screen.getAllByText(/activate a set list to use set list mode/i).length).toBeGreaterThan(0)
   })
 
   it('asks for confirmation before deleting a set list', () => {

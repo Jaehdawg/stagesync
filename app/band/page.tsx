@@ -9,6 +9,7 @@ import { getLatestTestShow, getLatestTestShowSettings } from '@/lib/test-show'
 import { getTestBandProfileByBandId } from '@/lib/test-band-profile'
 import { getTestLogin } from '@/lib/test-login-list'
 import { getBandProfileForBandId } from '@/lib/band-tenancy'
+import { getBandTidalCredentials } from '@/lib/band-tidal'
 import { getLiveBandAccessContext } from '@/lib/band-access'
 import { getBandSetListSongs, listBandSetLists } from '@/lib/set-lists'
 import { listBandRolesForProfileId } from '@/lib/band-roles'
@@ -63,10 +64,11 @@ async function getBandState(
   const currentSettings = currentShow?.id
     ? await supabase
         .from('show_settings')
-        .select('show_duration_minutes, signup_buffer_minutes, song_source_mode, tidal_playlist_url')
+        .select('show_duration_minutes, signup_buffer_minutes, song_source_mode, request_mode_enabled, request_source_mode, tidal_playlist_url')
         .eq('event_id', currentShow.id)
         .maybeSingle()
     : { data: null }
+  const hasTidalCredentials = Boolean(await getBandTidalCredentials(supabase, bandId))
   const showDurationMinutes = currentSettings.data?.show_duration_minutes ?? 60
   const signupBufferMinutes = currentSettings.data?.signup_buffer_minutes ?? 1
 
@@ -128,6 +130,9 @@ async function getBandState(
     showDurationMinutes,
     signupBufferMinutes,
     songSourceMode: currentSettings.data?.song_source_mode ?? 'uploaded',
+    requestModeEnabled: currentSettings.data?.request_mode_enabled ?? false,
+    requestSourceMode: currentSettings.data?.request_source_mode ?? 'set_list',
+    hasTidalCredentials,
     tidalPlaylistUrl: currentSettings.data?.tidal_playlist_url ?? null,
   })
 }
@@ -194,6 +199,9 @@ async function getBandTestState(supabase: Awaited<ReturnType<typeof createClient
     showDurationMinutes: activeTestShow ? (currentSettings?.show_duration_minutes ?? 60) : 60,
     signupBufferMinutes: activeTestShow ? (currentSettings?.signup_buffer_minutes ?? 1) : 1,
     songSourceMode: activeTestShow ? (currentSettings?.song_source_mode ?? 'uploaded') : 'uploaded',
+    requestModeEnabled: activeTestShow ? (currentSettings?.request_mode_enabled ?? false) : false,
+    requestSourceMode: activeTestShow ? (currentSettings?.request_source_mode ?? 'set_list') : 'set_list',
+    hasTidalCredentials: Boolean(await getBandTidalCredentials(supabase, activeBandId)),
     tidalPlaylistUrl: activeTestShow ? (currentSettings?.tidal_playlist_url ?? null) : null,
   }
 }

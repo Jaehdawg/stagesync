@@ -1,6 +1,6 @@
 'use client'
 
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import Image from 'next/image'
 import { buildQrCodeImageUrl } from '../lib/public-links'
 import { AdminRowDialog } from './admin-row-dialog'
@@ -28,6 +28,9 @@ export type BandDashboardState = {
   showDurationMinutes?: number | null
   signupBufferMinutes?: number | null
   songSourceMode?: 'uploaded' | 'tidal_playlist' | 'tidal_catalog' | 'set_list'
+  requestModeEnabled?: boolean
+  requestSourceMode?: 'set_list' | 'uploaded' | 'tidal_catalog'
+  hasTidalCredentials?: boolean
   tidalPlaylistUrl?: string | null
   bandAccessLevel?: 'admin' | 'member'
   testMode?: boolean
@@ -55,6 +58,15 @@ function Panel({
   )
 }
 
+function sourceOptions(hasTidalCredentials: boolean, includeSetList: boolean, includePlaylist: boolean) {
+  return [
+    { value: 'uploaded', label: bandDashboardViewCopy.operations.uploadedSongList },
+    ...(includeSetList ? [{ value: 'set_list', label: bandDashboardViewCopy.operations.setList }] : []),
+    ...(includePlaylist ? [{ value: 'tidal_playlist', label: bandDashboardViewCopy.operations.tidalPlaylist }] : []),
+    ...(hasTidalCredentials ? [{ value: 'tidal_catalog', label: bandDashboardViewCopy.operations.tidalCatalog }] : []),
+  ]
+}
+
 function parseQueueSong(song: string) {
   const parts = song.split(' - ')
   if (parts.length >= 2) {
@@ -77,6 +89,9 @@ export function BandDashboardView({
   showDurationMinutes,
   signupBufferMinutes,
   songSourceMode = 'uploaded',
+  requestModeEnabled = false,
+  requestSourceMode = 'set_list',
+  hasTidalCredentials = false,
   tidalPlaylistUrl = null,
   bandAccessLevel = 'admin',
   testMode = false,
@@ -85,12 +100,21 @@ export function BandDashboardView({
 }: BandDashboardState) {
   const canManageShow = bandAccessLevel !== 'member'
   const activeSetList = setLists.find((setList) => setList.is_active) ?? null
+  const [isRequestsMode, setIsRequestsMode] = useState(requestModeEnabled)
+  const usableSongSourceMode = hasTidalCredentials || (songSourceMode !== 'tidal_playlist' && songSourceMode !== 'tidal_catalog') ? songSourceMode : 'uploaded'
+  const usableRequestSourceMode = !activeSetList && requestSourceMode === 'set_list'
+    ? 'uploaded'
+    : hasTidalCredentials || requestSourceMode !== 'tidal_catalog'
+      ? requestSourceMode
+      : activeSetList
+        ? 'set_list'
+        : 'uploaded'
   const songSourceSelection =
-    songSourceMode === 'set_list' && activeSetList
+    usableSongSourceMode === 'set_list' && activeSetList
       ? 'set_list'
-      : songSourceMode === 'tidal_playlist'
+      : usableSongSourceMode === 'tidal_playlist'
         ? 'tidal_playlist'
-        : songSourceMode === 'tidal_catalog'
+        : usableSongSourceMode === 'tidal_catalog'
           ? 'tidal_catalog'
           : 'uploaded'
   const isPlaylistMode = songSourceSelection === 'tidal_playlist'
@@ -258,6 +282,31 @@ export function BandDashboardView({
                         />
                       </div>
                       <div className="space-y-2 sm:col-span-2">
+                        <p className="text-sm font-medium text-slate-200">{bandDashboardViewCopy.operations.modeLabel}</p>
+                        <div className="grid gap-2 sm:grid-cols-2">
+                          <label className={`flex items-center gap-3 rounded-xl border px-4 py-3 ${!isRequestsMode ? 'border-cyan-400 bg-cyan-400/10 text-white' : 'border-white/10 bg-slate-950/50 text-slate-200'}`}>
+                            <input
+                              type="radio"
+                              name="requestModeEnabled"
+                              value="false"
+                              checked={!isRequestsMode}
+                              onChange={() => setIsRequestsMode(false)}
+                            />
+                            <span>{bandDashboardViewCopy.operations.karaokeMode}</span>
+                          </label>
+                          <label className={`flex items-center gap-3 rounded-xl border px-4 py-3 ${isRequestsMode ? 'border-cyan-400 bg-cyan-400/10 text-white' : 'border-white/10 bg-slate-950/50 text-slate-200'}`}>
+                            <input
+                              type="radio"
+                              name="requestModeEnabled"
+                              value="true"
+                              checked={isRequestsMode}
+                              onChange={() => setIsRequestsMode(true)}
+                            />
+                            <span>{bandDashboardViewCopy.operations.requestsMode}</span>
+                          </label>
+                        </div>
+                      </div>
+                      <div className={`space-y-2 sm:col-span-2 ${isRequestsMode ? 'hidden' : ''}`}>
                         <label htmlFor="song-source-mode" className="text-sm font-medium text-slate-200">
                           {bandDashboardViewCopy.operations.songSourceLabel}
                         </label>
@@ -267,10 +316,11 @@ export function BandDashboardView({
                           defaultValue={songSourceSelection}
                           className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white focus:border-cyan-400 focus:outline-none"
                         >
-                          <option value="uploaded">{bandDashboardViewCopy.operations.uploadedSongList}</option>
-                          <option value="tidal_playlist">{bandDashboardViewCopy.operations.tidalPlaylist}</option>
-                          <option value="tidal_catalog">{bandDashboardViewCopy.operations.tidalCatalog}</option>
-                          {activeSetList ? <option value="set_list">{bandDashboardViewCopy.operations.setList}</option> : null}
+                          {sourceOptions(hasTidalCredentials, Boolean(activeSetList), true).map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
                         </select>
                         {isPlaylistMode ? (
                           <div className="mt-3 space-y-2 rounded-2xl border border-white/10 bg-slate-950/50 p-4">
@@ -295,6 +345,28 @@ export function BandDashboardView({
                           </p>
                         ) : null}
                         {!activeSetList ? <p className="text-xs text-amber-100">{bandDashboardViewCopy.operations.noActiveSetList}</p> : null}
+                      </div>
+                      <div className={`space-y-2 sm:col-span-2 ${isRequestsMode ? '' : 'hidden'}`}>
+                        <label htmlFor="request-source-mode" className="text-sm font-medium text-slate-200">
+                          {bandDashboardViewCopy.operations.requestSourceLabel}
+                        </label>
+                        <select
+                          id="request-source-mode"
+                          name="requestSourceMode"
+                          defaultValue={usableRequestSourceMode}
+                          className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white focus:border-cyan-400 focus:outline-none"
+                        >
+                          {sourceOptions(hasTidalCredentials, Boolean(activeSetList), false)
+                            .filter((option) => option.value !== 'tidal_playlist')
+                            .map((option) => (
+                              <option key={option.value} value={option.value}>
+                                {option.label}
+                              </option>
+                            ))}
+                        </select>
+                        {!activeSetList ? <p className="text-xs text-amber-100">{bandDashboardViewCopy.operations.noActiveSetList}</p> : null}
+                        {!hasTidalCredentials ? <p className="text-xs text-cyan-100">{bandDashboardViewCopy.operations.tidalUnavailableNote}</p> : null}
+                        <p className="text-xs text-slate-400">{bandDashboardViewCopy.operations.requestSourceNote}</p>
                       </div>
                     </div>
                     <button

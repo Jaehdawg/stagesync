@@ -32,6 +32,9 @@ export type DashboardSource = {
   showDurationMinutes?: number | null
   signupBufferMinutes?: number | null
   songSourceMode?: 'uploaded' | 'tidal_playlist' | 'tidal_catalog' | 'set_list'
+  requestModeEnabled?: boolean
+  requestSourceMode?: 'set_list' | 'uploaded' | 'tidal_catalog'
+  hasTidalCredentials?: boolean
   tidalPlaylistUrl?: string | null
   singerName?: string | null
   bandId?: string | null
@@ -58,6 +61,9 @@ export type DashboardState = {
   showDurationMinutes?: number | null
   signupBufferMinutes?: number | null
   songSourceMode?: 'uploaded' | 'tidal_playlist' | 'tidal_catalog' | 'set_list'
+  requestModeEnabled?: boolean
+  requestSourceMode?: 'set_list' | 'uploaded' | 'tidal_catalog'
+  hasTidalCredentials?: boolean
   tidalPlaylistUrl?: string | null
   singerName?: string | null
   bandId?: string | null
@@ -147,6 +153,9 @@ export function buildDashboardState(source: DashboardSource = {}): DashboardStat
     showDurationMinutes: source.showDurationMinutes ?? null,
     signupBufferMinutes: source.signupBufferMinutes ?? null,
     songSourceMode: source.songSourceMode ?? 'uploaded',
+    requestModeEnabled: source.requestModeEnabled ?? false,
+    requestSourceMode: source.requestSourceMode ?? 'set_list',
+    hasTidalCredentials: source.hasTidalCredentials ?? false,
     tidalPlaylistUrl: source.tidalPlaylistUrl ?? null,
     singerName: source.singerName ?? null,
     bandId: source.bandId ?? null,
