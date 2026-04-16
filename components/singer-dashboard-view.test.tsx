@@ -37,6 +37,7 @@ describe('SingerDashboardView', () => {
       />
     )
 
+    expect(screen.getByText(/stageSync request page/i)).toBeInTheDocument()
     expect(screen.getByText(/song requests/i)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /^request$/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /request login/i })).toBeInTheDocument()

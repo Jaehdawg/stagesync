@@ -1,5 +1,6 @@
 export const singerDashboardViewCopy = {
   title: 'StageSync Singer Page',
+  requestTitle: 'StageSync Request Page',
   bandProfile: 'Band profile',
   bandProfileEmpty: 'Band links and tip links will appear here when the band profile is filled out.',
   nowPlaying: 'Now Playing',

@@ -181,7 +181,9 @@ export function SingerDashboardView(state: DashboardState) {
   return (
     <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100 sm:px-6 lg:px-8">
       <section className="mx-auto mb-6 max-w-7xl rounded-[2rem] border border-white/10 bg-gradient-to-br from-cyan-500/15 via-slate-900 to-fuchsia-500/10 p-8 shadow-2xl shadow-cyan-950/10">
-        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">{singerDashboardViewCopy.title}</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">
+          {state.requestModeEnabled ? singerDashboardViewCopy.requestTitle : singerDashboardViewCopy.title}
+        </p>
         <h1 className="mt-3 text-4xl font-semibold tracking-tight text-white sm:text-5xl">{bandProfile.bandName}</h1>
         <p className="mt-4 max-w-3xl text-lg leading-8 text-slate-300">
           {bandProfile.customMessage ?? 'Pick a song, sing your heart out, and keep the queue moving.'}
