@@ -32,7 +32,7 @@ function SearchingIndicator() {
 type TidalSearchPanelProps = {
   disabled?: boolean
   statusMessage?: string
-  sourceMode?: 'uploaded' | 'tidal_playlist' | 'tidal_catalog'
+  sourceMode?: 'uploaded' | 'tidal_playlist' | 'tidal_catalog' | 'set_list'
   playlistUrl?: string | null
   bandId: string
   showId: string

@@ -11,6 +11,7 @@ export const singerDashboardViewCopy = {
   website: 'Website',
   social: 'Social',
   tips: 'Tips',
+  requestModeBanner: 'Requests mode is on. Pick from the band’s approved sources.',
   liveQueue: 'Live Queue',
   liveQueueEmpty: 'No songs in the live queue yet.',
   historyTitle: 'History',

@@ -52,6 +52,9 @@ type DashboardState = {
   signupEnabled: boolean
   signupStatusMessage: string
   songSourceMode?: 'uploaded' | 'tidal_playlist' | 'tidal_catalog' | 'set_list'
+  requestModeEnabled?: boolean
+  requestSourceMode?: 'set_list' | 'uploaded' | 'tidal_catalog'
+  hasTidalCredentials?: boolean
   tidalPlaylistUrl?: string | null
   singerName?: string | null
   bandId?: string | null
@@ -161,7 +164,18 @@ export function SingerDashboardView(state: DashboardState) {
     cashappUrl: state.paymentLinks?.find((link) => link.label === 'CashApp')?.href ?? null,
     customMessage: state.customMessage ?? null,
   }
-  const songSourceMode = state.songSourceMode === 'tidal_playlist' ? 'tidal_playlist' : state.songSourceMode === 'tidal_catalog' ? 'tidal_catalog' : 'uploaded'
+  const requestedSourceMode = state.requestModeEnabled
+    ? state.requestSourceMode ?? 'set_list'
+    : state.songSourceMode === 'tidal_playlist'
+      ? 'tidal_playlist'
+      : state.songSourceMode === 'tidal_catalog'
+        ? 'tidal_catalog'
+        : 'uploaded'
+  const songSourceMode = state.hasTidalCredentials
+    ? requestedSourceMode
+    : requestedSourceMode === 'tidal_playlist' || requestedSourceMode === 'tidal_catalog'
+      ? 'uploaded'
+      : requestedSourceMode
   const currentTrack = liveQueueItems[0] ?? currentRequest ?? lyricsTrack ?? null
 
   return (
@@ -172,6 +186,7 @@ export function SingerDashboardView(state: DashboardState) {
         <p className="mt-4 max-w-3xl text-lg leading-8 text-slate-300">
           {bandProfile.customMessage ?? 'Pick a song, sing your heart out, and keep the queue moving.'}
         </p>
+        {state.requestModeEnabled ? <p className="mt-4 rounded-2xl border border-cyan-400/20 bg-cyan-400/10 px-4 py-3 text-sm text-cyan-100">{singerDashboardViewCopy.requestModeBanner}</p> : null}
         {state.currentShowName ? <p className="mt-4 text-sm text-cyan-100">Show: {state.currentShowName}</p> : null}
         <div className="mt-6 flex flex-wrap gap-3 text-slate-200">
           <div className="min-w-[11rem] flex-1">

@@ -12,5 +12,10 @@ export const singerCopy = {
     paused: 'Signups are paused by the band.',
     ended: 'This show has ended and singer signups are closed.',
   },
+  requestStatus: {
+    open: (capacity: number) => `Requests are open. Singer Slots: ${capacity}`,
+    paused: 'Requests are paused by the band.',
+    ended: 'This show has ended and requests are closed.',
+  },
   currentShowNameFallback: 'StageSync Show',
 } as const

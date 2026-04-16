@@ -4,6 +4,7 @@ import { createServiceClient } from '../../utils/supabase/service'
 import { SingerDashboardView } from '../../components/singer-dashboard-view'
 import { slugifyBandName } from '../../lib/public-links'
 import { getBandProfileForBandId } from '../../lib/band-tenancy'
+import { getBandTidalCredentials } from '../../lib/band-tidal'
 import { getShowState, getSignupCapacity } from '../../lib/show-state'
 import { singerCopy } from '@/content/en/singer'
 import { sharedCopy } from '@/content/en/shared'
@@ -44,6 +45,8 @@ export default async function SingerPage({
       </main>
     )
   }
+
+  const hasTidalCredentials = Boolean(await getBandTidalCredentials(serviceSupabase, band.id))
 
   const activeShowResult = requestedShowId
     ? null
@@ -96,7 +99,7 @@ export default async function SingerPage({
       .maybeSingle(),
     serviceSupabase
       .from('show_settings')
-      .select('show_duration_minutes, signup_buffer_minutes, song_source_mode, tidal_playlist_url')
+      .select('show_duration_minutes, signup_buffer_minutes, song_source_mode, request_mode_enabled, request_source_mode, tidal_playlist_url')
       .eq('event_id', showId)
       .maybeSingle(),
     serviceSupabase
@@ -136,6 +139,7 @@ export default async function SingerPage({
   const currentShow = showResult.data ?? null
   const showState = getShowState(currentShow)
   const signupEnabled = showState === 'active' && Boolean(currentShow?.allow_signups)
+  const requestModeEnabled = settingsResult.data?.request_mode_enabled ?? false
   const signupCapacity = getSignupCapacity({
     show_duration_minutes: settingsResult.data?.show_duration_minutes ?? 60,
     buffer_minutes: settingsResult.data?.signup_buffer_minutes ?? 1,
@@ -189,13 +193,22 @@ export default async function SingerPage({
       }}
       signupEnabled={signupEnabled}
       signupStatusMessage={
-        signupEnabled
-          ? singerCopy.signupStatus.open(signupCapacity)
-          : showState === 'paused'
-            ? singerCopy.signupStatus.paused
-            : singerCopy.signupStatus.ended
+        requestModeEnabled
+          ? signupEnabled
+            ? singerCopy.requestStatus.open(signupCapacity)
+            : showState === 'paused'
+              ? singerCopy.requestStatus.paused
+              : singerCopy.requestStatus.ended
+          : signupEnabled
+            ? singerCopy.signupStatus.open(signupCapacity)
+            : showState === 'paused'
+              ? singerCopy.signupStatus.paused
+              : singerCopy.signupStatus.ended
       }
       songSourceMode={settingsResult.data?.song_source_mode ?? 'uploaded'}
+      requestModeEnabled={settingsResult.data?.request_mode_enabled ?? false}
+      requestSourceMode={settingsResult.data?.request_source_mode ?? 'set_list'}
+      hasTidalCredentials={hasTidalCredentials}
       tidalPlaylistUrl={settingsResult.data?.tidal_playlist_url ?? null}
       singerName={singerName}
       bandId={band.id}

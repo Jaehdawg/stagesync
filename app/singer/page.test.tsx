@@ -39,13 +39,23 @@ const songsEqMock = vi.fn()
 const songsInMock = vi.fn()
 const profilesInMock = vi.fn()
 
-const singerDashboardViewMock = vi.fn((..._args: any[]) => null)
+const singerDashboardViewMock = vi.fn(() => null)
 
 function makeMaybeSingle(data: unknown) {
   return async () => ({ data, error: null })
 }
 
-type AnySpy = (...args: any[]) => any
+type AnySpy = (...args: unknown[]) => unknown
+
+type QueryChain = {
+  data: unknown
+  select: AnySpy
+  eq: AnySpy
+  in: AnySpy
+  order: AnySpy
+  limit: AnySpy
+  maybeSingle: AnySpy
+}
 
 function makeQuery<T>(data: T, maybeSingleData?: unknown, spies?: {
   eq?: AnySpy
@@ -53,27 +63,27 @@ function makeQuery<T>(data: T, maybeSingleData?: unknown, spies?: {
   order?: AnySpy
   limit?: AnySpy
 }) {
-  const chain: any = {
+  const chain = {
     data,
     select: vi.fn(() => chain),
-    eq: vi.fn((...args: any[]) => {
+    eq: vi.fn((...args: unknown[]) => {
       spies?.eq?.(...args)
       return chain
     }),
-    in: vi.fn((...args: any[]) => {
+    in: vi.fn((...args: unknown[]) => {
       spies?.in?.(...args)
       return chain
     }),
-    order: vi.fn((...args: any[]) => {
+    order: vi.fn((...args: unknown[]) => {
       spies?.order?.(...args)
       return chain
     }),
-    limit: vi.fn((...args: any[]) => {
+    limit: vi.fn((...args: unknown[]) => {
       spies?.limit?.(...args)
       return chain
     }),
     maybeSingle: vi.fn(maybeSingleData !== undefined ? makeMaybeSingle(maybeSingleData) : makeMaybeSingle(data instanceof Array ? data[0] ?? null : data)),
-  }
+  } as QueryChain
   return chain
 }
 
@@ -184,6 +194,8 @@ describe('SingerPage', () => {
         customMessage: 'Request a song and tip the band.',
       }),
       singerName: 'Avery',
+      requestModeEnabled: false,
+      requestSourceMode: 'set_list',
       currentRequest: { artist: 'Fleetwood Mac', title: 'Dreams' },
       liveQueueItems: expect.arrayContaining([
         expect.objectContaining({ artist: 'Fleetwood Mac', title: 'Dreams' }),
@@ -192,5 +204,29 @@ describe('SingerPage', () => {
         expect.objectContaining({ artist: 'Yeah Yeah Yeahs', title: 'Maps' }),
       ]),
     })
+  })
+
+  it('passes request-mode settings through to the singer dashboard', async () => {
+    authGetUserMock.mockResolvedValue({ data: { user: { id: 'singer-1' } } })
+    const originalSettings = { ...settingsRow }
+    Object.assign(settingsRow, { request_mode_enabled: true, request_source_mode: 'tidal_catalog' })
+
+    try {
+      const { default: SingerPage } = await loadPage()
+
+      const element = await SingerPage({
+        searchParams: Promise.resolve({ band: 'finding-north', show: 'show-1' }),
+      })
+
+      render(element)
+
+      expect(singerDashboardViewMock.mock.calls[0]?.[0]).toMatchObject({
+        requestModeEnabled: true,
+        requestSourceMode: 'tidal_catalog',
+        signupStatusMessage: expect.stringContaining('Requests are open.'),
+      })
+    } finally {
+      Object.assign(settingsRow, originalSettings)
+    }
   })
 })
