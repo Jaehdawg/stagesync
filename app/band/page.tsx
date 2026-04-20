@@ -35,7 +35,7 @@ async function getBandState(
     custom_message?: string | null
   }
 ) {
-  type QueueRow = { id: string; position: number | null; status: string | null; song_id: string | null; performer_id: string | null }
+  type QueueRow = { id: string; position: number | null; status: string | null; song_id: string | null; performer_id: string | null; singer_name: string | null }
 
   const bandProfile = bandId
     ? await getBandProfileForBandId(supabase, bandId)
@@ -53,12 +53,12 @@ async function getBandState(
   const queueItemsResult = currentShow?.id && bandId
     ? await supabase
         .from('queue_items')
-        .select('id, position, status, song_id, performer_id')
+        .select('id, position, status, song_id, performer_id, singer_name')
         .eq('band_id', bandId)
         .eq('event_id', currentShow.id)
         .order('position', { ascending: true })
         .limit(200)
-    : { data: [] as { id: string; position: number | null; status: string | null; song_id: string | null; performer_id: string | null }[] }
+    : { data: [] as { id: string; position: number | null; status: string | null; song_id: string | null; performer_id: string | null; singer_name: string | null }[] }
 
   const queueItems = queueItemsResult.data ?? []
   const currentSettings = currentShow?.id
@@ -105,6 +105,7 @@ async function getBandState(
       name:
         performer?.display_name ||
         [performer?.first_name, performer?.last_name].filter(Boolean).join(' ') ||
+        item.singer_name?.trim() ||
         sharedCopy.guestSinger,
       song: song ? `${song.title} - ${song.artist}` : sharedCopy.requestedSong,
     }

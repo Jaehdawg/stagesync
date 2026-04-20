@@ -4,6 +4,7 @@ import { useState, type ReactNode } from 'react'
 import Image from 'next/image'
 import { buildQrCodeImageUrl } from '../lib/public-links'
 import { AdminRowDialog } from './admin-row-dialog'
+import { ManualQueueEntryForm } from './manual-queue-entry-form'
 import { QueueActionButtons } from './queue-action-buttons'
 import { UltimateGuitarSongLink } from './ultimate-guitar-song-link'
 import { bandDashboardViewCopy } from '../content/en/components/band-dashboard-view'
@@ -389,6 +390,14 @@ export function BandDashboardView({
           ) : null}
 
           <Panel title={bandDashboardViewCopy.queue.title} eyebrow={bandDashboardViewCopy.queue.eyebrow}>
+            {canManageShow && currentShowId ? (
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                <p className="text-sm text-slate-400">Add a singer and song directly to the current queue.</p>
+                <AdminRowDialog triggerLabel="Add manual entry" title="Add manual queue entry">
+                  <ManualQueueEntryForm showId={currentShowId} />
+                </AdminRowDialog>
+              </div>
+            ) : null}
             {liveQueueItems.length ? (
               <div className="space-y-3">
                 {liveQueueItems.map((item) => {

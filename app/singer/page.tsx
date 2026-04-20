@@ -104,7 +104,7 @@ export default async function SingerPage({
       .maybeSingle(),
     serviceSupabase
       .from('queue_items')
-      .select('id, event_id, performer_id, song_id, status, position, created_at')
+      .select('id, event_id, performer_id, singer_name, song_id, status, position, created_at')
       .eq('band_id', band.id)
       .eq('event_id', showId)
       .order('position', { ascending: true })
@@ -147,7 +147,7 @@ export default async function SingerPage({
 
   const decoratedQueue = queueItems.map((item) => {
     const song = item.song_id ? songsById.get(item.song_id) : undefined
-    const singerName = item.performer_id ? singerNamesById.get(item.performer_id) : undefined
+    const singerName = item.performer_id ? singerNamesById.get(item.performer_id) : item.singer_name?.trim() || undefined
     return {
       id: item.id,
       position: item.position ?? 0,

@@ -154,6 +154,7 @@ describe('BandDashboardView', () => {
     expect(screen.getByRole('button', { name: /remove/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /move up/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /move down/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /add manual entry/i })).toBeInTheDocument()
   })
 
   it('shows the singer signup link and QR code', () => {
