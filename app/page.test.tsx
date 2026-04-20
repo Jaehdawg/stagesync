@@ -73,7 +73,7 @@ describe('Singer dashboard', () => {
 
     vi.stubGlobal('fetch', fetchMock)
 
-    render(<SingerDashboardView {...state} songSourceMode="tidal_playlist" tidalPlaylistUrl="https://tidal.com/playlist/abc123" />)
+    render(<SingerDashboardView {...state} songSourceMode="tidal_playlist" hasTidalCredentials tidalPlaylistUrl="https://tidal.com/playlist/abc123" />)
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining('/api/songs/search?bandId=')))
 

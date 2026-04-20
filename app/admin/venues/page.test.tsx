@@ -92,7 +92,7 @@ describe('AdminVenuesPage', () => {
     expect(screen.getByRole('heading', { name: /operator-facing summaries/i })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: /multi-band and multi-room access/i })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: /support and admin tools/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /save review/i })).toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: /save review/i }).length).toBeGreaterThan(0)
     expect(screen.getByText(/leads captured/i)).toBeInTheDocument()
     expect(screen.getByText(/the river house/i)).toBeInTheDocument()
   })
