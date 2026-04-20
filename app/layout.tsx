@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Geist, Geist_Mono } from "next/font/google";
+import { PwaWakeLock } from "../components/pwa-wake-lock";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -31,6 +32,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col">
         <div className="flex min-h-full flex-1 flex-col">
           <div className="flex-1">{children}</div>
+          <PwaWakeLock />
           <footer className="border-t border-slate-200 bg-white/90 px-4 py-6 text-sm text-slate-600 dark:border-white/10 dark:bg-slate-950/80 dark:text-slate-400 sm:px-6 lg:px-8">
             <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-3">
               <p>StageSync</p>
