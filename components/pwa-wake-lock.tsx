@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 type WakeLockHandle = {
   release: () => Promise<void>
@@ -12,6 +12,8 @@ type WakeLockNavigator = Navigator & {
     request: (type: 'screen') => Promise<WakeLockHandle>
   }
 }
+
+const STORAGE_KEY = 'stagesync:keep-awake-enabled'
 
 function isPwaStandalone() {
   if (typeof window === 'undefined') return false
@@ -27,22 +29,37 @@ function isIosDevice() {
 
   const ua = navigator.userAgent ?? ''
   const platform = navigator.platform ?? ''
-  return /iPad|iPhone|iPod/i.test(ua) || (platform === 'MacIntel' && (navigator as Navigator & { maxTouchPoints?: number }).maxTouchPoints > 1)
+  const maxTouchPoints = (navigator as Navigator & { maxTouchPoints?: number }).maxTouchPoints ?? 0
+  return /iPad|iPhone|iPod/i.test(ua) || (platform === 'MacIntel' && maxTouchPoints > 1)
+}
+
+function readStoredPreference() {
+  if (typeof window === 'undefined' || typeof window.localStorage?.getItem !== 'function') return true
+
+  const stored = window.localStorage.getItem(STORAGE_KEY)
+  return stored === null ? true : stored === 'true'
 }
 
 export function PwaWakeLock() {
-  const videoRef = useRef<HTMLVideoElement | null>(null)
-  const [useVideoFallback, setUseVideoFallback] = useState(false)
+  const [enabled, setEnabled] = useState(readStoredPreference)
 
   useEffect(() => {
-    if (!isPwaStandalone()) {
-      return
-    }
+    if (typeof window === 'undefined') return
+    setEnabled(readStoredPreference())
+  }, [])
 
-    const wakeLockSupported = 'wakeLock' in navigator
-    const iosFallback = !wakeLockSupported && isIosDevice()
-    if (iosFallback) {
-      setUseVideoFallback(true)
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof window.localStorage?.setItem !== 'function') return
+    window.localStorage.setItem(STORAGE_KEY, String(enabled))
+  }, [enabled])
+
+  const standalone = useMemo(() => isPwaStandalone(), [])
+  const wakeLockSupported = useMemo(() => typeof navigator !== 'undefined' && 'wakeLock' in navigator, [])
+  const needsVideoFallback = standalone && enabled && !wakeLockSupported && isIosDevice()
+
+  useEffect(() => {
+    if (!standalone || !enabled) {
+      return
     }
 
     let cancelled = false
@@ -58,19 +75,21 @@ export function PwaWakeLock() {
           wakeLock = null
         }
       }
+    }
 
-      const video = videoRef.current
-      if (video) {
-        try {
-          video.pause()
-        } catch {
-          // Ignore pause failures.
-        }
+    const releaseVideo = async () => {
+      const video = document.querySelector<HTMLVideoElement>('[data-pwa-wake-lock-video="true"]')
+      if (!video) return
+
+      try {
+        video.pause()
+      } catch {
+        // Ignore pause failures.
       }
     }
 
     const acquireWakeLock = async () => {
-      if (cancelled || document.visibilityState !== 'visible' || !isPwaStandalone()) {
+      if (cancelled || document.visibilityState !== 'visible' || !enabled) {
         return
       }
 
@@ -83,11 +102,10 @@ export function PwaWakeLock() {
         }
       }
 
-      if (iosFallback || useVideoFallback) {
-        const video = videoRef.current
+      if (needsVideoFallback) {
+        const video = document.querySelector<HTMLVideoElement>('[data-pwa-wake-lock-video="true"]')
         if (!video) return
 
-        setUseVideoFallback(true)
         try {
           await video.play()
         } catch {
@@ -101,6 +119,7 @@ export function PwaWakeLock() {
         void acquireWakeLock()
       } else {
         void releaseWakeLock()
+        void releaseVideo()
       }
     }
 
@@ -113,24 +132,36 @@ export function PwaWakeLock() {
       document.removeEventListener('visibilitychange', handleVisibilityChange)
       window.removeEventListener('pagehide', handleVisibilityChange)
       void releaseWakeLock()
+      void releaseVideo()
     }
-  }, [useVideoFallback])
+  }, [standalone, enabled, needsVideoFallback, wakeLockSupported])
 
-  if (!useVideoFallback) {
+  if (!standalone) {
     return null
   }
 
   return (
-    <video
-      ref={videoRef}
-      src="/keep-awake.mp4"
-      muted
-      loop
-      playsInline
-      autoPlay
-      preload="auto"
-      aria-hidden="true"
-      className="pointer-events-none fixed bottom-0 right-0 h-px w-px opacity-0"
-    />
+    <>
+      <button
+        type="button"
+        onClick={() => setEnabled((value) => !value)}
+        className="fixed bottom-4 right-4 z-50 rounded-full border border-white/15 bg-slate-950/90 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-cyan-100 shadow-lg shadow-black/30 backdrop-blur hover:border-cyan-400/50"
+      >
+        Keep awake: {enabled ? 'on' : 'off'}
+      </button>
+      {needsVideoFallback ? (
+        <video
+          data-pwa-wake-lock-video="true"
+          src="/keep-awake.mp4"
+          muted
+          loop
+          playsInline
+          autoPlay
+          preload="auto"
+          aria-hidden="true"
+          className="pointer-events-none fixed bottom-0 right-0 h-px w-px opacity-0"
+        />
+      ) : null}
+    </>
   )
 }

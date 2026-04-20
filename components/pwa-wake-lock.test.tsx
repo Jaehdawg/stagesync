@@ -1,4 +1,4 @@
-import { render, waitFor } from '@testing-library/react'
+import { fireEvent, render, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { PwaWakeLock } from './pwa-wake-lock'
 
@@ -18,6 +18,7 @@ function mockMatchMedia(matches: boolean) {
 afterEach(() => {
   vi.unstubAllGlobals()
   vi.restoreAllMocks()
+  window.localStorage?.removeItem?.('stagesync:keep-awake-enabled')
 })
 
 describe('PwaWakeLock', () => {
@@ -36,6 +37,33 @@ describe('PwaWakeLock', () => {
 
     await waitFor(() => {
       expect(requestMock).toHaveBeenCalledWith('screen')
+      expect(document.querySelector('button')).toHaveTextContent(/keep awake: on/i)
+    })
+  })
+
+  it('toggles the wake lock off and on in standalone mode', async () => {
+    const requestMock = vi.fn().mockResolvedValue({ release: vi.fn().mockResolvedValue(undefined) })
+    vi.stubGlobal('navigator', {
+      wakeLock: { request: requestMock },
+      standalone: true,
+      userAgent: 'Chrome',
+      platform: 'MacIntel',
+      maxTouchPoints: 0,
+    })
+    mockMatchMedia(true)
+
+    render(<PwaWakeLock />)
+
+    const toggle = await waitFor(() => document.querySelector('button'))
+    expect(toggle).toHaveTextContent(/keep awake: on/i)
+
+    fireEvent.click(toggle!)
+    expect(toggle).toHaveTextContent(/keep awake: off/i)
+
+    fireEvent.click(toggle!)
+    await waitFor(() => {
+      expect(requestMock).toHaveBeenCalledTimes(2)
+      expect(toggle).toHaveTextContent(/keep awake: on/i)
     })
   })
 
@@ -75,6 +103,7 @@ describe('PwaWakeLock', () => {
 
     await waitFor(() => {
       expect(requestMock).not.toHaveBeenCalled()
+      expect(document.querySelector('button')).toBeNull()
     })
   })
 })
