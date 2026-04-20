@@ -17,6 +17,7 @@ function mockMatchMedia(matches: boolean) {
 
 afterEach(() => {
   vi.unstubAllGlobals()
+  vi.restoreAllMocks()
 })
 
 describe('PwaWakeLock', () => {
@@ -25,6 +26,9 @@ describe('PwaWakeLock', () => {
     vi.stubGlobal('navigator', {
       wakeLock: { request: requestMock },
       standalone: true,
+      userAgent: 'Chrome',
+      platform: 'MacIntel',
+      maxTouchPoints: 0,
     })
     mockMatchMedia(true)
 
@@ -35,11 +39,35 @@ describe('PwaWakeLock', () => {
     })
   })
 
+  it('falls back to a looping video on iOS standalone when Wake Lock is unavailable', async () => {
+    const playMock = vi.fn().mockResolvedValue(undefined)
+    const pauseMock = vi.fn()
+    vi.stubGlobal('navigator', {
+      standalone: true,
+      userAgent: 'iPhone',
+      platform: 'iPhone',
+      maxTouchPoints: 1,
+    })
+    mockMatchMedia(true)
+    vi.spyOn(HTMLMediaElement.prototype, 'play').mockImplementation(playMock)
+    vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(pauseMock)
+
+    const { container } = render(<PwaWakeLock />)
+
+    await waitFor(() => {
+      expect(container.querySelector('video')).not.toBeNull()
+      expect(playMock).toHaveBeenCalled()
+    })
+  })
+
   it('does nothing in a normal browser tab', async () => {
     const requestMock = vi.fn()
     vi.stubGlobal('navigator', {
       wakeLock: { request: requestMock },
       standalone: false,
+      userAgent: 'Chrome',
+      platform: 'MacIntel',
+      maxTouchPoints: 0,
     })
     mockMatchMedia(false)
 

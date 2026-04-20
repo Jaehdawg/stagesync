@@ -17,6 +17,12 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "StageSync",
   description: "Live karaoke queueing for singers, bands, and admins.",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    title: "StageSync",
+    statusBarStyle: "black-translucent",
+  },
 };
 
 export default function RootLayout({
