@@ -5,6 +5,7 @@ import { getTestSession } from '@/lib/test-session'
 import { getLiveBandAccessContext } from '@/lib/band-access'
 import { getShowState } from '@/lib/show-state'
 import { slugifySongId } from '@/lib/song-library'
+import { normalizeQueuePositions } from '@/lib/queue-order'
 
 function getSupabase(request: NextRequest) {
   return createServerClient(
@@ -137,6 +138,8 @@ export async function POST(request: NextRequest) {
   if (queueError) {
     return NextResponse.json({ message: queueError.message }, { status: 500 })
   }
+
+  await normalizeQueuePositions(serviceSupabase, { bandId, eventId: currentShow.id })
 
   return NextResponse.json({ message: 'Manual queue entry added.' })
 }

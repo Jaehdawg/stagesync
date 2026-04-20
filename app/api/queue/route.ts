@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { createServiceClient } from '../../../utils/supabase/service'
 import { recordAnalyticsEvent } from '../../../lib/analytics-events'
 import { getShowState } from '../../../lib/show-state'
+import { normalizeQueuePositions } from '../../../lib/queue-order'
 
 type SongSourceType = 'uploaded' | 'google_sheet' | 'tidal_playlist' | 'tidal_catalog' | 'manual'
 
@@ -174,6 +175,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: updateError.message }, { status: 500 })
     }
 
+    await normalizeQueuePositions(serviceSupabase, { bandId, eventId: showId })
+
     return NextResponse.json({ message: 'Song request updated.' })
   }
 
@@ -201,6 +204,8 @@ export async function POST(request: NextRequest) {
   if (queueError) {
     return NextResponse.json({ message: queueError.message }, { status: 500 })
   }
+
+  await normalizeQueuePositions(serviceSupabase, { bandId, eventId: showId })
 
   return NextResponse.json({ message: 'Song request added to the queue.' })
 }

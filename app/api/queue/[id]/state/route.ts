@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { createServiceClient } from '@/utils/supabase/service'
 import { isBandAdminRequest } from '@/lib/band-auth'
+import { normalizeQueuePositions } from '@/lib/queue-order'
 
 async function swapQueuePositions(supabase: ReturnType<typeof createServiceClient>, queueItem: { id: string; band_id: string; event_id: string; position: number | null }, direction: 'up' | 'down') {
   const { data: siblings, error } = await supabase
@@ -71,6 +72,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
       if (!moved) {
         return NextResponse.json({ message: `Queue item already at the ${action === 'up' ? 'top' : 'bottom'}.` })
       }
+      await normalizeQueuePositions(serviceSupabase, { bandId: queueItem.band_id, eventId: queueItem.event_id })
       return NextResponse.json({ message: `Queue item moved ${action}.` })
     } catch (error) {
       return NextResponse.json({ message: error instanceof Error ? error.message : 'Unable to move queue item.' }, { status: 500 })
